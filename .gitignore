@@ -1,0 +1,4 @@
+*.pyc
+*.kdev4*
+.DS_Store
+
