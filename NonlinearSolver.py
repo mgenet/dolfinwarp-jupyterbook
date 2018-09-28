@@ -280,7 +280,7 @@ class NonlinearSolver():
             self.printer.print_str(" "+str(timer)+" s",tab=False)
             #self.printer.print_var("dsol_func",self.problem.dsol_func.vector().get_local())
         except:
-            self.printer.print_str(" Warning! Linear solver failed!",tab=False)
+            self.printer.print_str("Warning! Linear solver failed!",tab=False)
             return False
 
         if not (numpy.isfinite(self.problem.dsol_func.vector()).all()):

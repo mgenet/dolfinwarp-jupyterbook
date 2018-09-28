@@ -15,7 +15,7 @@ from Material_Elastic import ElasticMaterial
 
 ################################################################################
 
-class HookeElasticMaterial(ElasticMaterial):
+class KirchhoffElasticMaterial(ElasticMaterial):
 
 
 
@@ -35,18 +35,21 @@ class HookeElasticMaterial(ElasticMaterial):
 
     def get_free_energy(self,
             U=None,
-            epsilon=None):
+            E=None):
 
-        if (epsilon is None):
+        if (E is None):
             dim = U.ufl_shape[0]
-            epsilon = dolfin.sym(dolfin.grad(U))
+            I = dolfin.Identity(dim)
+            F = I + dolfin.grad(U)
+            C = F.T * F
+            E = (C - I)/2
         else:
-            assert (epsilon.ufl_shape[0] == epsilon.ufl_shape[1])
-            dim = epsilon.ufl_shape[0]
+            assert (E.ufl_shape[0] == E.ufl_shape[1])
+            dim = E.ufl_shape[0]
+            I = dolfin.Identity(dim)
 
-        Psi = (self.lmbda/2) * dolfin.tr(epsilon)**2 + self.mu * dolfin.inner(epsilon, epsilon)
+        Psi = (self.lmbda/2) * dolfin.tr(E)**2 + self.mu * dolfin.inner(E,E)
 
-        I = dolfin.Identity(dim)
-        Sigma = self.lmbda * dolfin.tr(epsilon) * I + 2 * self.mu * epsilon
+        Sigma = self.lmbda * dolfin.tr(E) * I + 2 * self.mu * E
 
         return Psi, Sigma

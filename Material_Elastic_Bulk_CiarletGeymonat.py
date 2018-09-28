@@ -32,7 +32,14 @@ class CiarletGeymonatBulkElasticMaterial(BulkElasticMaterial):
 
 
     def get_free_energy(self,
-            C):
+            U=None,
+            C=None):
+
+        if (C is None):
+            dim = U.ufl_shape[0]
+            I = dolfin.Identity(dim)
+            F = I + dolfin.grad(U)
+            C = F.T * F
 
         JF    = dolfin.sqrt(dolfin.det(C))
         IC    = dolfin.tr(C)

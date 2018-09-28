@@ -32,11 +32,19 @@ class NeoHookeanDevElasticMaterial(DevElasticMaterial):
 
 
     def get_free_energy(self,
-            C):
+            U=None,
+            C=None):
 
-        assert (C.ufl_shape[0] == C.ufl_shape[1])
-        dim = C.ufl_shape[0]
-        I     = dolfin.Identity(dim)
+        if (C is None):
+            dim = U.ufl_shape[0]
+            I = dolfin.Identity(dim)
+            F = I + dolfin.grad(U)
+            C = F.T * F
+        else:
+            assert (C.ufl_shape[0] == C.ufl_shape[1])
+            dim = C.ufl_shape[0]
+            I = dolfin.Identity(dim)
+
         JF    = dolfin.sqrt(dolfin.det(C))
         IC    = dolfin.tr(C)
         C_inv = dolfin.inv(C)
