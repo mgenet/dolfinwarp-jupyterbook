@@ -2,7 +2,7 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018                                            ###
+### Created by Martin Genet, 2018-2019                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
@@ -536,5 +536,3 @@ class NonlinearSolver():
     def exit_test(self):
 
         self.success = all([self.subsol_err_lst[k_subsol]<self.sol_tol[k_subsol] for k_subsol in xrange(len(self.problem.subsols)) if self.sol_tol[k_subsol] is not None])
-
-
