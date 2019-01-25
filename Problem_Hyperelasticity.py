@@ -303,6 +303,7 @@ class HyperelasticityProblem(Problem):
 
     def set_variational_formulation(self,
             penalties=[],
+            surface_tensions=[],
             surface0_loadings=[],
             pressure0_loadings=[],
             volume0_loadings=[],
@@ -323,12 +324,23 @@ class HyperelasticityProblem(Problem):
         #         loading.val,
         #         self.subsols["U"].subfunc) * loading.measure
 
-        # self.res_form = dolfin.derivative(
-        #     self.Pi,
-        #     self.sol_func,
-        #     self.dsol_test); assert (self.w_growth != "mixed") and (self.w_relaxation != "mixed")
+        self.Pi = 0.
 
-        self.res_form = 0
+        for loading in surface_tensions:
+            FmTN = dolfin.dot(
+                dolfin.transpose(dolfin.inv(self.kinematics.Ft)),
+                self.mesh_normals)
+            T = dolfin.sqrt(dolfin.inner(
+                FmTN,
+                FmTN))
+            self.Pi += loading.val * self.kinematics.Jt * T * loading.measure
+
+        self.res_form = dolfin.derivative(
+            self.Pi,
+            self.sol_func,
+            self.dsol_test); assert (self.w_growth != "mixed") and (self.w_relaxation != "mixed")
+
+        # self.res_form = 0
 
         self.res_form += dolfin.inner(
             self.Sigma,

@@ -26,6 +26,7 @@ class Step():
             dt_max=None,
             constraints=None, #MG20180508: Do not use list as default value because it is static
             penalties=None,
+            surface_tensions=None,
             surface0_loadings=None,
             pressure0_loadings=None,
             volume0_loadings=None,
@@ -42,6 +43,7 @@ class Step():
 
         self.constraints        = constraints        if (constraints        is not None) else []
         self.penalties          = penalties          if (penalties          is not None) else []
+        self.surface_tensions   = surface_tensions   if (surface_tensions   is not None) else []
         self.surface0_loadings  = surface0_loadings  if (surface0_loadings  is not None) else []
         self.pressure0_loadings = pressure0_loadings if (pressure0_loadings is not None) else []
         self.volume0_loadings   = volume0_loadings   if (volume0_loadings   is not None) else []
@@ -71,6 +73,18 @@ class Step():
             *args,
             **kwargs)
         self.penalties += [loading]
+        return loading
+
+
+
+    def add_surface_tension(self,
+            *args,
+            **kwargs):
+
+        loading = dcm.Loading(
+            *args,
+            **kwargs)
+        self.surface_tensions += [loading]
         return loading
 
 
