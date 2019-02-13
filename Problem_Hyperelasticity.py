@@ -324,7 +324,7 @@ class HyperelasticityProblem(Problem):
         #         loading.val,
         #         self.subsols["U"].subfunc) * loading.measure
 
-        self.Pi = 0.
+        self.Pi = dolfin.Constant(0.) * self.dV
 
         for loading in surface_tensions:
             FmTN = dolfin.dot(
