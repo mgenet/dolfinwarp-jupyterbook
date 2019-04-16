@@ -31,6 +31,7 @@ class Problem():
         self.constraints = []
         self.penalties   = []
 
+        self.surface_tensions   = []
         self.surface0_loadings  = []
         self.pressure0_loadings = []
         self.volume0_loadings   = []
@@ -458,6 +459,18 @@ class Problem():
             *args,
             **kwargs)
         self.penalties += [loading]
+        return loading
+
+
+
+    def add_surface_tension(self,
+            *args,
+            **kwargs):
+
+        loading = dcm.Loading(
+            *args,
+            **kwargs)
+        self.surface_tensions += [loading]
         return loading
 
 
