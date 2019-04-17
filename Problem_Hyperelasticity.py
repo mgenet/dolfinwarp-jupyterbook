@@ -140,6 +140,7 @@ class HyperelasticityProblem(Problem):
                 degree=U_degree-1)
 
 
+
     def set_solution_degree(self,
             U_degree=1):
 
@@ -240,7 +241,7 @@ class HyperelasticityProblem(Problem):
         #self.Sigma = dolfin.diff(self.Psi, self.kinematics.Ee)   # MG20180412: but fails at project…
 
         self.PK1 = self.kinematics.Ft * self.Sigma
-        self.sigma = (1/self.kinematics.Jt) * self.PK1 * dolfin.transpose(self.kinematics.Ft)
+        self.sigma = (1./self.kinematics.Jt) * self.PK1 * dolfin.transpose(self.kinematics.Ft)
 
         self.add_foi(expr=self.Sigma, fs=self.mfoi_fs, name="Sigma")
         #self.add_foi(expr=self.PK1  , fs=self.mfoi_fs, name="PK1"  )
@@ -289,7 +290,7 @@ class HyperelasticityProblem(Problem):
             #self.unloaded_Sigma = dolfin.diff(self.unloaded_Psi, self.unloaded_kinematics.Ee) # MG20180412: but fails at project…
 
             self.unloaded_PK1 = self.unloaded_kinematics.Ft * self.unloaded_Sigma
-            self.unloaded_sigma = (1/self.unloaded_kinematics.Jt) * self.unloaded_PK1 * dolfin.transpose(self.unloaded_kinematics.Ft)
+            self.unloaded_sigma = (1./self.unloaded_kinematics.Jt) * self.unloaded_PK1 * dolfin.transpose(self.unloaded_kinematics.Ft)
 
             self.add_foi(expr=self.unloaded_Sigma, fs=self.mfoi_fs, name="Sigmap")
             self.add_foi(expr=self.unloaded_PK1  , fs=self.mfoi_fs, name="PK1p"  )
@@ -340,19 +341,17 @@ class HyperelasticityProblem(Problem):
             self.sol_func,
             self.dsol_test); assert (self.w_growth != "mixed") and (self.w_relaxation != "mixed")
 
-        # self.res_form = 0
-
-        self.res_form += dolfin.inner(
+        self.res_form = dolfin.inner(
             self.Sigma,
             dolfin.derivative(
                 self.kinematics.Et,
                 self.subsols["U"].subfunc,
-                self.subsols["U"].dsubtest)) * self.dV;
+                self.subsols["U"].dsubtest)) * self.dV
 
         if (self.w_incompressibility):
             self.res_form += dolfin.inner(
                 self.kinematics.Je-1,
-                self.subsols["P"].dsubtest) * self.dV;
+                self.subsols["P"].dsubtest) * self.dV
 
         if (self.w_unloaded_configuration):
             self.res_form += dolfin.inner(
@@ -360,12 +359,12 @@ class HyperelasticityProblem(Problem):
                 dolfin.derivative(
                     self.unloaded_kinematics.Et,
                     self.subsols["Up"].subfunc,
-                    self.subsols["Up"].dsubtest)) * self.dV;
+                    self.subsols["Up"].dsubtest)) * self.dV
 
             if (self.w_incompressibility):
                 self.res_form += dolfin.inner(
                     self.unloaded_kinematics.Je-1,
-                    self.subsols["Pp"].dsubtest) * self.dV;
+                    self.subsols["Pp"].dsubtest) * self.dV
 
         for loading in penalties:
             self.res_form += loading.val * dolfin.inner(

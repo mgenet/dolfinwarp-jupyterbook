@@ -396,7 +396,7 @@ class NonlinearSolver():
         if (self.k_iter == 1):
             self.relax = 1. # MG20180505: Otherwise Dirichlet boundary conditions are not correctly enforced
         else:
-            phi = (1 + math.sqrt(5)) / 2
+            phi = (1+math.sqrt(5))/2
             a = (1-phi)/(2-phi)
             b = 1/(2-phi)
             need_update_c = True
