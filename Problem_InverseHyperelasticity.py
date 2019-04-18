@@ -133,6 +133,7 @@ class InverseHyperelasticityProblem(Problem):
 
     def set_variational_formulation(self,
             penalties=[],
+            surface_tensions=[],
             surface0_loadings=[],
             pressure0_loadings=[],
             volume0_loadings=[],
