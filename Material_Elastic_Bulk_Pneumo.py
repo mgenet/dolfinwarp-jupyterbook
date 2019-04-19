@@ -7,7 +7,7 @@
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
 ###                                                                          ###
-### And Cécile Patte, 2018                                                   ###
+### And Cécile Patte, 2019                                                   ###
 ###                                                                          ###
 ### INRIA, Palaiseau, France                                                 ###
 ###                                                                          ###
@@ -27,17 +27,13 @@ class PneumoBulkElasticMaterial(BulkElasticMaterial):
     def __init__(self,
             parameters):
 
-        if ("alpha" in parameters) and ("gamma" in parameters):
-            self.alpha     = dolfin.Constant(parameters["alpha"])
-            self.gamma    = dolfin.Constant(parameters["gamma"])
+        self.alpha = dolfin.Constant(parameters["alpha"])
+        self.gamma = dolfin.Constant(parameters["gamma"])
 
 
 
     def get_free_energy(self,
-            U=None,
-            C=None):
-
-        assert C is not None
+            C):
 
         JF    = dolfin.sqrt(dolfin.det(C))
         IC    = dolfin.tr(C)
