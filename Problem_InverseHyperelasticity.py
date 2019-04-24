@@ -120,14 +120,14 @@ class InverseHyperelasticityProblem(Problem):
         self.Psi_dev,\
         self.Sigma_dev = self.elastic_behavior_dev.get_free_energy(
             C=self.kinematics.Ce)
-        self.Sigma = self.Sigma_bulk + self.Sigma_dev
+        self.Sigma = [Sigma_bulk_elt + Sigma_dev_elt for Sigma_bulk_elt, Sigma_dev_elt in zip(self.Sigma_bulk, self.Sigma_dev)]
 
-        self.PK1 = self.kinematics.Ft * self.Sigma
-        self.sigma = (1./self.kinematics.Jt) * self.PK1 * dolfin.transpose(self.kinematics.Ft)
+        self.PK1 = [self.kinematics.Ft * self.Sigma[k] for k in range(len(self.Sigma))]
+        self.sigma = [(1./self.kinematics.Jt) * self.PK1[k] * dolfin.transpose(self.kinematics.Ft) for k in range(len(self.PK1))]
 
         # self.add_foi(expr=self.Sigma, fs=self.mfoi_fs, name="Sigma")
         # self.add_foi(expr=self.PK1  , fs=self.mfoi_fs, name="PK1"  )
-        self.add_foi(expr=self.sigma, fs=self.mfoi_fs, name="sigma")
+        # self.add_foi(expr=self.sigma, fs=self.mfoi_fs, name="sigma")
 
 
 
@@ -140,14 +140,21 @@ class InverseHyperelasticityProblem(Problem):
             surface_loadings=[],
             pressure_loadings=[],
             volume_loadings=[],
+            nb_material_subdomains=1,
             dt=None):
 
-        # self.res_form = 0.                            # MG20190417: ok??
+        self.res_form = 0.                            # MG20190417: ok??
         # self.res_form = dolfin.Constant(0.) * self.dV # MG20190417: arity mismatch??
 
-        self.res_form = dolfin.inner(
-            self.sigma,
-            dolfin.sym(dolfin.grad(self.subsols["U"].dsubtest))) * self.dV
+        if nb_material_subdomains == 1:
+            self.res_form = dolfin.inner(
+                self.sigma[0],
+                dolfin.sym(dolfin.grad(self.subsols["U"].dsubtest))) * self.dV
+        else:
+            for id_subdomain in range(nb_material_subdomains):
+                self.res_form += dolfin.inner(
+                    self.sigma[id_subdomain],
+                    dolfin.sym(dolfin.grad(self.subsols["U"].dsubtest))) * self.dV(id_subdomain)
 
         if (self.w_incompressibility):
             self.res_form += dolfin.inner(

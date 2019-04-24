@@ -27,8 +27,8 @@ class PneumoBulkElasticMaterial(BulkElasticMaterial):
     def __init__(self,
             parameters):
 
-        self.alpha = dolfin.Constant(parameters["alpha"])
-        self.gamma = dolfin.Constant(parameters["gamma"])
+        self.alpha     = [dolfin.Constant(parameters["alpha"][k]) for k in range(len(parameters["alpha"]))]
+        self.gamma    = [dolfin.Constant(parameters["gamma"][k]) for k in range(len(parameters["gamma"]))]
 
 
 
@@ -39,7 +39,7 @@ class PneumoBulkElasticMaterial(BulkElasticMaterial):
         IC    = dolfin.tr(C)
         C_inv = dolfin.inv(C)
 
-        Psi   = (self.alpha) * (dolfin.exp(self.gamma*(JF**2 - 1 - 2*dolfin.ln(JF))) - 1)
-        Sigma = (self.alpha) * dolfin.exp(self.gamma*(JF**2 - 1 - 2*dolfin.ln(JF))) * (2*self.gamma) * (JF**2 - 1) * C_inv
+        Psi   = [(self.alpha[k]) * (dolfin.exp(self.gamma[k]*(JF**2 - 1 - 2*dolfin.ln(JF))) - 1) for k in range(len(self.alpha))]
+        Sigma = [(self.alpha[k]) * dolfin.exp(self.gamma[k]*(JF**2 - 1 - 2*dolfin.ln(JF))) * (2*self.gamma[k]) * (JF**2 - 1) * C_inv for k in range(len(self.alpha))]
 
         return Psi, Sigma

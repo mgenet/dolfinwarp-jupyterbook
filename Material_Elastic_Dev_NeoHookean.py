@@ -23,7 +23,7 @@ class NeoHookeanDevElasticMaterial(DevElasticMaterial):
             parameters):
 
         if ("mu" in parameters):
-            self.mu = dolfin.Constant(parameters["mu"])
+            self.mu = [dolfin.Constant(parameters["mu"][k]) for k in range(len(parameters["mu"]))]
         elif ("E" in parameters) and ("nu" in parameters):
             self.E  = dolfin.Constant(parameters["E"])
             self.nu = dolfin.Constant(parameters["nu"])
@@ -49,7 +49,7 @@ class NeoHookeanDevElasticMaterial(DevElasticMaterial):
         IC    = dolfin.tr(C)
         C_inv = dolfin.inv(C)
 
-        Psi   = (self.mu/2) * (IC - dim - 2*dolfin.ln(JF)) # MG20180516: in 2d, plane strain
-        Sigma =  self.mu    * (I - C_inv)
+        Psi   = [(self.mu[k]/2) * (IC - dim - 2*dolfin.ln(JF)) for k in range(len(self.mu))] # MG20180516: in 2d, plane strain
+        Sigma =  [self.mu[k]    * (I - C_inv) for k in range(len(self.mu))]
 
         return Psi, Sigma

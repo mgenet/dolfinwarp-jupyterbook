@@ -182,6 +182,7 @@ class TimeIntegrator():
                     surface_loadings=surface_loadings,
                     pressure_loadings=pressure_loadings,
                     volume_loadings=volume_loadings,
+                    nb_material_subdomains=self.problem.nb_material_subdomains,
                     dt=dt)
 
                 t += dt
