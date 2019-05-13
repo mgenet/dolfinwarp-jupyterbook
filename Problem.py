@@ -28,8 +28,9 @@ class Problem():
         self.inelastic_behaviors_mixed    = []
         self.inelastic_behaviors_internal = []
 
-        self.constraints = []
-        self.penalties   = []
+        self.constraints           = []
+        self.normal_penalties      = []
+        self.directional_penalties = []
 
         self.surface_tensions   = []
         self.surface0_loadings  = []
@@ -100,7 +101,8 @@ class Problem():
 
     def set_measures(self,
             domains=None,
-            boundaries=None):
+            boundaries=None,
+            points=None):
 
         if (domains is not None):
             self.dV = dolfin.Measure(
@@ -120,6 +122,16 @@ class Problem():
         else:
             self.dS = dolfin.Measure(
                 "ds",
+                domain=self.mesh)
+
+        if (points is not None):
+            self.dP = dolfin.Measure(
+                "dP",
+                domain=self.mesh,
+                subdomain_data=points)
+        else:
+            self.dP = dolfin.Measure(
+                "dP",
                 domain=self.mesh)
 
 
@@ -192,60 +204,6 @@ class Problem():
 
 
 
-    def get_subsol_function_space(self,
-            name):
-
-        index = self.subsols.keys().index(name)
-        # print str(name)+" index = "+str(index)
-        return self.sol_fs.sub(index)
-
-
-
-    def get_displacement_function_space(self):
-
-        if (len(self.subsols) == 1):
-            return self.sol_fs
-        else:
-            return self.get_subsol_function_space(name="U")
-
-
-
-    def get_unloaded_displacement_function_space(self):
-
-        assert (len(self.subsols) > 1)
-        return self.get_subsol_function_space(name="Up")
-
-
-
-    def get_pressure_function_space(self):
-
-        assert (len(self.subsols) > 1)
-        return self.get_subsol_function_space(name="P")
-
-
-
-    def get_unloaded_pressure_function_space(self):
-
-        assert (len(self.subsols) > 1)
-        return self.get_subsol_function_space(name="Pp")
-
-
-
-    def get_growth_function_space(self):
-
-        assert (len(self.subsols) > 1)
-        return self.get_subsol_function_space(name="thetag")
-        #return self.get_subsol_function_space(name="Fg")
-
-
-
-    def get_relaxation_function_space(self):
-
-        assert (len(self.subsols) > 1)
-        return self.get_subsol_function_space(name="Fr")
-
-
-
     def set_solution_finite_element(self):
 
         if (len(self.subsols) == 1):
@@ -262,6 +220,15 @@ class Problem():
             self.mesh,
             self.sol_fe) # MG: element keyword don't work here…
         #print self.sol_fs
+
+
+
+    def get_subsol_function_space(self,
+            name):
+
+        index = self.subsols.keys().index(name)
+        # print str(name)+" index = "+str(index)
+        return self.sol_fs.sub(index)
 
 
 
@@ -451,14 +418,26 @@ class Problem():
 
 
 
-    def add_penalty(self,
+    def add_normal_penalty(self,
             *args,
             **kwargs):
 
         loading = dcm.Loading(
             *args,
             **kwargs)
-        self.penalties += [loading]
+        self.normal_penalties += [loading]
+        return loading
+
+
+
+    def add_directional_penalty(self,
+            *args,
+            **kwargs):
+
+        loading = dcm.Loading(
+            *args,
+            **kwargs)
+        self.directional_penalties += [loading]
         return loading
 
 
@@ -578,85 +557,6 @@ class Problem():
             **kwargs)
         self.qois += [qoi]
         return qoi
-
-
-
-    def add_strain_qois(self,
-            strain_type="elastic",
-            configuration_type="loaded"):
-
-        if (configuration_type == "loaded"):
-            kin = self.kinematics
-        elif (configuration_type == "unloaded"):
-            kin = self.unloaded_kinematics
-
-        if (strain_type == "elastic"):
-            basename = "E^e_"
-            strain = kin.Ee
-        elif (strain_type == "total"):
-            basename = "E^t_"
-            strain = kin.Et
-
-        self.add_qoi(
-            name=basename+"XX",
-            expr=strain[0,0] * self.dV)
-        if (self.dim >= 2):
-            self.add_qoi(
-                name=basename+"YY",
-                expr=strain[1,1] * self.dV)
-            if (self.dim >= 3):
-                self.add_qoi(
-                    name=basename+"ZZ",
-                    expr=strain[2,2] * self.dV)
-        if (self.dim >= 2):
-            self.add_qoi(
-                name=basename+"XY",
-                expr=strain[0,1] * self.dV)
-            if (self.dim >= 3):
-                self.add_qoi(
-                    name=basename+"YZ",
-                    expr=strain[1,2] * self.dV)
-                self.add_qoi(
-                    name=basename+"ZX",
-                    expr=strain[2,0] * self.dV)
-
-
-
-    def add_stress_qois(self,
-            stress_type="cauchy"):
-
-        if (stress_type in ("cauchy", "sigma")):
-            basename = "s_"
-            stress = self.sigma
-        elif (stress_type in ("piola", "PK2", "Sigma")):
-            basename = "S_"
-            stress = self.Sigma
-        elif (stress_type in ("PK1", "P")):
-            basename = "P_"
-            stress = self.PK1
-
-        self.add_qoi(
-            name=basename+"XX",
-            expr=stress[0,0] * self.dV)
-        if (self.dim >= 2):
-            self.add_qoi(
-                name=basename+"YY",
-                expr=stress[1,1] * self.dV)
-            if (self.dim >= 3):
-                self.add_qoi(
-                    name=basename+"ZZ",
-                    expr=stress[2,2] * self.dV)
-        if (self.dim >= 2):
-            self.add_qoi(
-                name=basename+"XY",
-                expr=stress[0,1] * self.dV)
-            if (self.dim >= 3):
-                self.add_qoi(
-                    name=basename+"YZ",
-                    expr=stress[1,2] * self.dV)
-                self.add_qoi(
-                    name=basename+"ZX",
-                    expr=stress[2,0] * self.dV)
 
 
 
