@@ -225,6 +225,7 @@ class NonlinearSolver():
         self.printer.print_str(" "+str(timer)+" s",tab=False,newline=False)
         # self.printer.print_var("res_vec",self.res_vec.get_local())
         # self.printer.print_var("jac_mat",self.jac_mat.array())
+
         Pi = dolfin.Constant(0.) * self.problem.dV
         for loading in self.problem.directional_penalties:
             Pi += (loading.val/2) * dolfin.inner(
