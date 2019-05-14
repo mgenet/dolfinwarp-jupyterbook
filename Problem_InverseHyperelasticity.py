@@ -69,7 +69,7 @@ class InverseHyperelasticityProblem(Problem):
 
 
     def set_solution_degree(self,
-            U_degree=1):
+            U_degree=1): #MG20190513: Should have different name, right?
 
         self.set_subsols(
             U_degree=U_degree)
@@ -132,7 +132,8 @@ class InverseHyperelasticityProblem(Problem):
 
 
     def set_variational_formulation(self,
-            penalties=[],
+            normal_penalties=[],
+            directional_penalties=[],
             surface_tensions=[],
             surface0_loadings=[],
             pressure0_loadings=[],

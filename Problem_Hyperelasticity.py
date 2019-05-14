@@ -142,7 +142,7 @@ class HyperelasticityProblem(Problem):
 
 
     def set_solution_degree(self,
-            U_degree=1):
+            U_degree=1): #MG20190513: Should have different name, right?
 
         self.set_subsols(
             U_degree=U_degree)
@@ -160,6 +160,51 @@ class HyperelasticityProblem(Problem):
         self.set_foi_finite_elements_DG(
             degree=U_degree-1)
         self.set_foi_function_spaces()
+
+
+
+    def get_displacement_function_space(self):
+
+        if (len(self.subsols) == 1):
+            return self.sol_fs
+        else:
+            return self.get_subsol_function_space(name="U")
+
+
+
+    def get_unloaded_displacement_function_space(self):
+
+        assert (len(self.subsols) > 1)
+        return self.get_subsol_function_space(name="Up")
+
+
+
+    def get_pressure_function_space(self):
+
+        assert (len(self.subsols) > 1)
+        return self.get_subsol_function_space(name="P")
+
+
+
+    def get_unloaded_pressure_function_space(self):
+
+        assert (len(self.subsols) > 1)
+        return self.get_subsol_function_space(name="Pp")
+
+
+
+    def get_growth_function_space(self):
+
+        assert (len(self.subsols) > 1)
+        return self.get_subsol_function_space(name="thetag")
+        #return self.get_subsol_function_space(name="Fg")
+
+
+
+    def get_relaxation_function_space(self):
+
+        assert (len(self.subsols) > 1)
+        return self.get_subsol_function_space(name="Fr")
 
 
 
@@ -303,7 +348,8 @@ class HyperelasticityProblem(Problem):
 
 
     def set_variational_formulation(self,
-            penalties=[],
+            normal_penalties=[],
+            directional_penalties=[],
             surface_tensions=[],
             surface0_loadings=[],
             pressure0_loadings=[],
@@ -314,19 +360,32 @@ class HyperelasticityProblem(Problem):
             nb_material_subdomains=1,
             dt=None):
 
-        # self.Pi = self.Psi * self.dV
+        self.Pi = self.Psi * self.dV
 
-        # for loading in surface0_loadings:
-        #     self.Pi -= dolfin.inner(
-        #         loading.val,
-        #         self.subsols["U"].subfunc) * loading.measure
+        if (self.w_unloaded_configuration):
+            self.Pi += self.unloaded_Psi * self.dV
 
-        # for loading in volume0_loadings:
-        #     self.Pi -= dolfin.inner(
-        #         loading.val,
-        #         self.subsols["U"].subfunc) * loading.measure
+        for loading in normal_penalties:
+            self.Pi += (loading.val/2) * dolfin.inner(
+                self.subsols["U"].subfunc,
+                self.mesh_normals)**2 * loading.measure
 
-        self.Pi = dolfin.Constant(0.) * self.dV
+        if (self.w_unloaded_configuration):
+            for loading in normal_penalties:
+                self.Pi += (loading.val/2) * dolfin.inner(
+                    self.subsols["Up"].subfunc,
+                    self.mesh_normals)**2 * loading.measure
+
+        # for loading in directional_penalties: #MG20190513: Cannot use point integral within assemble_system
+        #     self.Pi += (loading.val/2) * dolfin.inner(
+        #         self.subsols["U"].subfunc,
+        #         loading.N)**2 * loading.measure
+        #
+        # if (self.w_unloaded_configuration):
+        #     for loading in directional_penalties: #MG20190513: Cannot use point integral within assemble_system
+        #         self.Pi += (loading.val/2) * dolfin.inner(
+        #             self.subsols["Up"].subfunc,
+        #             loading.N)**2 * loading.measure
 
         for loading in surface_tensions:
             FmTN = dolfin.dot(
@@ -337,74 +396,80 @@ class HyperelasticityProblem(Problem):
                 FmTN))
             self.Pi += loading.val * self.kinematics.Jt * T * loading.measure
 
+        for loading in surface0_loadings:
+            self.Pi -= dolfin.inner(
+                loading.val,
+                self.subsols["U"].subfunc) * loading.measure
+
+        for loading in pressure0_loadings:
+            self.Pi -= dolfin.inner(
+               -loading.val * self.mesh_normals,
+                self.subsols["U"].subfunc) * loading.measure
+
+        for loading in volume0_loadings:
+            self.Pi -= dolfin.inner(
+                loading.val,
+                self.subsols["U"].subfunc) * loading.measure
+
         self.res_form = dolfin.derivative(
             self.Pi,
             self.sol_func,
             self.dsol_test); assert (self.w_growth != "mixed") and (self.w_relaxation != "mixed")
 
-        if nb_material_subdomains == 1:
-            self.res_form = dolfin.inner(
-                self.Sigma[0],
-                dolfin.derivative(
-                    self.kinematics.Et,
-                    self.subsols["U"].subfunc,
-                    self.subsols["U"].dsubtest)) * self.dV
-        else:
-            for id_subdomain in range(nb_material_subdomains):
-                self.res_form += dolfin.inner(
-                    self.Sigma[id_subdomain],
-                    dolfin.derivative(
-                        self.kinematics.Et,
-                        self.subsols["U"].subfunc,
-                        self.subsols["U"].dsubtest)) * self.dV(id_subdomain)
+        # self.res_form += dolfin.inner(
+        #     self.Sigma,
+        #     dolfin.derivative(
+        #         self.kinematics.Et,
+        #         self.subsols["U"].subfunc,
+        #         self.subsols["U"].dsubtest)) * self.dV
+        #
+        # if (self.w_incompressibility):
+        #     self.res_form += dolfin.inner(
+        #         self.kinematics.Je-1,
+        #         self.subsols["P"].dsubtest) * self.dV
 
-        if (self.w_incompressibility):
-            self.res_form += dolfin.inner(
-                self.kinematics.Je-1,
-                self.subsols["P"].dsubtest) * self.dV
+        # if (self.w_unloaded_configuration):
+        #     self.res_form += dolfin.inner(
+        #         self.unloaded_Sigma,
+        #         dolfin.derivative(
+        #             self.unloaded_kinematics.Et,
+        #             self.subsols["Up"].subfunc,
+        #             self.subsols["Up"].dsubtest)) * self.dV
+        #
+        #     if (self.w_incompressibility):
+        #         self.res_form += dolfin.inner(
+        #             self.unloaded_kinematics.Je-1,
+        #             self.subsols["Pp"].dsubtest) * self.dV
 
-        if (self.w_unloaded_configuration):
-            self.res_form += dolfin.inner(
-                self.unloaded_Sigma,
-                dolfin.derivative(
-                    self.unloaded_kinematics.Et,
-                    self.subsols["Up"].subfunc,
-                    self.subsols["Up"].dsubtest)) * self.dV
+        # for loading in normal_penalties:
+        #     self.res_form += loading.val * dolfin.inner(
+        #         self.subsols["U"].subfunc,
+        #         self.mesh_normals) * dolfin.inner(
+        #         self.subsols["U"].dsubtest,
+        #         self.mesh_normals) * loading.measure
+        #
+        # if (self.w_unloaded_configuration):
+        #     for loading in normal_penalties:
+        #         self.res_form += loading.val * dolfin.inner(
+        #             self.subsols["Up"].subfunc,
+        #             self.mesh_normals) * dolfin.inner(
+        #             self.subsols["Up"].dsubtest,
+        #             self.mesh_normals) * loading.measure
 
-            if (self.w_incompressibility):
-                self.res_form += dolfin.inner(
-                    self.unloaded_kinematics.Je-1,
-                    self.subsols["Pp"].dsubtest) * self.dV
-
-        for loading in penalties:
-            self.res_form += loading.val * dolfin.inner(
-                self.subsols["U"].subfunc,
-                self.mesh_normals) * dolfin.inner(
-                self.subsols["U"].dsubtest,
-                self.mesh_normals) * loading.measure
-
-        if (self.w_unloaded_configuration):
-            for loading in penalties:
-                self.res_form += loading.val * dolfin.inner(
-                    self.subsols["Up"].subfunc,
-                    self.mesh_normals) * dolfin.inner(
-                    self.subsols["Up"].dsubtest,
-                    self.mesh_normals) * loading.measure
-
-        for loading in surface0_loadings:
-            self.res_form -= dolfin.inner(
-                loading.val,
-                self.subsols["U"].dsubtest) * loading.measure
-
-        for loading in pressure0_loadings:
-            self.res_form -= dolfin.inner(
-               -loading.val * self.mesh_normals,
-                self.subsols["U"].dsubtest) * loading.measure
-
-        for loading in volume0_loadings:
-            self.res_form -= dolfin.inner(
-                loading.val,
-                self.subsols["U"].dsubtest) * loading.measure
+        # for loading in surface0_loadings:
+        #     self.res_form -= dolfin.inner(
+        #         loading.val,
+        #         self.subsols["U"].dsubtest) * loading.measure
+        #
+        # for loading in pressure0_loadings:
+        #     self.res_form -= dolfin.inner(
+        #        -loading.val * self.mesh_normals,
+        #         self.subsols["U"].dsubtest) * loading.measure
+        #
+        # for loading in volume0_loadings:
+        #     self.res_form -= dolfin.inner(
+        #         loading.val,
+        #         self.subsols["U"].dsubtest) * loading.measure
 
         for loading in surface_loadings:
             FmTN = dolfin.dot(
@@ -439,3 +504,82 @@ class HyperelasticityProblem(Problem):
             self.res_form,
             self.sol_func,
             self.dsol_tria)
+
+
+
+    def add_strain_qois(self,
+            strain_type="elastic",
+            configuration_type="loaded"):
+
+        if (configuration_type == "loaded"):
+            kin = self.kinematics
+        elif (configuration_type == "unloaded"):
+            kin = self.unloaded_kinematics
+
+        if (strain_type == "elastic"):
+            basename = "E^e_"
+            strain = kin.Ee
+        elif (strain_type == "total"):
+            basename = "E^t_"
+            strain = kin.Et
+
+        self.add_qoi(
+            name=basename+"XX",
+            expr=strain[0,0] * self.dV)
+        if (self.dim >= 2):
+            self.add_qoi(
+                name=basename+"YY",
+                expr=strain[1,1] * self.dV)
+            if (self.dim >= 3):
+                self.add_qoi(
+                    name=basename+"ZZ",
+                    expr=strain[2,2] * self.dV)
+        if (self.dim >= 2):
+            self.add_qoi(
+                name=basename+"XY",
+                expr=strain[0,1] * self.dV)
+            if (self.dim >= 3):
+                self.add_qoi(
+                    name=basename+"YZ",
+                    expr=strain[1,2] * self.dV)
+                self.add_qoi(
+                    name=basename+"ZX",
+                    expr=strain[2,0] * self.dV)
+
+
+
+    def add_stress_qois(self,
+            stress_type="cauchy"):
+
+        if (stress_type in ("cauchy", "sigma")):
+            basename = "s_"
+            stress = self.sigma
+        elif (stress_type in ("piola", "PK2", "Sigma")):
+            basename = "S_"
+            stress = self.Sigma
+        elif (stress_type in ("PK1", "P")):
+            basename = "P_"
+            stress = self.PK1
+
+        self.add_qoi(
+            name=basename+"XX",
+            expr=stress[0,0] * self.dV)
+        if (self.dim >= 2):
+            self.add_qoi(
+                name=basename+"YY",
+                expr=stress[1,1] * self.dV)
+            if (self.dim >= 3):
+                self.add_qoi(
+                    name=basename+"ZZ",
+                    expr=stress[2,2] * self.dV)
+        if (self.dim >= 2):
+            self.add_qoi(
+                name=basename+"XY",
+                expr=stress[0,1] * self.dV)
+            if (self.dim >= 3):
+                self.add_qoi(
+                    name=basename+"YZ",
+                    expr=stress[1,2] * self.dV)
+                self.add_qoi(
+                    name=basename+"ZX",
+                    expr=stress[2,0] * self.dV)

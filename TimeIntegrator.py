@@ -122,9 +122,13 @@ class TimeIntegrator():
             self.solver.constraints += self.problem.constraints
             self.solver.constraints += step.constraints
 
-            penalties  = []
-            penalties += self.problem.penalties
-            penalties += step.penalties
+            normal_penalties  = []
+            normal_penalties += self.problem.normal_penalties
+            normal_penalties += step.normal_penalties
+
+            directional_penalties  = []
+            directional_penalties += self.problem.directional_penalties
+            directional_penalties += step.directional_penalties
 
             surface_tensions  = []
             surface_tensions += self.problem.surface_tensions
@@ -174,7 +178,8 @@ class TimeIntegrator():
                 self.printer.print_var("dt",dt)
 
                 self.problem.set_variational_formulation(
-                    penalties=penalties,
+                    normal_penalties=normal_penalties,
+                    directional_penalties=directional_penalties,
                     surface_tensions=surface_tensions,
                     surface0_loadings=surface0_loadings,
                     pressure0_loadings=pressure0_loadings,
@@ -194,7 +199,10 @@ class TimeIntegrator():
                 for constraint in step.constraints:
                     constraint.set_value_at_t_step(t_step)
 
-                for loading in step.penalties:
+                for loading in step.normal_penalties:
+                    loading.set_value_at_t_step(t_step)
+
+                for loading in step.directional_penalties:
                     loading.set_value_at_t_step(t_step)
 
                 for loading in step.surface_tensions:

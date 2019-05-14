@@ -25,7 +25,8 @@ class Step():
             dt_min=None,
             dt_max=None,
             constraints=None, #MG20180508: Do not use list as default value because it is static
-            penalties=None,
+            normal_penalties=None,
+            directional_penalties=None,
             surface_tensions=None,
             surface0_loadings=None,
             pressure0_loadings=None,
@@ -41,15 +42,16 @@ class Step():
         self.dt_min = dt_min if (dt_min is not None) else self.dt_ini
         self.dt_max = dt_max if (dt_max is not None) else self.dt_ini
 
-        self.constraints        = constraints        if (constraints        is not None) else []
-        self.penalties          = penalties          if (penalties          is not None) else []
-        self.surface_tensions   = surface_tensions   if (surface_tensions   is not None) else []
-        self.surface0_loadings  = surface0_loadings  if (surface0_loadings  is not None) else []
-        self.pressure0_loadings = pressure0_loadings if (pressure0_loadings is not None) else []
-        self.volume0_loadings   = volume0_loadings   if (volume0_loadings   is not None) else []
-        self.surface_loadings   = surface_loadings   if (surface_loadings   is not None) else []
-        self.pressure_loadings  = pressure_loadings  if (pressure_loadings  is not None) else []
-        self.volume_loadings    = volume_loadings    if (volume_loadings    is not None) else []
+        self.constraints           = constraints           if (constraints           is not None) else []
+        self.normal_penalties      = normal_penalties      if (normal_penalties      is not None) else []
+        self.directional_penalties = directional_penalties if (directional_penalties is not None) else []
+        self.surface_tensions      = surface_tensions      if (surface_tensions      is not None) else []
+        self.surface0_loadings     = surface0_loadings     if (surface0_loadings     is not None) else []
+        self.pressure0_loadings    = pressure0_loadings    if (pressure0_loadings    is not None) else []
+        self.volume0_loadings      = volume0_loadings      if (volume0_loadings      is not None) else []
+        self.surface_loadings      = surface_loadings      if (surface_loadings      is not None) else []
+        self.pressure_loadings     = pressure_loadings     if (pressure_loadings     is not None) else []
+        self.volume_loadings       = volume_loadings       if (volume_loadings       is not None) else []
 
 
 
@@ -65,14 +67,26 @@ class Step():
 
 
 
-    def add_penalty(self,
+    def add_normal_penalty(self,
             *args,
             **kwargs):
 
         loading = dcm.Loading(
             *args,
             **kwargs)
-        self.penalties += [loading]
+        self.normal_penalties += [loading]
+        return loading
+
+
+
+    def add_directional_penalty(self,
+            *args,
+            **kwargs):
+
+        loading = dcm.Loading(
+            *args,
+            **kwargs)
+        self.directional_penalties += [loading]
         return loading
 
 
