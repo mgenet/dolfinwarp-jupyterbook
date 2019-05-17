@@ -90,6 +90,15 @@ class InverseHyperelasticityProblem(Problem):
 
 
 
+    def get_displacement_function_space(self):
+
+        if (len(self.subsols) == 1):
+            return self.sol_fs
+        else:
+            return self.get_subsol_function_space(name="U")
+
+
+
     def set_materials(self,
             elastic_behavior_dev,
             elastic_behavior_bulk=None):
