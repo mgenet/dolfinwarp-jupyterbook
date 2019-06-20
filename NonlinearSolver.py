@@ -43,7 +43,7 @@ class NonlinearSolver():
 
         self.linear_solver_type = parameters["linear_solver_type"] if ("linear_solver_type" in parameters) else self.default_linear_solver_type
 
-        if (self.default_linear_solver_type == "petsc"):
+        if (self.linear_solver_type == "petsc"):
 
             self.res_vec = dolfin.PETScVector()
             self.jac_mat = dolfin.PETScMatrix()
@@ -64,7 +64,7 @@ class NonlinearSolver():
             self.linear_solver.ksp().setFromOptions()
             self.linear_solver.ksp().setOperators(A=self.jac_mat.mat())
 
-        elif (self.default_linear_solver_type == "dolfin"):
+        elif (self.linear_solver_type == "dolfin"):
 
             self.res_vec = dolfin.Vector()
             self.jac_mat = dolfin.Matrix()
