@@ -8,6 +8,8 @@
 ###                                                                          ###
 ################################################################################
 
+from builtins import *
+
 import dolfin
 import time
 
@@ -52,7 +54,7 @@ class FOI():
                 # t = time.time()
                 self.local_solver.factorize()
                 # t = time.time() - t
-                # print "LocalSolver factorization = "+str(t)+" s"
+                # print("LocalSolver factorization = "+str(t)+" s")
 
                 self.update = self.update_local_solver
 
@@ -69,20 +71,20 @@ class FOI():
 
     def update_local_solver(self):
 
-        # print self.name
-        # print self.form_compiler_parameters
+        # print(self.name)
+        # print(self.form_compiler_parameters)
 
         # t = time.time()
         self.local_solver.solve_local_rhs(self.func)
         # t = time.time() - t
-        # print "LocalSolver solve = "+str(t)+" s"
+        # print("LocalSolver solve = "+str(t)+" s")
 
 
 
     def update_project(self):
 
-        # print self.name
-        # print self.form_compiler_parameters
+        # print(self.name)
+        # print(self.form_compiler_parameters)
 
         # t = time.time()
         dolfin.project(
@@ -91,7 +93,7 @@ class FOI():
             function=self.func,
             form_compiler_parameters=self.form_compiler_parameters)
         # t = time.time() - t
-        # print "Projec = "+str(t)+" s"
+        # print("Projec = "+str(t)+" s")
 
 
 

@@ -8,6 +8,8 @@
 ###                                                                          ###
 ################################################################################
 
+from builtins import *
+
 import decimal
 import dolfin
 import glob
@@ -327,7 +329,7 @@ class NonlinearSolver():
             dolfin.assign(
                 self.problem.get_subsols_dfunc_lst(),
                 self.problem.dsol_func)
-            # for subsol_name,subsol in self.problem.subsols.iteritems():
+            # for subsol_name,subsol in self.problem.subsols.items():
             #     self.printer.print_var("d"+subsol_name+"_func",subsol.dfunc.vector().get_local())
 
         if (0):
@@ -387,10 +389,10 @@ class NonlinearSolver():
             xdmf_file_modes = dcm.XDMFFile(
                 filename=sys.argv[0][:-3]+"-eigenmodes-"+spectrum+".xdmf",
                 functions=[mode_func])
-            for k_mode in xrange(n_converged):
-                # print k_mode+1
+            for k_mode in range(n_converged):
+                # print(k_mode+1)
                 val_r, val_c, vec_r, vec_c = jac_eigensolver.get_eigenpair(k_mode)
-                # print val_r
+                # print(val_r)
                 mode_func.vector()[:] = vec_r[:]
                 xdmf_file_modes.write(k_mode)
             xdmf_file_modes.close()
@@ -399,9 +401,9 @@ class NonlinearSolver():
 
     def compute_dsol_norm(self):
 
-        self.dsubsol_norm_lst = [subsol.dfunc.vector().norm("l2") for subsol in self.problem.subsols.itervalues()]
-        for k_subsol in xrange(len(self.problem.subsols)):
-            self.printer.print_sci("d"+self.problem.subsols.values()[k_subsol].name+"_norm",self.dsubsol_norm_lst[k_subsol])
+        self.dsubsol_norm_lst = [subsol.dfunc.vector().norm("l2") for subsol in self.problem.subsols.values()]
+        for (k_subsol,subsol) in enumerate(self.problem.subsols.values()):
+            self.printer.print_sci("d"+subsol.name+"_norm",self.dsubsol_norm_lst[k_subsol])
 
 
 
@@ -432,7 +434,7 @@ class NonlinearSolver():
         else:
             phi = (1+math.sqrt(5))/2
             a = (1-phi)/(2-phi)
-            b = 1/(2-phi)
+            b = 1./(2-phi)
             need_update_c = True
             need_update_d = True
             cur = 0.
@@ -528,30 +530,30 @@ class NonlinearSolver():
     def update_sol(self):
 
         # for constraint in self.problem.constraints+self.problem.steps[k_step-1].constraints:
-        #     print constraint.bc.get_boundary_values()
+        #     print(constraint.bc.get_boundary_values())
         self.problem.sol_func.vector().axpy(
             self.relax,
             self.problem.dsol_func.vector())
         # for constraint in self.problem.constraints+self.problem.steps[k_step-1].constraints:
-        #     print constraint.bc.get_boundary_values()
+        #     print(constraint.bc.get_boundary_values())
         # self.printer.print_var("sol_func",self.problem.sol_func.vector().get_local())
 
         if (len(self.problem.subsols) > 1):
             dolfin.assign(
                 self.problem.get_subsols_func_lst(),
                 self.problem.sol_func)
-            # for subsol_name,subsol in self.problem.subsols.iteritems()):
+            # for subsol_name,subsol in self.problem.subsols.items()):
             #     self.printer.print_var(subsol_name+"_func",subsol.func.vector().get_local())
 
 
 
     def compute_sol_norm(self):
 
-        self.subsol_norm_lst = [subsol.func.vector().norm("l2") for subsol in self.problem.subsols.itervalues()]
-        self.subsol_norm_old_lst = [subsol.func_old.vector().norm("l2") for subsol in self.problem.subsols.itervalues()]
-        for k_subsol in xrange(len(self.problem.subsols)):
-            self.printer.print_sci(self.problem.subsols.values()[k_subsol].name+"_norm"    ,self.subsol_norm_lst[k_subsol]    )
-            self.printer.print_sci(self.problem.subsols.values()[k_subsol].name+"_norm_old",self.subsol_norm_old_lst[k_subsol])
+        self.subsol_norm_lst = [subsol.func.vector().norm("l2") for subsol in self.problem.subsols.values()]
+        self.subsol_norm_old_lst = [subsol.func_old.vector().norm("l2") for subsol in self.problem.subsols.values()]
+        for (k_subsol,subsol) in enumerate(self.problem.subsols.values()):
+            self.printer.print_sci(subsol.name+"_norm"    ,self.subsol_norm_lst[k_subsol]    )
+            self.printer.print_sci(subsol.name+"_norm_old",self.subsol_norm_old_lst[k_subsol])
 
 
 
@@ -561,12 +563,12 @@ class NonlinearSolver():
             val=self.dsubsol_norm_lst[k_subsol],
             ref=max(
                 self.subsol_norm_lst[k_subsol],
-                self.subsol_norm_old_lst[k_subsol])) for k_subsol in xrange(len(self.problem.subsols))]
-        for k_subsol in xrange(len(self.problem.subsols)):
-            self.printer.print_sci(self.problem.subsols.values()[k_subsol].name+"_err",self.subsol_err_lst[k_subsol])
+                self.subsol_norm_old_lst[k_subsol])) for k_subsol in range(len(self.problem.subsols))]
+        for (k_subsol,subsol) in enumerate(self.problem.subsols.values()):
+            self.printer.print_sci(subsol.name+"_err",self.subsol_err_lst[k_subsol])
 
 
 
     def exit_test(self):
 
-        self.success = all([self.subsol_err_lst[k_subsol]<self.sol_tol[k_subsol] for k_subsol in xrange(len(self.problem.subsols)) if self.sol_tol[k_subsol] is not None])
+        self.success = all([self.subsol_err_lst[k_subsol]<self.sol_tol[k_subsol] for k_subsol in range(len(self.problem.subsols)) if self.sol_tol[k_subsol] is not None])

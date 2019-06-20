@@ -8,6 +8,8 @@
 ###                                                                          ###
 ################################################################################
 
+from builtins import *
+
 import dolfin
 import numpy
 
@@ -28,9 +30,9 @@ class SubSol():
         self.fe = fe
 
         if (init_val is None):
-            # print "value_shape = "+str(fe.value_shape())
+            # print("value_shape = "+str(fe.value_shape()))
             self.init_val = numpy.zeros(fe.value_shape())
         else:
-            # print "size = "+str(numpy.size(init))
+            # print("size = "+str(numpy.size(init)))
             self.init_val = init_val
-        # print "init_val = "+str(self.init_val)
+        # print("init_val = "+str(self.init_val))
