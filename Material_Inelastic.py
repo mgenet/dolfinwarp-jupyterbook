@@ -8,10 +8,12 @@
 ###                                                                          ###
 ################################################################################
 
+from builtins import *
+
 import dolfin
 
 import dolfin_cm as dcm
-from Material import Material
+from .Material import Material
 
 ################################################################################
 

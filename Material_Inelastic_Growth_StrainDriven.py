@@ -8,11 +8,13 @@
 ###                                                                          ###
 ################################################################################
 
+from builtins import *
+
 import dolfin
 import numpy
 
 import dolfin_cm as dcm
-from Material_Inelastic_Growth import GrowthInelasticMaterial
+from .Material_Inelastic_Growth import GrowthInelasticMaterial
 
 ################################################################################
 

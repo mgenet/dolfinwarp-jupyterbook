@@ -13,10 +13,12 @@
 ###                                                                          ###
 ################################################################################
 
+from builtins import *
+
 import dolfin
 
 import dolfin_cm as dcm
-from Material_Elastic_Bulk import BulkElasticMaterial
+from .Material_Elastic_Bulk import BulkElasticMaterial
 
 ################################################################################
 

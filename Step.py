@@ -8,6 +8,8 @@
 ###                                                                          ###
 ################################################################################
 
+from builtins import *
+
 import dolfin
 
 import dolfin_cm as dcm

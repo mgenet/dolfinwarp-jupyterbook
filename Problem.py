@@ -8,6 +8,8 @@
 ###                                                                          ###
 ################################################################################
 
+from builtins import *
+
 import collections
 import dolfin
 import numpy
@@ -207,10 +209,10 @@ class Problem():
     def set_solution_finite_element(self):
 
         if (len(self.subsols) == 1):
-            self.sol_fe = self.subsols.values()[0].fe
+            self.sol_fe = list(self.subsols.values())[0].fe
         else:
-            self.sol_fe = dolfin.MixedElement([subsol.fe for subsol in self.subsols.itervalues()])
-        #print self.sol_fe
+            self.sol_fe = dolfin.MixedElement([subsol.fe for subsol in self.subsols.values()])
+        #print(self.sol_fe)
 
 
 
@@ -219,15 +221,15 @@ class Problem():
         self.sol_fs = dolfin.FunctionSpace(
             self.mesh,
             self.sol_fe) # MG: element keyword don't work here…
-        #print self.sol_fs
+        #print(self.sol_fs)
 
 
 
     def get_subsol_function_space(self,
             name):
 
-        index = self.subsols.keys().index(name)
-        # print str(name)+" index = "+str(index)
+        index = list(self.subsols.keys()).index(name)
+        # print(str(name)+" index = "+str(index))
         return self.sol_fs.sub(index)
 
 
@@ -255,13 +257,10 @@ class Problem():
             funcs_old = dolfin.Function(self.sol_fs).split(deepcopy=1)
             dfuncs    = dolfin.Function(self.sol_fs).split(deepcopy=1)
 
-        for k_subsol in xrange(len(self.subsols)):
-            subsol = self.subsols.values()[k_subsol]
-
+        for (k_subsol,subsol) in enumerate(self.subsols.values()):
             subsol.subfunc  = subfuncs[k_subsol]
             subsol.dsubtest = dsubtests[k_subsol]
             subsol.dsubtria = dsubtrias[k_subsol]
-
 
             subsol.func = funcs[k_subsol]
             subsol.func.rename(subsol.name, subsol.name)
@@ -270,7 +269,7 @@ class Problem():
             subsol.dfunc = dfuncs[k_subsol]
             subsol.dfunc.rename("d"+subsol.name, "d"+subsol.name)
 
-        init_val = [str(val) for val in numpy.concatenate([subsol.init_val.flatten() for subsol in self.subsols.itervalues()])]
+        init_val = [str(val) for val in numpy.concatenate([subsol.init_val.flatten() for subsol in self.subsols.values()])]
         self.sol_func.interpolate(dolfin.Expression(
             init_val,
             element=self.sol_fe))
@@ -289,19 +288,19 @@ class Problem():
 
     def get_subsols_func_lst(self):
 
-        return [subsol.func for subsol in self.subsols.itervalues()]
+        return [subsol.func for subsol in self.subsols.values()]
 
 
 
     def get_subsols_func_old_lst(self):
 
-        return [subsol.func_old for subsol in self.subsols.itervalues()]
+        return [subsol.func_old for subsol in self.subsols.values()]
 
 
 
     def get_subsols_dfunc_lst(self):
 
-        return [subsol.dfunc for subsol in self.subsols.itervalues()]
+        return [subsol.dfunc for subsol in self.subsols.values()]
 
 
 
