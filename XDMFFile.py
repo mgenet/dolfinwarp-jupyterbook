@@ -29,14 +29,14 @@ class XDMFFile():
 
 
 
+    def __del__(self):
+
+        self.xdmf_file.__del__() #MG20190702: Not needed, right?
+
+
+
     def write(self,
             time=0):
 
         for function in self.functions:
             self.xdmf_file.write(function, float(time))
-
-
-
-    def close(self):
-
-        self.xdmf_file.close()
