@@ -29,9 +29,9 @@ class XDMFFile():
 
 
 
-    def __del__(self):
+    def close(self):
 
-        self.xdmf_file.__del__() #MG20190702: Not needed, right?
+        self.xdmf_file.close()
 
 
 

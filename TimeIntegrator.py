@@ -95,16 +95,16 @@ class TimeIntegrator():
 
 
 
-    def __del__(self):
+    def close(self):
 
-        self.printer.__del__() #MG20190702: Not needed, right?
-        self.table_printer.__del__() #MG20190702: Not needed, right?
+        self.printer.close()
+        self.table_printer.close()
 
         if (self.write_qois):
-            self.qoi_printer.__del__() #MG20190702: Not needed, right?
+            self.qoi_printer.close()
 
         if (self.write_sol):
-            self.xdmf_file_sol.__del__() #MG20190702: Not needed, right?
+            self.xdmf_file_sol.close()
 
 
 

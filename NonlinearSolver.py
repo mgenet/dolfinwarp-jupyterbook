@@ -193,7 +193,7 @@ class NonlinearSolver():
 
         # write
         if (self.write_iter):
-            xdmf_file_iter.__del__() #MG20190702: Not needed, right?
+            xdmf_file_iter.close()
 
         return self.success, self.k_iter
 
@@ -395,7 +395,7 @@ class NonlinearSolver():
                 # print(val_r)
                 mode_func.vector()[:] = vec_r[:]
                 xdmf_file_modes.write(k_mode)
-            xdmf_file_modes.__del__() #MG20190702: Not needed, right?
+            xdmf_file_modes.close()
 
 
 
