@@ -363,14 +363,12 @@ class HyperelasticityProblem(Problem):
         if nb_material_subdomains == 1:
             assert len(self.Psi) == 1
             self.Pi = self.Psi[0] * self.dV
-            print self.Pi
+            # print self.Pi
         else:
             # self.Pi = self.Psi[0] * self.dV(0) + self.Psi[1] * self.dV(1)
             self.Pi = self.Psi[0] * self.dV(0)
-            print self.Pi
             for id_subdomain in range(1, nb_material_subdomains):
                 self.Pi += self.Psi[id_subdomain] * self.dV(id_subdomain)
-                print self.Pi
 
         if (self.w_unloaded_configuration):
             self.Pi += self.unloaded_Psi * self.dV
