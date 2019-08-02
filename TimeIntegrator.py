@@ -237,11 +237,11 @@ class TimeIntegrator():
                     dolfin.assign(
                         self.problem.get_subsols_func_old_lst(),
                         self.problem.sol_old_func)
-                success, n_iter = self.solver.solve(k_step, k_t, dt, t)
+                solver_success, n_iter = self.solver.solve(k_step, k_t, dt, t)
 
-                self.table_printer.write_line([k_step, k_t, dt, t, t_step, n_iter, success])
+                self.table_printer.write_line([k_step, k_t, dt, t, t_step, n_iter, solver_success])
 
-                if (success):
+                if (solver_success):
                     n_iter_tot += n_iter
 
                     if (self.write_sol):
@@ -253,6 +253,7 @@ class TimeIntegrator():
                         self.qoi_printer.write_line([t]+[qoi.value for qoi in self.problem.qois])
 
                     if dolfin.near(t, step.t_fin, eps=1e-9):
+                        self.success = True
                         break
                     else:
                         if (n_iter <= self.n_iter_for_accel):
@@ -279,8 +280,14 @@ class TimeIntegrator():
                     dt /= self.decel_coeff
                     if (dt < step.dt_min):
                         self.printer.print_str("Warning! Time integrator failed to move forward!")
-                        exit()
+                        self.success = False
+                        break
 
             self.printer.dec()
 
+            if not (self.success):
+                break
+
         self.printer.dec()
+
+        return self.success
