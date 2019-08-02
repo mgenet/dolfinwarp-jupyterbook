@@ -8,6 +8,8 @@
 ###                                                                          ###
 ################################################################################
 
+# from builtins import *
+
 import dolfin
 
 import dolfin_cm as dcm
@@ -33,8 +35,8 @@ class QOI():
 
     def update(self):
 
-        # print self.name
-        # print self.form_compiler_parameters
+        # print(self.name)
+        # print(self.form_compiler_parameters)
 
         self.value = dolfin.assemble(
             self.expr,

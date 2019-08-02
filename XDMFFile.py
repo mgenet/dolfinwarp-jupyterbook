@@ -8,6 +8,8 @@
 ###                                                                          ###
 ################################################################################
 
+# from builtins import *
+
 import dolfin
 
 ################################################################################
@@ -27,14 +29,14 @@ class XDMFFile():
 
 
 
+    def close(self):
+
+        self.xdmf_file.close()
+
+
+
     def write(self,
             time=0):
 
         for function in self.functions:
             self.xdmf_file.write(function, float(time))
-
-
-
-    def close(self):
-
-        self.xdmf_file.close()
