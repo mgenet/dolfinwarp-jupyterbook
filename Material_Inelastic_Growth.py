@@ -8,10 +8,12 @@
 ###                                                                          ###
 ################################################################################
 
+# from builtins import *
+
 import dolfin
 
 import dolfin_cm as dcm
-from Material_Inelastic import InelasticMaterial
+from .Material_Inelastic import InelasticMaterial
 
 ################################################################################
 

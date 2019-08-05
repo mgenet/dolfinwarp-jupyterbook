@@ -13,10 +13,12 @@
 ###                                                                          ###
 ################################################################################
 
+# from builtins import *
+
 import dolfin
 
 import dolfin_cm as dcm
-from Material_Elastic_Bulk import BulkElasticMaterial
+from .Material_Elastic_Bulk import BulkElasticMaterial
 
 ################################################################################
 
@@ -25,8 +27,7 @@ class PneumoBulkElasticMaterial(BulkElasticMaterial):
 
 
     def __init__(self,
-                 parameters,
-                 porosity_field = None):
+                 parameters):
 
         self.alpha     = [dolfin.Constant(parameters["alpha"][k]) for k in range(len(parameters["alpha"]))]
         self.gamma     = [dolfin.Constant(parameters["gamma"][k]) for k in range(len(parameters["gamma"]))]
@@ -34,7 +35,7 @@ class PneumoBulkElasticMaterial(BulkElasticMaterial):
 
 
     def get_free_energy(self,
-            C):
+                        C):
 
         JF    = dolfin.sqrt(dolfin.det(C))
         IC    = dolfin.tr(C)

@@ -8,37 +8,30 @@
 ###                                                                          ###
 ################################################################################
 
-# from builtins import *
-
 import dolfin
 
 import dolfin_cm as dcm
+from Material_Elastic import ElasticMaterial
 
 ################################################################################
 
-class QOI():
-
+class PorousMaterial(ElasticMaterial):
 
 
     def __init__(self,
-            name,
-            expr,
-            norm=1.,
-            form_compiler_parameters={}):
+                 material,
+                 porosity=0):
 
-        self.name = name
-        self.expr = expr
-        self.norm = norm
-        self.form_compiler_parameters = form_compiler_parameters
+        self.material = material
+        self.porosity = porosity
 
+    def get_free_energy(self,
+                        *args,
+                        **kwargs):
 
+        Psi_mat, Sigma_mat = self.material.get_free_energy(*args,
+                                                           **kwargs)
+        Psi = (1 - self.porosity) * Psi_mat
+        Sigma = (1 - self.porosity) * Sigma_mat
 
-    def update(self):
-
-        # print(self.name)
-        # print(self.form_compiler_parameters)
-
-        self.value = dolfin.assemble(
-            self.expr,
-            form_compiler_parameters=self.form_compiler_parameters)
-        self.value /= self.norm
+        return Psi, Sigma
