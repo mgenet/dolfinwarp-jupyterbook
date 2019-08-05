@@ -6,6 +6,11 @@
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
+###                                                                          ###
+### And Cécile Patte, 2019                                                   ###
+###                                                                          ###
+### INRIA, Palaiseau, France                                                 ###
+###                                                                          ###
 ################################################################################
 
 import dolfin
