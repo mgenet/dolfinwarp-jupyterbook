@@ -31,7 +31,7 @@ class PorousMaterial(ElasticMaterial):
 
         Psi_mat, Sigma_mat = self.material.get_free_energy(*args,
                                                            **kwargs)
-        Psi = (1 - self.porosity) * Psi_mat
-        Sigma = (1 - self.porosity) * Sigma_mat
+        Psi = [(1 - self.porosity) * Psi_k for Psi_k in Psi_mat]
+        Sigma = [(1 - self.porosity) * Sigma_k for Sigma_k in Sigma_mat]
 
         return Psi, Sigma
