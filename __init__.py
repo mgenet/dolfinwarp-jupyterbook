@@ -25,6 +25,7 @@ from .Material_Elastic_Bulk import *
 from .Material_Elastic_Hooke import *
 from .Material_Inelastic_Growth_TimeDriven import *
 from .Material import *
+from .Material_Porous import *
 from .Kinematics_Inverse import *
 from .Material_Inelastic import *
 from .Problem_InverseHyperelasticity import *
