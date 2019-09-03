@@ -280,6 +280,8 @@ class HyperelasticityProblem(Problem):
         if (elastic_behavior is not None):
             self.Psi, self.Sigma = self.elastic_behavior.get_free_energy(
                 C=self.kinematics.Ce)
+            self.Psi = [self.Psi]
+            self.Sigma = [self.Sigma]
         else:
             if (self.w_incompressibility):
                 self.Psi_bulk   = -self.subsols["P"].subfunc * (self.kinematics.Je - 1)
@@ -291,8 +293,9 @@ class HyperelasticityProblem(Problem):
                 C=self.kinematics.Ce)
         # self.Psi_dev, self.Sigma_dev = self.elastic_behavior_dev.get_free_energy(
         #     C=self.kinematics.Ce)
-        self.Psi   = [Psi_bulk_elt + Psi_dev_elt for Psi_bulk_elt, Psi_dev_elt in zip(self.Psi_bulk, self.Psi_dev)]
-        self.Sigma = [Sigma_bulk_elt + Sigma_dev_elt for Sigma_bulk_elt, Sigma_dev_elt in zip(self.Sigma_bulk, self.Sigma_dev)]
+        if elastic_behavior_dev and elastic_behavior_bulk:
+            self.Psi   = [Psi_bulk_elt + Psi_dev_elt for Psi_bulk_elt, Psi_dev_elt in zip(self.Psi_bulk, self.Psi_dev)]
+            self.Sigma = [Sigma_bulk_elt + Sigma_dev_elt for Sigma_bulk_elt, Sigma_dev_elt in zip(self.Sigma_bulk, self.Sigma_dev)]
 
         #self.kinematics.Ee = dolfin.variable(self.kinematics.Ee) # MG20180412: Works here,
         #self.Sigma = dolfin.diff(self.Psi, self.kinematics.Ee)   # MG20180412: but fails at project…
