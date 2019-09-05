@@ -532,7 +532,7 @@ class HyperelasticityProblem(Problem):
             self.sol_func,
             self.dsol_tria)
 
-        print self.jac_form
+        # print self.jac_form
 
 
 
