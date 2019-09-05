@@ -26,7 +26,7 @@ class PorousMaterial(ElasticMaterial):
     def __init__(self,
                  material,
                  porosity=0,
-                 config_porosity=None):
+                 config_porosity='ref'):
 
         self.material        = material
         self.porosity        = porosity
