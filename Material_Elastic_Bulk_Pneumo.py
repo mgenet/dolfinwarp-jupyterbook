@@ -27,21 +27,21 @@ class PneumoBulkElasticMaterial(BulkElasticMaterial):
 
 
     def __init__(self,
-                 parameters):
+            parameters):
 
-        self.alpha          = dolfin.Constant(parameters["alpha"])
-        self.gamma          = dolfin.Constant(parameters["gamma"])
+        self.alpha = dolfin.Constant(parameters["alpha"])
+        self.gamma = dolfin.Constant(parameters["gamma"])
 
 
 
     def get_free_energy(self,
-                        C):
+            C):
 
         JF    = dolfin.sqrt(dolfin.det(C))
         IC    = dolfin.tr(C)
         C_inv = dolfin.inv(C)
 
         Psi   = (self.alpha) * (dolfin.exp(self.gamma*(JF**2 - 1 - 2*dolfin.ln(JF))) - 1)
-        Sigma = (self.alpha) * dolfin.exp(self.gamma*(JF**2 - 1 - 2*dolfin.ln(JF))) * (2*self.gamma) * (JF**2 - 1) * C_inv
+        Sigma = (self.alpha) *  dolfin.exp(self.gamma*(JF**2 - 1 - 2*dolfin.ln(JF))) * (2*self.gamma) * (JF**2 - 1) * C_inv
 
         return Psi, Sigma
