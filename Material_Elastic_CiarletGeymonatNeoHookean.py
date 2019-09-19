@@ -30,15 +30,15 @@ class CiarletGeymonatNeoHookeanElasticMaterial(ElasticMaterial):
 
 
     def get_free_energy(self,
-            U=None,
-            C=None):
+            *args,
+            **kwargs):
 
         Psi_bulk, Sigma_bulk = self.bulk.get_free_energy(
-            U=U,
-            C=C)
+            *args,
+            **kwargs)
         Psi_dev, Sigma_dev = self.dev.get_free_energy(
-            U=U,
-            C=C)
+            *args,
+            **kwargs)
 
         Psi   = Psi_bulk   + Psi_dev
         Sigma = Sigma_bulk + Sigma_dev
