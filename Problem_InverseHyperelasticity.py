@@ -134,7 +134,7 @@ class InverseHyperelasticityProblem(Problem):
         self.Sigma = self.Sigma_bulk + self.Sigma_dev
 
         self.PK1 = self.kinematics.Ft * self.Sigma
-        self.sigma = (1./self.kinematics.Jt) * self.PK1 * dolfin.transpose(self.kinematics.Ft)
+        self.sigma = (1./self.kinematics.Jt) * self.PK1 * self.kinematics.Ft.T
 
         # self.add_foi(expr=self.Sigma, fs=self.mfoi_fs, name="Sigma")
         # self.add_foi(expr=self.PK1  , fs=self.mfoi_fs, name="PK1"  )
