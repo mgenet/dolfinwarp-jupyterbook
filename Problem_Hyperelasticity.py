@@ -280,8 +280,6 @@ class HyperelasticityProblem(Problem):
         if (elastic_behavior is not None):
             self.Psi, self.Sigma = self.elastic_behavior.get_free_energy(
                 C=self.kinematics.Ce)
-            self.Psi = [self.Psi]
-            self.Sigma = [self.Sigma]
         else:
             if (self.w_incompressibility):
                 self.Psi_bulk   = -self.subsols["P"].subfunc * (self.kinematics.Je - 1)
@@ -291,21 +289,18 @@ class HyperelasticityProblem(Problem):
                     C=self.kinematics.Ce)
             self.Psi_dev, self.Sigma_dev = self.elastic_behavior_dev.get_free_energy(
                 C=self.kinematics.Ce)
-        # self.Psi_dev, self.Sigma_dev = self.elastic_behavior_dev.get_free_energy(
-        #     C=self.kinematics.Ce)
-        if elastic_behavior_dev and elastic_behavior_bulk:
-            self.Psi   = [Psi_bulk_elt + Psi_dev_elt for Psi_bulk_elt, Psi_dev_elt in zip(self.Psi_bulk, self.Psi_dev)]
-            self.Sigma = [Sigma_bulk_elt + Sigma_dev_elt for Sigma_bulk_elt, Sigma_dev_elt in zip(self.Sigma_bulk, self.Sigma_dev)]
+            self.Psi   = self.Psi_bulk   + self.Psi_dev
+            self.Sigma = self.Sigma_bulk + self.Sigma_dev
 
         #self.kinematics.Ee = dolfin.variable(self.kinematics.Ee) # MG20180412: Works here,
         #self.Sigma = dolfin.diff(self.Psi, self.kinematics.Ee)   # MG20180412: but fails at project…
 
-        self.PK1 = [self.kinematics.Ft * self.Sigma[k] for k in range(len(self.Sigma))]
-        self.sigma = [(1./self.kinematics.Jt) * self.PK1[k] * dolfin.transpose(self.kinematics.Ft) for k in range(len(self.PK1))]
+        self.PK1 = self.kinematics.Ft * self.Sigma
+        self.sigma = (1./self.kinematics.Jt) * self.PK1 * dolfin.transpose(self.kinematics.Ft)
 
-        # self.add_foi(expr=self.Sigma, fs=self.mfoi_fs, name="Sigma")
-        # #self.add_foi(expr=self.PK1  , fs=self.mfoi_fs, name="PK1"  )
-        # self.add_foi(expr=self.sigma, fs=self.mfoi_fs, name="sigma")
+        self.add_foi(expr=self.Sigma, fs=self.mfoi_fs, name="Sigma")
+        #self.add_foi(expr=self.PK1  , fs=self.mfoi_fs, name="PK1"  )
+        self.add_foi(expr=self.sigma, fs=self.mfoi_fs, name="sigma")
 
         if (self.Q_expr is not None):
             self.sigma_loc = dolfin.dot(dolfin.dot(self.Q_expr, self.sigma), dolfin.transpose(self.Q_expr))
@@ -376,18 +371,9 @@ class HyperelasticityProblem(Problem):
             surface_loadings=[],
             pressure_loadings=[],
             volume_loadings=[],
-            nb_material_subdomains=1,
             dt=None):
 
-        if nb_material_subdomains == 1:
-            assert len(self.Psi) == 1
-            self.Pi = self.Psi[0] * self.dV
-            # print self.Pi
-        else:
-            # self.Pi = self.Psi[0] * self.dV(0) + self.Psi[1] * self.dV(1)
-            self.Pi = self.Psi[0] * self.dV(0)
-            for id_subdomain in range(1, nb_material_subdomains):
-                self.Pi += self.Psi[id_subdomain] * self.dV(id_subdomain)
+        self.Pi = self.Psi * self.dV
 
         if (self.w_unloaded_configuration):
             self.Pi += self.unloaded_Psi * self.dV
@@ -531,8 +517,6 @@ class HyperelasticityProblem(Problem):
             self.res_form,
             self.sol_func,
             self.dsol_tria)
-
-        # print self.jac_form
 
 
 
