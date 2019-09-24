@@ -188,7 +188,7 @@ class HyperelasticityProblem(Problem):
 
         for loading in surface_tensions:
             FmTN = dolfin.dot(
-                dolfin.transpose(dolfin.inv(self.kinematics.Ft)),
+                dolfin.inv(self.kinematics.Ft).T,
                 self.mesh_normals)
             T = dolfin.sqrt(dolfin.inner(
                 FmTN,
@@ -251,7 +251,7 @@ class HyperelasticityProblem(Problem):
 
         for loading in surface_loadings:
             FmTN = dolfin.dot(
-                dolfin.transpose(dolfin.inv(self.kinematics.Ft)),
+                dolfin.inv(self.kinematics.Ft).T,
                 self.mesh_normals)
             T = dolfin.sqrt(dolfin.inner(
                 FmTN,
