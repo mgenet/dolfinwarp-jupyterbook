@@ -17,6 +17,7 @@ import math
 import numpy
 import os
 import petsc4py
+import petsc4py.PETSc
 import sys
 import time
 
@@ -57,11 +58,18 @@ class NonlinearSolver():
             self.linear_solver_name = parameters["linear_solver_name"] if ("linear_solver_name" in parameters) else self.default_linear_solver_name
 
             if (self.linear_solver_name == "mumps"):
-                options = dolfin.PETScOptions()
-                options.set("ksp_type", "preonly")
-                options.set("pc_type", "lu")
-                options.set("pc_factor_mat_solver_package", "mumps")
-                options.set("mat_mumps_icntl_33", 0)
+                if (int(dolfin.__version__.split('.')[0]) >= 2018):
+                    options = petsc4py.PETSc.Options()
+                    options["ksp_type"] = "preonly"
+                    options["pc_type"] = "lu"
+                    options["pc_factor_mat_solver_type"] = "mumps"
+                    options["mat_mumps_icntl_33"] = 0
+                else:
+                    options = dolfin.PETScOptions()
+                    options.set("ksp_type", "preonly")
+                    options.set("pc_type", "lu")
+                    options.set("pc_factor_mat_solver_package", "mumps")
+                    options.set("mat_mumps_icntl_33", 0)
 
             self.linear_solver.ksp().setFromOptions()
             self.linear_solver.ksp().setOperators(A=self.jac_mat.mat())
@@ -212,53 +220,66 @@ class NonlinearSolver():
             self.res_old_norm = self.res_norm
 
         # linear system: Assembly
-        self.printer.print_str("Assembly…",newline=False)
-        timer = time.time()
-        self.jac_mat,self.res_vec = dolfin.assemble_system(
-            self.problem.jac_form,
-           -self.problem.res_form,
-            bcs=[constraint.bc for constraint in self.constraints],
-            A_tensor=self.jac_mat,
-            b_tensor=self.res_vec,
-            add_values=False,
-            finalize_tensor=False,
-            form_compiler_parameters=self.problem.form_compiler_parameters)
-        timer = time.time() - timer
-        self.printer.print_str(" "+str(timer)+" s",tab=False,newline=False)
-        # self.printer.print_var("res_vec",self.res_vec.get_local())
-        # self.printer.print_var("jac_mat",self.jac_mat.array())
+        if (len(self.problem.directional_penalties)): #MG20190513: Cannot use point integral within assemble_system
+            self.printer.print_str("Assembly…",newline=False)
+            timer = time.time()
+            dolfin.assemble_system(
+                self.problem.jac_form,
+               -self.problem.res_form,
+                bcs=[constraint.bc for constraint in self.constraints],
+                A_tensor=self.jac_mat,
+                b_tensor=self.res_vec,
+                add_values=False,
+                finalize_tensor=False,
+                form_compiler_parameters=self.problem.form_compiler_parameters)
+            timer = time.time() - timer
+            self.printer.print_str(" "+str(timer)+" s",tab=False)
+            # self.printer.print_var("res_vec",self.res_vec.get_local())
+            # self.printer.print_var("jac_mat",self.jac_mat.array())
 
-        Pi = dolfin.Constant(0.) * self.problem.dV
-        for loading in self.problem.directional_penalties:
-            Pi += (loading.val/2) * dolfin.inner(
-                self.problem.subsols["U"].subfunc,
-                loading.N)**2 * loading.measure
-        res_form = dolfin.derivative(
-            Pi,
-            self.problem.sol_func,
-            self.problem.dsol_test)
-        jac_form = dolfin.derivative(
-            res_form,
-            self.problem.sol_func,
-            self.problem.dsol_tria)
-        dolfin.assemble( #MG20190513: Cannot use point integral within assemble_system
-           -res_form,
-            tensor=self.res_vec,
-            add_values=True,
-            finalize_tensor=True,
-            form_compiler_parameters=self.problem.form_compiler_parameters)
-        timer = time.time() - timer
-        self.printer.print_str(" "+str(timer)+" s",tab=False,newline=False)
-        # self.printer.print_var("res_vec",self.res_vec.get_local())
-        dolfin.assemble( #MG20190513: Cannot use point integral within assemble_system
-            jac_form,
-            tensor=self.jac_mat,
-            add_values=True,
-            finalize_tensor=True,
-            form_compiler_parameters=self.problem.form_compiler_parameters)
-        timer = time.time() - timer
-        self.printer.print_str(" "+str(timer)+" s",tab=False)
-        # self.printer.print_var("jac_mat",self.jac_mat.array())
+            self.printer.print_str("Assembly (directional penalties)…",newline=False)
+            timer = time.time()
+            Pi = sum([(loading.val/2) * dolfin.inner(self.problem.subsols["U"].subfunc, loading.N)**2 * loading.measure for loading in self.problem.directional_penalties])
+            res_form = dolfin.derivative(
+                Pi,
+                self.problem.sol_func,
+                self.problem.dsol_test)
+            jac_form = dolfin.derivative(
+                res_form,
+                self.problem.sol_func,
+                self.problem.dsol_tria)
+            dolfin.assemble(
+               -res_form,
+                tensor=self.res_vec,
+                add_values=True,
+                finalize_tensor=True,
+                form_compiler_parameters=self.problem.form_compiler_parameters)
+            dolfin.assemble(
+                jac_form,
+                tensor=self.jac_mat,
+                add_values=True,
+                finalize_tensor=True,
+                form_compiler_parameters=self.problem.form_compiler_parameters)
+            timer = time.time() - timer
+            self.printer.print_str(" "+str(timer)+" s",tab=False)
+            # self.printer.print_var("res_vec",self.res_vec.get_local())
+            # self.printer.print_var("jac_mat",self.jac_mat.array())
+        else:
+            self.printer.print_str("Assembly…",newline=False)
+            timer = time.time()
+            dolfin.assemble_system(
+                self.problem.jac_form,
+               -self.problem.res_form,
+                bcs=[constraint.bc for constraint in self.constraints],
+                A_tensor=self.jac_mat,
+                b_tensor=self.res_vec,
+                add_values=False,
+                finalize_tensor=True,
+                form_compiler_parameters=self.problem.form_compiler_parameters)
+            timer = time.time() - timer
+            self.printer.print_str(" "+str(timer)+" s",tab=False)
+            # self.printer.print_var("res_vec",self.res_vec.get_local())
+            # self.printer.print_var("jac_mat",self.jac_mat.array())
 
         if not (numpy.isfinite(self.res_vec).all()):
             self.printer.print_str("Warning! Residual is NaN!")

@@ -37,13 +37,19 @@ class KirchhoffElasticMaterial(ElasticMaterial):
 
     def get_free_energy(self,
             U=None,
+            C=None,
             E=None):
 
         if (E is None):
-            dim = U.ufl_shape[0]
-            I = dolfin.Identity(dim)
-            F = I + dolfin.grad(U)
-            C = F.T * F
+            if (C is None):
+                dim = U.ufl_shape[0]
+                I = dolfin.Identity(dim)
+                F = I + dolfin.grad(U)
+                C = F.T * F
+            else:
+                assert (C.ufl_shape[0] == C.ufl_shape[1])
+                dim = C.ufl_shape[0]
+                I = dolfin.Identity(dim)
             E = (C - I)/2
         else:
             assert (E.ufl_shape[0] == E.ufl_shape[1])

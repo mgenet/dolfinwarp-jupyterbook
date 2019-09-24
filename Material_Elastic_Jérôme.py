@@ -17,30 +17,38 @@ from .Material_Elastic import ElasticMaterial
 
 ################################################################################
 
-class CiarletGeymonatNeoHookeanElasticMaterial(ElasticMaterial):
+class JeromeElasticMaterial(ElasticMaterial):
 
 
 
     def __init__(self,
             parameters):
 
-        self.bulk = dcm.CiarletGeymonatBulkElasticMaterial(parameters)
-        self.dev = dcm.NeoHookeanDevElasticMaterial(parameters)
+        self.Kappa1 = dolfin.Constant(parameters["Kappa1"])
+        self.Kappa2 = dolfin.Constant(parameters["Kappa2"])
+        self.Bulk   = dolfin.Constant(parameters["Bulk"])
 
 
 
     def get_free_energy(self,
-            *args,
-            **kwargs):
+            C=None):
 
-        Psi_bulk, Sigma_bulk = self.bulk.get_free_energy(
-            *args,
-            **kwargs)
-        Psi_dev, Sigma_dev = self.dev.get_free_energy(
-            *args,
-            **kwargs)
+        assert (C.ufl_shape[0] == C.ufl_shape[1])
+        dim = C.ufl_shape[0]
+        I = dolfin.Identity(dim)
 
-        Psi   = Psi_bulk   + Psi_dev
-        Sigma = Sigma_bulk + Sigma_dev
+        JF     = dolfin.sqrt(dolfin.det(C))
+        IC     = dolfin.tr(C)
+        ICbar  = IC * JF**(-2./3)
+        IIC    = (dolfin.tr(C)*dolfin.tr(C) - dolfin.tr(C*C))/2
+        IICbar = IIC * JF**(-4./3)
+        C_inv = dolfin.inv(C)
+
+        Psi = self.Kappa1 * (ICbar  - 3)\
+            + self.Kappa2 * (IICbar - 3)\
+            + self.Bulk   * (JF - 1 - dolfin.ln(JF))
+
+        C = dolfin.variable(C)
+        Sigma = dolfin.diff(Psi, C)
 
         return Psi, Sigma

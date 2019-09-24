@@ -14,9 +14,12 @@ from .XDMFFile import *
 from .QOI import *
 from .Material_Elastic_CiarletGeymonatNeoHookean import *
 from .Material_Elastic import *
+from .Material_Elastic_Jérôme import *
 from .Kinematics import *
 from .TimeVaryingConstant import *
+from .Material_Porous import *
 from .Step import *
+from .Problem_RelaxedGrowth import *
 from .Problem_Hyperelasticity import *
 from .Material_Elastic_Dev_NeoHookean import *
 from .Constraint import *
@@ -25,9 +28,13 @@ from .Material_Elastic_Bulk import *
 from .Material_Elastic_Hooke import *
 from .Material_Inelastic_Growth_TimeDriven import *
 from .Material import *
+<<<<<<< HEAD
 from .Material_Elastic_Porous import *
+=======
+>>>>>>> MultiMaterial
 from .Kinematics_Inverse import *
 from .Material_Inelastic import *
+from .SubDomain import *
 from .Problem_InverseHyperelasticity import *
 from .Problem import *
 from .compute_error import *
