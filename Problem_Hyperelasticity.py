@@ -561,6 +561,28 @@ class HyperelasticityProblem(Problem):
 
 
 
+    def add_J_qois(self,
+            J_type="elastic",
+            configuration_type="loaded"):
+
+        if (configuration_type == "loaded"):
+            kin = self.kinematics
+        elif (configuration_type == "unloaded"):
+            kin = self.unloaded_kinematics
+
+        if (J_type == "elastic"):
+            basename = "J^e_"
+            J = kin.Je
+        elif (J_type == "total"):
+            basename = "J^t_"
+            J = kin.Jt
+
+        self.add_qoi(
+            name=basename,
+            expr=J * self.dV)
+
+
+
     def add_stress_qois(self,
             stress_type="cauchy"):
 
@@ -596,3 +618,14 @@ class HyperelasticityProblem(Problem):
                 self.add_qoi(
                     name=basename+"ZX",
                     expr=stress[2,0] * self.dV)
+
+
+
+    def add_P_qois(self):
+
+        basename = "P_"
+        P = -1./3. * dolfin.tr(self.sigma)
+
+        self.add_qoi(
+            name=basename,
+            expr=P * self.dV)
