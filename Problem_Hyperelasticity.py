@@ -23,10 +23,7 @@ class HyperelasticityProblem(Problem):
 
 
     def __init__(self,
-            w_incompressibility=False,
-            w_growth=False,
-            w_relaxation=False,
-            w_unloaded_configuration=False):
+            w_incompressibility=False):
 
         Problem.__init__(self)
 

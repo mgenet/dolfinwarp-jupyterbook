@@ -28,10 +28,7 @@ from .Material_Elastic_Bulk import *
 from .Material_Elastic_Hooke import *
 from .Material_Inelastic_Growth_TimeDriven import *
 from .Material import *
-<<<<<<< HEAD
 from .Material_Elastic_Porous import *
-=======
->>>>>>> MultiMaterial
 from .Kinematics_Inverse import *
 from .Material_Inelastic import *
 from .SubDomain import *
