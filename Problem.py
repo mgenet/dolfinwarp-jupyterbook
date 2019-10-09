@@ -27,6 +27,8 @@ class Problem():
 
         self.subsols = collections.OrderedDict()
 
+        self.subdomains = []
+
         self.inelastic_behaviors_mixed    = []
         self.inelastic_behaviors_internal = []
 
@@ -106,35 +108,47 @@ class Problem():
             boundaries=None,
             points=None):
 
-        if (domains is not None):
-            self.dV = dolfin.Measure(
-                "dx",
-                domain=self.mesh,
-                subdomain_data=domains)
-        else:
-            self.dV = dolfin.Measure(
-                "dx",
-                domain=self.mesh)
+        self.dV = dolfin.Measure(
+            "dx",
+            domain=self.mesh,
+            subdomain_data=domains)
+        # if (domains is not None):
+        #     self.dV = dolfin.Measure(
+        #         "dx",
+        #         domain=self.mesh,
+        #         subdomain_data=domains)
+        # else:
+        #     self.dV = dolfin.Measure(
+        #         "dx",
+        #         domain=self.mesh)
 
-        if (boundaries is not None):
-            self.dS = dolfin.Measure(
-                "ds",
-                domain=self.mesh,
-                subdomain_data=boundaries)
-        else:
-            self.dS = dolfin.Measure(
-                "ds",
-                domain=self.mesh)
+        self.dS = dolfin.Measure(
+            "ds",
+            domain=self.mesh,
+            subdomain_data=boundaries)
+        # if (boundaries is not None):
+        #     self.dS = dolfin.Measure(
+        #         "ds",
+        #         domain=self.mesh,
+        #         subdomain_data=boundaries)
+        # else:
+        #     self.dS = dolfin.Measure(
+        #         "ds",
+        #         domain=self.mesh)
 
-        if (points is not None):
-            self.dP = dolfin.Measure(
-                "dP",
-                domain=self.mesh,
-                subdomain_data=points)
-        else:
-            self.dP = dolfin.Measure(
-                "dP",
-                domain=self.mesh)
+        self.dP = dolfin.Measure(
+            "dP",
+            domain=self.mesh,
+            subdomain_data=points)
+        # if (points is not None):
+        #     self.dP = dolfin.Measure(
+        #         "dP",
+        #         domain=self.mesh,
+        #         subdomain_data=points)
+        # else:
+        #     self.dP = dolfin.Measure(
+        #         "dP",
+        #         domain=self.mesh)
 
 
 
@@ -405,6 +419,26 @@ class Problem():
 
 
 
+    def add_qoi(self,
+            *args,
+            **kwargs):
+
+        qoi = dcm.QOI(
+            *args,
+            form_compiler_parameters=self.form_compiler_parameters,
+            **kwargs)
+        self.qois += [qoi]
+        return qoi
+
+
+
+    def update_qois(self):
+
+        for qoi in self.qois:
+            qoi.update()
+
+
+
     def add_constraint(self,
             *args,
             **kwargs):
@@ -543,23 +577,3 @@ class Problem():
             **kwargs)
         self.steps += [step]
         return step
-
-
-
-    def add_qoi(self,
-            *args,
-            **kwargs):
-
-        qoi = dcm.QOI(
-            *args,
-            form_compiler_parameters=self.form_compiler_parameters,
-            **kwargs)
-        self.qois += [qoi]
-        return qoi
-
-
-
-    def update_qois(self):
-
-        for qoi in self.qois:
-            qoi.update()

@@ -38,8 +38,8 @@ class InverseKinematics():
         self.Jt     = dolfin.det(self.Ft    )
         self.Jt_old = dolfin.det(self.Ft_old)
 
-        self.Ct     = dolfin.transpose(self.Ft    ) * self.Ft
-        self.Ct_old = dolfin.transpose(self.Ft_old) * self.Ft_old
+        self.Ct     = self.Ft.T     * self.Ft
+        self.Ct_old = self.Ft_old.T * self.Ft_old
 
         self.Et     = (self.Ct     - self.I)/2
         self.Et_old = (self.Ct_old - self.I)/2
@@ -50,8 +50,8 @@ class InverseKinematics():
         self.Je     = dolfin.det(self.Fe    )
         self.Je_old = dolfin.det(self.Fe_old)
 
-        self.Ce     = dolfin.transpose(self.Fe    ) * self.Fe
-        self.Ce_old = dolfin.transpose(self.Fe_old) * self.Fe_old
+        self.Ce     = self.Fe.T     * self.Fe
+        self.Ce_old = self.Fe_old.T * self.Fe_old
         self.Ce_inv = dolfin.inv(self.Ce)
         self.ICe    = dolfin.tr(self.Ce)
 
@@ -59,5 +59,5 @@ class InverseKinematics():
         self.Ee_old = (self.Ce_old - self.I)/2
 
         self.Fe_bar  = self.Je**(-1./3) * self.Fe
-        self.Ce_bar  = dolfin.transpose(self.Fe_bar) * self.Fe_bar
+        self.Ce_bar  = self.Fe_bar.T * self.Fe_bar
         self.ICe_bar = dolfin.tr(self.Ce_bar)
