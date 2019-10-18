@@ -343,15 +343,31 @@ class HyperelasticityProblem(Problem):
     def add_stress_qois(self,
             stress_type="cauchy"):
 
-        if (stress_type in ("cauchy", "sigma")):
-            basename = "s_"
-            stress = self.sigma
-        elif (stress_type in ("piola", "PK2", "Sigma")):
-            basename = "S_"
-            stress = self.Sigma
-        elif (stress_type in ("PK1", "P")):
-            basename = "P_"
-            stress = self.PK1
+        nb_subdomain = 0
+        for subdomain in self.subdomains:
+            nb_subdomain += 1
+
+        if nb_subdomain == 0:
+            if (stress_type in ("cauchy", "sigma")):
+                basename = "s_"
+                stress = self.sigma
+            elif (stress_type in ("piola", "PK2", "Sigma")):
+                basename = "S_"
+                stress = self.Sigma
+            elif (stress_type in ("PK1", "P")):
+                basename = "P_"
+                stress = self.PK1
+
+        elif nb_subdomain == 1:
+            if (stress_type in ("cauchy", "sigma")):
+                basename = "s_"
+                stress = self.subdomains[0].sigma
+            elif (stress_type in ("piola", "PK2", "Sigma")):
+                basename = "S_"
+                stress = self.subdomains[0].Sigma
+            elif (stress_type in ("PK1", "P")):
+                basename = "P_"
+                stress = self.subdomains[0].PK1
 
         self.add_qoi(
             name=basename+"XX",
@@ -380,8 +396,17 @@ class HyperelasticityProblem(Problem):
 
     def add_P_qois(self):
 
-        basename = "P_"
-        P = -1./3. * dolfin.tr(self.sigma)
+        nb_subdomain = 0
+        for subdomain in self.subdomains:
+            nb_subdomain += 1
+        # print nb_subdomain
+
+        if nb_subdomain == 0:
+             basename = "P_"
+             P = -1./3. * dolfin.tr(self.sigma)
+        elif nb_subdomain == 1:
+            basename = "P_"
+            P = -1./3. * dolfin.tr(self.subdomains[0].sigma)
 
         self.add_qoi(
             name=basename,
