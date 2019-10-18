@@ -25,31 +25,20 @@ class PorousMaterial(ElasticMaterial):
 
 
     def __init__(self,
-<<<<<<< HEAD:Material_Elastic_Porous.py
-                 material,
-                 porosity=0,
-                 config_porosity='ref'):
-=======
             material,
             porosity=0,
             config_porosity='ref'):
->>>>>>> eb99a1cd1354306ce83ab5a25945b288039bc8fe:Material_Elastic_Porous.py
 
         self.material        = material
         self.porosity        = porosity
         self.config_porosity = config_porosity
 
-<<<<<<< HEAD:Material_Elastic_Porous.py
-    def get_free_energy(self,
-                        C=None):
-=======
 
 
     def get_free_energy(self,
             C=None):
->>>>>>> eb99a1cd1354306ce83ab5a25945b288039bc8fe:Material_Elastic_Porous.py
 
-        Psi_mat, Sigma_mat = self.material.get_free_energy(C = C)
+        Psi_mat, Sigma_mat = self.material.get_free_energy(C=C)
         if self.config_porosity == 'ref':
             Psi = (1 - self.porosity) * Psi_mat
             Sigma = (1 - self.porosity) * Sigma_mat
