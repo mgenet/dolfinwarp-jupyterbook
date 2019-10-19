@@ -15,6 +15,7 @@ import numpy
 
 import dolfin_cm as dcm
 from .Problem import Problem
+from .Problem_Hyperelasticity import HyperelasticityProblem
 
 ################################################################################
 
