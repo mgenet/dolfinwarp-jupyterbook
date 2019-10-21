@@ -101,15 +101,7 @@ class InverseHyperelasticityProblem(Problem):
 
 
 
-    def set_materials(self,
-            elastic_behavior_dev,
-            elastic_behavior_bulk=None):
-
-        self.elastic_behavior_dev = elastic_behavior_dev
-
-        if not (self.w_incompressibility):
-            assert (elastic_behavior_bulk is not None)
-            self.elastic_behavior_bulk = elastic_behavior_bulk
+    def set_kinematics(self):
 
         self.kinematics = dcm.InverseKinematics(
             dim=self.dim,
@@ -120,25 +112,38 @@ class InverseHyperelasticityProblem(Problem):
         self.add_foi(expr=self.kinematics.Je, fs=self.sfoi_fs, name="J")
         self.add_foi(expr=self.kinematics.Ce, fs=self.mfoi_fs, name="C")
         self.add_foi(expr=self.kinematics.Ee, fs=self.mfoi_fs, name="E")
+        if (self.Q_expr is not None):
+            self.add_foi(expr=self.kinematics.Ee_loc, fs=self.mfoi_fs, name="Ee_loc")
+
+
+
+    def set_materials(self,
+            elastic_behavior=None,
+            elastic_behavior_dev=None,
+            elastic_behavior_bulk=None,
+            subdomain_id=None):
 
         if (self.w_incompressibility):
-            self.Psi_bulk   = -self.subsols["P"].subfunc * (self.kinematics.Je - 1)
-            self.Sigma_bulk = -self.subsols["P"].subfunc *  self.kinematics.Je      * self.kinematics.Ce_inv
+            assert (elastic_behavior      is     None)
+            assert (elastic_behavior_dev  is not None)
+            assert (elastic_behavior_bulk is     None)
         else:
-            self.Psi_bulk,\
-            self.Sigma_bulk = self.elastic_behavior_bulk.get_free_energy(
-                C=self.kinematics.Ce)
-        self.Psi_dev,\
-        self.Sigma_dev = self.elastic_behavior_dev.get_free_energy(
-            C=self.kinematics.Ce)
-        self.Sigma = self.Sigma_bulk + self.Sigma_dev
+            assert  ((elastic_behavior      is not None)
+                or  ((elastic_behavior_dev  is not None)
+                and  (elastic_behavior_bulk is not None)))
 
-        self.PK1 = self.kinematics.Ft * self.Sigma
-        self.sigma = (1./self.kinematics.Jt) * self.PK1 * self.kinematics.Ft.T
+        subdomain = dcm.SubDomain(
+            problem=self,
+            elastic_behavior=elastic_behavior,
+            elastic_behavior_dev=elastic_behavior_dev,
+            elastic_behavior_bulk=elastic_behavior_bulk,
+            id=subdomain_id)
 
-        # self.add_foi(expr=self.Sigma, fs=self.mfoi_fs, name="Sigma")
-        # self.add_foi(expr=self.PK1  , fs=self.mfoi_fs, name="PK1"  )
-        self.add_foi(expr=self.sigma, fs=self.mfoi_fs, name="sigma")
+        self.subdomains += [subdomain]
+
+        # self.add_foi(expr=subdomain.Sigma, fs=self.mfoi_fs, name="Sigma")
+        # self.add_foi(expr=subdomain.PK1  , fs=self.mfoi_fs, name="PK1"  )
+        self.add_foi(expr=subdomain.sigma, fs=self.mfoi_fs, name="sigma")
 
 
 
@@ -156,6 +161,8 @@ class InverseHyperelasticityProblem(Problem):
 
         # self.res_form = 0.                            # MG20190417: ok??
         # self.res_form = dolfin.Constant(0.) * self.dV # MG20190417: arity mismatch??
+
+        self.sigma = sum([subdomain.sigma * self.dV(subdomain.id) for subdomain in self.subdomains])
 
         self.res_form = dolfin.inner(
             self.sigma,
