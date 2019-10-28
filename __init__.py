@@ -15,7 +15,6 @@ from .XDMFFile import *
 from .QOI import *
 from .Material_Elastic_CiarletGeymonatNeoHookean import *
 from .Material_Elastic import *
-# from .Material_Elastic_Jérôme import *
 from .Kinematics import *
 from .TimeVaryingConstant import *
 from .Material_Elastic_Porous import *

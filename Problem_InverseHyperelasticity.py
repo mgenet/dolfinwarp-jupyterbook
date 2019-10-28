@@ -162,11 +162,11 @@ class InverseHyperelasticityProblem(Problem):
         # self.res_form = 0.                            # MG20190417: ok??
         # self.res_form = dolfin.Constant(0.) * self.dV # MG20190417: arity mismatch??
 
-        self.sigma = sum([subdomain.sigma * self.dV(subdomain.id) for subdomain in self.subdomains])
-
-        self.res_form = dolfin.inner(
-            self.sigma,
-            dolfin.sym(dolfin.grad(self.subsols["U"].dsubtest))) * self.dV
+        self.res_form = 0
+        for subdomain in self.subdomains :
+            self.res_form += dolfin.inner(
+                subdomain.sigma,
+                dolfin.sym(dolfin.grad(self.subsols["U"].dsubtest))) * self.dV(subdomain.id)
 
         if (self.w_incompressibility):
             self.res_form += dolfin.inner(
