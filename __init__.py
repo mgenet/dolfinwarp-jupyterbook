@@ -39,3 +39,4 @@ from .Problem_InverseHyperelasticity import *
 from .Problem import *
 from .compute_error import *
 from .Material_Inelastic_Growth import *
+from .Material_Elastic_Jerome import *
