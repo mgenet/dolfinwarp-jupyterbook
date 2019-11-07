@@ -130,6 +130,8 @@ class HyperelasticityProblem(Problem):
             elastic_behavior_bulk=None,
             subdomain_id=None):
 
+        self.set_kinematics()
+
         if (self.w_incompressibility):
             assert (elastic_behavior      is     None)
             assert (elastic_behavior_dev  is not None)
@@ -336,7 +338,7 @@ class HyperelasticityProblem(Problem):
 
         self.add_qoi(
             name=basename,
-            expr=J * self.dV)
+            expr=J / self.mesh_V0 * self.dV)
 
 
 
@@ -410,4 +412,4 @@ class HyperelasticityProblem(Problem):
 
         self.add_qoi(
             name=basename,
-            expr=P * self.dV)
+            expr=P / self.mesh_V0 * self.dV)

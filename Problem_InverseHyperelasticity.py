@@ -123,6 +123,8 @@ class InverseHyperelasticityProblem(Problem):
             elastic_behavior_bulk=None,
             subdomain_id=None):
 
+        self.set_kinematics()
+
         if (self.w_incompressibility):
             assert (elastic_behavior      is     None)
             assert (elastic_behavior_dev  is not None)
@@ -192,3 +194,45 @@ class InverseHyperelasticityProblem(Problem):
             self.res_form,
             self.sol_func,
             self.dsol_tria)
+
+
+
+    def add_J_qois(self,
+            J_type="elastic",
+            configuration_type="loaded"):
+
+        if (configuration_type == "loaded"):
+            kin = self.kinematics
+        elif (configuration_type == "unloaded"):
+            kin = self.unloaded_kinematics
+
+        if (J_type == "elastic"):
+            basename = "J^e_"
+            J = kin.Je
+        elif (J_type == "total"):
+            basename = "J^t_"
+            J = kin.Jt
+
+        self.add_qoi(
+            name=basename,
+            expr=J / self.mesh_V0 * self.dV)
+
+
+
+    def add_P_qois(self):
+
+        nb_subdomain = 0
+        for subdomain in self.subdomains:
+            nb_subdomain += 1
+        # print nb_subdomain
+
+        if nb_subdomain == 0:
+             basename = "P_"
+             P = -1./3. * dolfin.tr(self.sigma)
+        elif nb_subdomain == 1:
+            basename = "P_"
+            P = -1./3. * dolfin.tr(self.subdomains[0].sigma)
+
+        self.add_qoi(
+            name=basename,
+            expr=P / self.mesh_V0 * self.dV)
