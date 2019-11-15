@@ -24,7 +24,6 @@ from .Problem_RelaxedGrowth import *
 from .Problem_Hyperelasticity import *
 from .Problem_Porosity_Wpor import *
 from .Problem_Porosity_Condition import *
-from .Problem_test_condition import *
 from .Material_Elastic_Dev_NeoHookean import *
 from .Constraint import *
 from .FOI import *
