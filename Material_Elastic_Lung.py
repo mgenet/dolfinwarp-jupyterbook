@@ -30,9 +30,6 @@ class LungElasticMaterial(ElasticMaterial):
             self.bulk = dcm.PneumoBulkElasticMaterial(parameters)
             self.dev = dcm.NeoHookeanDevElasticMaterial(parameters)
         elif version == 2:
-            print set(["alpha", "gamma", "c1", "c2"])
-            print set(parameters.keys())
-            print type(set(parameters.keys()))
             assert set(["alpha", "gamma", "c1", "c2"]).issubset(set(parameters.keys()))
             self.bulk = dcm.PneumoBulkElasticMaterial(parameters)
             self.dev = dcm.MooneyRivlinDevElasticMaterial(parameters)
