@@ -35,10 +35,17 @@ class InversePoroWporProblem(InverseHyperelasticityProblem):
     def set_porosity_energy(self):
 
         # Wpor = - self.eta * dolfin.log(self.kinematics.Je - self.kinematics.Js)
-        dWpordJ = - self.eta / (self.kinematics.Je * self.porosity_given)
-        # dWpordJ = - self.eta / (self.kinematics.Je * self.porosity_given) + self.eta / self.porosity_given
+        dWpordJ = - self.eta / (self.kinematics.Je * self.kinematics.Phi)
+        # dWpordJ = - self.eta / (self.kinematics.Je * self.porosity_given)
         self.dWpordJ = self.coef_1_minus_phi0 * dWpordJ
 
+        if self.config_porosity == 'ref':
+            coef0 = 1 - self.porosity_given
+        elif self.config_porosity == 'deformed':
+            coef0 = (1 - self.porosity_given) * self.porosity_given / (self.porosity_given - self.eta / self.kappa * (1 - self.porosity_given))
+        Phi0 = 1 - coef0
+        self.dWpordJ += coef0 * self.eta / (Phi0)
+        # self.dWpordJ += coef0 * self.eta / self.porosity_given
 
 
     def set_coef_1_minus_phi0(self,
@@ -195,3 +202,13 @@ class InversePoroWporProblem(InverseHyperelasticityProblem):
         self.add_qoi(
             name=basename,
             expr=self.kinematics.Js / self.mesh_V0 * self.dV)
+
+
+
+    def add_coef_qois(self):
+
+        basename = "coef_"
+
+        self.add_qoi(
+            name=basename,
+            expr=self.coef_1_minus_phi0 / self.mesh_V0 * self.dV)

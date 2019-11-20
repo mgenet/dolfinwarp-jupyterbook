@@ -36,8 +36,16 @@ class PoroWporProblem(HyperelasticityProblem):
 
         # Wpor = - self.eta * dolfin.log(self.kinematics.Je - self.kinematics.Js)
         # dWpordJ = - self.eta / (self.kinematics.Je - self.kinematics.Js)
-        dWpordJ = - self.eta / (self.kinematics.Je - self.kinematics.Js) + self.eta / self.porosity_given
+        # dWpordJ = - self.eta / (self.kinematics.Je - self.kinematics.Js)
+        # self.dWpordJ = dWpordJ
         self.dWpordJ = self.coef_1_minus_phi0 * dWpordJ
+
+        if self.config_porosity == 'ref':
+            if self.kappa == 0:
+                Js0 = self.coef_1_minus_phi0
+            else:
+                Js0 = self.coef_1_minus_phi0/2 * (1 + 1/self.coef_1_minus_phi0 + self.eta/self.kappa - ((1 + 1/self.coef_1_minus_phi0 + self.eta/self.kappa)**2 - 4 / self.coef_1_minus_phi0)**(1./2.))
+            self.dWpordJ += self.coef_1_minus_phi0 * self.eta / (1 - Js0)
 
 
 
@@ -210,3 +218,13 @@ class PoroWporProblem(HyperelasticityProblem):
         self.add_qoi(
             name=basename,
             expr=self.kinematics.Js / self.mesh_V0 * self.dV)
+
+
+
+    def add_coef_qois(self):
+
+        basename = "coef_"
+
+        self.add_qoi(
+            name=basename,
+            expr=self.coef_1_minus_phi0 / self.mesh_V0 * self.dV)
