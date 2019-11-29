@@ -42,7 +42,7 @@ class PorousMaterial(ElasticMaterial):
 
         Psi_mat, Sigma_mat = self.material.get_free_energy(C=C)
 
-        if self.problem.coef_1_minus_phi0 is not None:
+        if 'coef_1_minus_phi0' in self.problem.__dict__:
             Psi   = self.problem.coef_1_minus_phi0 * Psi_mat
             Sigma = self.problem.coef_1_minus_phi0 * Sigma_mat
         else:
