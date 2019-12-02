@@ -160,13 +160,6 @@ class NewFPoroWporProblem(HyperelasticityProblem):
                 self.subsols["U"].dsubtest) * loading.measure
 
         self.res_form += dolfin.inner(
-            self.dWpordJ * self.kinematics.Je * self.kinematics.Ce_inv,
-            dolfin.derivative(
-                    self.kinematics.Et,
-                    self.subsols["U"].subfunc,
-                    self.subsols["U"].dsubtest)) * self.dV
-
-        self.res_form += dolfin.inner(
                 self.dWbulkdJs - self.dWpordJ,
                 self.subsols["Phi"].dsubtest) * self.dV
 
