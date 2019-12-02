@@ -13,39 +13,33 @@
 ###                                                                          ###
 ################################################################################
 
+# from builtins import *
+
 import dolfin
 
 import dolfin_cm as dcm
-from .Material_Elastic import ElasticMaterial
+from .Material_Elastic_Bulk import BulkElasticMaterial
 
 ################################################################################
 
-class PorousMaterial(ElasticMaterial):
+class SkeletonPoroBulkElasticMaterial(BulkElasticMaterial):
 
 
 
     def __init__(self,
-            material,
-            porosity=0,
-            config_porosity='ref'):
+            parameters):
 
-        self.material        = material
-        self.porosity        = porosity
-        self.config_porosity = config_porosity
+        self.kappa = dolfin.Constant(parameters["kappa"])
 
 
 
     def get_free_energy(self,
-            C=None):
+            Js=None,
+            Phi0=None,
+            Phi=None):
 
-        Psi_mat, Sigma_mat = self.material.get_free_energy(C=C)
-        if self.config_porosity == 'ref':
-            Psi = (1 - self.porosity) * Psi_mat
-            Sigma = (1 - self.porosity) * Sigma_mat
-        elif self.config_porosity == 'deformed':
-            assert C is not None
-            J = dolfin.sqrt(dolfin.det(C))
-            Psi = (1 - self.porosity) * J * Psi_mat
-            Sigma = (1 - self.porosity) * J * Sigma_mat
+        # Psi   =
+        dev_bulk_mat_Js = self.kappa * ( 1 / (1 - Phi0) - 1 / Js )
 
-        return Psi, Sigma
+        return 0, dev_bulk_mat_Js
+        # return Psi, Sigma

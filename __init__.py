@@ -6,6 +6,7 @@ from .Material_Inelastic_Growth_StrainDriven import *
 from .Material_Elastic_Kirchhoff import *
 from .Material_Inelastic_Relaxation import *
 from .Material_Elastic_Bulk_Pneumo import *
+from .Material_Elastic_Bulk_Poro_Skeleton import *
 from .Material_Elastic_Bulk_CiarletGeymonat import *
 from .Loading import *
 from .SubSol import *
@@ -14,13 +15,14 @@ from .XDMFFile import *
 from .QOI import *
 from .Material_Elastic_CiarletGeymonatNeoHookean import *
 from .Material_Elastic import *
-from .Material_Elastic_Jérôme import *
 from .Kinematics import *
 from .TimeVaryingConstant import *
-from .Material_Porous import *
+from .Material_Elastic_Porous import *
 from .Step import *
 from .Problem_RelaxedGrowth import *
 from .Problem_Hyperelasticity import *
+from .Problem_Porosity_Wpor import *
+from .Problem_Porosity_Condition import *
 from .Material_Elastic_Dev_NeoHookean import *
 from .Constraint import *
 from .FOI import *
@@ -36,3 +38,4 @@ from .Problem_InverseHyperelasticity import *
 from .Problem import *
 from .compute_error import *
 from .Material_Inelastic_Growth import *
+from .Material_Elastic_Jerome import *

@@ -318,18 +318,56 @@ class HyperelasticityProblem(Problem):
 
 
 
+    def add_J_qois(self,
+            J_type="elastic",
+            configuration_type="loaded"):
+
+        if (configuration_type == "loaded"):
+            kin = self.kinematics
+        elif (configuration_type == "unloaded"):
+            kin = self.unloaded_kinematics
+
+        if (J_type == "elastic"):
+            basename = "J^e_"
+            J = kin.Je
+        elif (J_type == "total"):
+            basename = "J^t_"
+            J = kin.Jt
+
+        self.add_qoi(
+            name=basename,
+            expr=J * self.dV)
+
+
+
     def add_stress_qois(self,
             stress_type="cauchy"):
 
-        if (stress_type in ("cauchy", "sigma")):
-            basename = "s_"
-            stress = self.sigma
-        elif (stress_type in ("piola", "PK2", "Sigma")):
-            basename = "S_"
-            stress = self.Sigma
-        elif (stress_type in ("PK1", "P")):
-            basename = "P_"
-            stress = self.PK1
+        nb_subdomain = 0
+        for subdomain in self.subdomains:
+            nb_subdomain += 1
+
+        if nb_subdomain == 0:
+            if (stress_type in ("cauchy", "sigma")):
+                basename = "s_"
+                stress = self.sigma
+            elif (stress_type in ("piola", "PK2", "Sigma")):
+                basename = "S_"
+                stress = self.Sigma
+            elif (stress_type in ("PK1", "P")):
+                basename = "P_"
+                stress = self.PK1
+
+        elif nb_subdomain == 1:
+            if (stress_type in ("cauchy", "sigma")):
+                basename = "s_"
+                stress = self.subdomains[0].sigma
+            elif (stress_type in ("piola", "PK2", "Sigma")):
+                basename = "S_"
+                stress = self.subdomains[0].Sigma
+            elif (stress_type in ("PK1", "P")):
+                basename = "P_"
+                stress = self.subdomains[0].PK1
 
         self.add_qoi(
             name=basename+"XX",
@@ -353,3 +391,23 @@ class HyperelasticityProblem(Problem):
                 self.add_qoi(
                     name=basename+"ZX",
                     expr=stress[2,0] * self.dV)
+
+
+
+    def add_P_qois(self):
+
+        nb_subdomain = 0
+        for subdomain in self.subdomains:
+            nb_subdomain += 1
+        # print nb_subdomain
+
+        if nb_subdomain == 0:
+             basename = "P_"
+             P = -1./3. * dolfin.tr(self.sigma)
+        elif nb_subdomain == 1:
+            basename = "P_"
+            P = -1./3. * dolfin.tr(self.subdomains[0].sigma)
+
+        self.add_qoi(
+            name=basename,
+            expr=P * self.dV)
