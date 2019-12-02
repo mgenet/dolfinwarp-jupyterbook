@@ -35,8 +35,7 @@ class PoroWporProblem(HyperelasticityProblem):
     def set_porosity_energy(self):
 
         # Wpor = - self.eta * dolfin.log(self.kinematics.Je - self.kinematics.Js)
-        # dWpordJ = - self.eta / (self.kinematics.Je - self.kinematics.Js)
-        # dWpordJ = - self.eta / (self.kinematics.Je - self.kinematics.Js)
+        dWpordJ = - self.eta / (self.kinematics.Je - self.kinematics.Js)
         # self.dWpordJ = dWpordJ
         self.dWpordJ = self.coef_1_minus_phi0 * dWpordJ
 
@@ -77,7 +76,7 @@ class PoroWporProblem(HyperelasticityProblem):
             # self.kinematics.Js = 1 - self.porosity0
 
             # better
-            if self.kappa == 0:
+            if self.eta == 0:
                 self.kinematics.Js = self.coef_1_minus_phi0
                 self.kinematics.Phi = 1 - self.kinematics.Js / self.kinematics.Je
 
