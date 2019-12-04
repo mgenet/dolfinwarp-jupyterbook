@@ -45,6 +45,9 @@ class PorousMaterial(ElasticMaterial):
         if 'coef_1_minus_phi0' in self.problem.__dict__:
             Psi   = self.problem.coef_1_minus_phi0 * Psi_mat
             Sigma = self.problem.coef_1_minus_phi0 * Sigma_mat
+        elif 'phi0' in self.problem.__dict__:
+            Psi   = (1 - self.problem.phi0) * Psi_mat
+            Sigma = (1 - self.problem.phi0) * Sigma_mat
         else:
             if self.config_porosity == 'ref':
                 Psi   = (1-self.porosity_given) * Psi_mat

@@ -212,7 +212,7 @@ class HyperelasticityProblem(Problem):
         self.res_form = dolfin.derivative(
             self.Pi,
             self.sol_func,
-            self.dsol_test);
+            self.dsol_test)
 
         # self.res_form += dolfin.inner(
         #     self.Sigma,
