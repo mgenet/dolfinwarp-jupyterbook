@@ -19,7 +19,7 @@ from .Problem_Hyperelasticity import HyperelasticityProblem
 
 ################################################################################
 
-class NewFPoroWporProblem(HyperelasticityProblem):
+class TwoSubfuncPoroProblem(HyperelasticityProblem):
 
 
 
@@ -40,12 +40,16 @@ class NewFPoroWporProblem(HyperelasticityProblem):
             self.add_scalar_subsol(
                 name="Phi",
                 family="DG",
-                degree=0)
+                degree=0,
+                init_val=numpy.array([self.value_phi_given]))
+                # init_val=self.porosity_given)
         else:
             self.add_scalar_subsol(
                 name="Phi",
                 family="CG",
-                degree=degree)
+                degree=degree,
+                init_val=numpy.array([self.value_phi_given]))
+                # init_val=self.porosity_given)
 
 
 
@@ -69,13 +73,15 @@ class NewFPoroWporProblem(HyperelasticityProblem):
 
     def set_porosity_energy(self):
 
-        # if self.subsols["Phi"].subfunc < self.phi0:
-            # dWpordJ = - self.eta * (self.phi0 / self.subsols["Phi"].subfunc)**2 * exp(-self.subsols["Phi"].subfunc / (self.phi0 - self.subsols["Phi"].subfunc)) / (self.phi0 - self.subsols["Phi"].subfunc)
-        # dWpordJ = - self.eta * (self.phi0 / (self.kinematics.Je * self.subsols["Phi"].subfunc))**2 * dolfin.exp(-self.kinematics.Je * self.subsols["Phi"].subfunc / (self.phi0 - self.kinematics.Je * self.subsols["Phi"].subfunc)) / (self.phi0 - self.kinematics.Je * self.subsols["Phi"].subfunc)
-        dWpordJ = 0
-        # else:
-        #     dWpordJ = 0
-        self.dWpordJ = (1 - self.phi0) * dWpordJ
+        # JPhi = self.kinematics.Je * self.subsols["Phi"].subfunc
+        # Phi0 = self.phi0
+
+        dWpordJ = - self.eta * (self.phi0 / (self.kinematics.Je * self.subsols["Phi"].subfunc))**2 * dolfin.exp(-self.kinematics.Je * self.subsols["Phi"].subfunc / (self.phi0 - self.kinematics.Je * self.subsols["Phi"].subfunc)) / (self.phi0 - self.kinematics.Je * self.subsols["Phi"].subfunc)
+        # n = 2
+        # dWpordJ = - self.eta * n * ((self.phi0 - self.kinematics.Je * self.subsols["Phi"].subfunc) / (self.kinematics.Je * self.subsols["Phi"].subfunc))**(n-1) * self.phi0 / (self.kinematics.Je * self.subsols["Phi"].subfunc)**2
+        # dWpordJ = 0
+        dWpordJ_condition = dolfin.conditional(dolfin.lt(self.subsols["Phi"].subfunc, self.phi0), dWpordJ, 0)
+        self.dWpordJ = (1 - self.phi0) * dWpordJ_condition
 
 
 
@@ -188,3 +194,23 @@ class NewFPoroWporProblem(HyperelasticityProblem):
         self.add_qoi(
             name=basename,
             expr=self.kinematics.Js / self.mesh_V0 * self.dV)
+
+
+
+    def add_dWpordJ_qois(self):
+
+        basename = "dWpordJ_"
+
+        self.add_qoi(
+            name=basename,
+            expr=self.dWpordJ / self.mesh_V0 * self.dV)
+
+
+
+    def add_dWbulkdJs_qois(self):
+
+        basename = "dWbulkdJs_"
+
+        self.add_qoi(
+            name=basename,
+            expr=self.dWbulkdJs / self.mesh_V0 * self.dV)
