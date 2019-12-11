@@ -12,14 +12,13 @@
 
 import dolfin
 import numpy
-# import math
 
 import dolfin_cm as dcm
-from .Problem_Hyperelasticity import HyperelasticityProblem
+from .Problem_InverseHyperelasticity import InverseHyperelasticityProblem
 
 ################################################################################
 
-class TwoSubfuncPoroProblem(HyperelasticityProblem):
+class TwoSubfuncInversePoroProblem(InverseHyperelasticityProblem):
 
 
 
@@ -28,7 +27,7 @@ class TwoSubfuncPoroProblem(HyperelasticityProblem):
             kappa,
             p0 = 0):
 
-        HyperelasticityProblem.__init__(self,w_incompressibility=False)
+        InverseHyperelasticityProblem.__init__(self,w_incompressibility=False)
         self.eta   = eta
         self.kappa = kappa
         self.p0    = p0
@@ -40,14 +39,14 @@ class TwoSubfuncPoroProblem(HyperelasticityProblem):
 
         if (degree == 0):
             self.add_scalar_subsol(
-                name="Phi",
+                name="Phi0",
                 family="DG",
                 degree=0,
                 init_val=numpy.array([self.value_phi_given]))
                 # init_val=self.porosity_given)
         else:
             self.add_scalar_subsol(
-                name="Phi",
+                name="Phi0",
                 family="CG",
                 degree=degree,
                 init_val=numpy.array([self.value_phi_given]))
@@ -69,18 +68,23 @@ class TwoSubfuncPoroProblem(HyperelasticityProblem):
     def get_porosity_function_space(self):
 
         assert (len(self.subsols) > 1)
-        return self.get_subsol_function_space(name="Phi")
+        return self.get_subsol_function_space(name="Phi0")
 
 
 
     def set_porosity_energy(self):
 
-        # exp
-        dWpordJs = self.eta * (self.Phi0 / (self.kinematics.Je * self.Phi))**2 * dolfin.exp(-self.kinematics.Je * self.Phi / (self.Phi0 - self.kinematics.Je * self.Phi)) / (self.Phi0 - self.kinematics.Je * self.Phi)
-        # n = 2
-        # dWpordJs = self.eta * n * ((self.Phi0 - self.kinematics.Je * self.Phi) / (self.kinematics.Je * self.Phi))**(n-1) * self.Phi0 / (self.kinematics.Je * self.Phi)**2
-        # dWpordJ = 0
-        dWpordJs_condition = dolfin.conditional(dolfin.lt(self.Phi, self.Phi0), dWpordJs, 0)
+        # # exp
+        # dWpordJs = self.eta * (self.Phi0 / (self.kinematics.Je * self.Phi))**2 * dolfin.exp(-self.kinematics.Je * self.Phi / (self.Phi0 - self.kinematics.Je * self.Phi)) / (self.Phi0 - self.kinematics.Je * self.Phi)
+        # # n = 2
+        # # dWpordJs = self.eta * n * ((self.Phi0 - self.kinematics.Je * self.Phi) / (self.kinematics.Je * self.Phi))**(n-1) * self.Phi0 / (self.kinematics.Je * self.Phi)**2
+        # # dWpordJs = 0
+        # dWpordJs_condition = dolfin.conditional(dolfin.lt(self.Phi, self.Phi0), dWpordJs, 0)
+        # self.dWpordJs = (1 - self.Phi0) * dWpordJs_condition
+
+        n = 4
+        dWpordJs = - self.eta * n * ((self.Phi0 - self.kinematics.Je * self.Phi) / (self.kinematics.Je * self.Phi*self.Phi0))**(n-1) / (self.kinematics.Je * self.Phi)**2
+        dWpordJs_condition = dolfin.conditional(dolfin.lt(self.Phi0, self.Phi), dWpordJs, 0)
         self.dWpordJs = (1 - self.Phi0) * dWpordJs_condition
 
 
@@ -96,20 +100,20 @@ class TwoSubfuncPoroProblem(HyperelasticityProblem):
             config_porosity='ref'):
 
         if self.config_porosity == 'ref':
-            self.Phi0 = self.porosity_given
-            self.Phi  = self.subsols["Phi"].subfunc
-        elif self.config_porosity == 'deformed':
             self.Phi0 = Nan
             self.Phi  = Nan
+        elif self.config_porosity == 'deformed':
+            self.Phi0 = self.subsols["Phi0"].subfunc
+            self.Phi  = self.porosity_given
 
 
 
     def set_kinematics(self):
 
-        HyperelasticityProblem.set_kinematics(self)
+        InverseHyperelasticityProblem.set_kinematics(self)
 
         self.set_Phi0_and_Phi(self.config_porosity)
-        self.kinematics.Js = self.kinematics.Je * (1 - self.subsols["Phi"].subfunc)
+        self.kinematics.Js = self.kinematics.Je * (1 - self.Phi)
 
 
 
@@ -121,7 +125,7 @@ class TwoSubfuncPoroProblem(HyperelasticityProblem):
 
         self.set_kinematics()
 
-        HyperelasticityProblem.set_materials(self,
+        InverseHyperelasticityProblem.set_materials(self,
                 elastic_behavior=elastic_behavior,
                 elastic_behavior_dev=elastic_behavior_dev,
                 elastic_behavior_bulk=elastic_behavior_bulk,
@@ -144,20 +148,16 @@ class TwoSubfuncPoroProblem(HyperelasticityProblem):
             volume_loadings=[],
             dt=None):
 
-        self.Pi = sum([subdomain.Psi * self.dV(subdomain.id) for subdomain in self.subdomains])
-        # print (self.Pi)
+        self.res_form = 0
 
-        self.res_form = dolfin.derivative(
-            self.Pi,
-            self.sol_func,
-            self.dsol_test);
+        for subdomain in self.subdomains :
+            self.res_form += dolfin.inner(
+                subdomain.sigma,
+                dolfin.sym(dolfin.grad(self.subsols["U"].dsubtest))) * self.dV(subdomain.id)
 
         for loading in pressure_loadings:
-            T = dolfin.dot(
+            self.res_form -= dolfin.inner(
                -loading.val * self.mesh_normals,
-                dolfin.inv(self.kinematics.Ft))
-            self.res_form -= self.kinematics.Jt * dolfin.inner(
-                T,
                 self.subsols["U"].dsubtest) * loading.measure
 
         self.res_form += dolfin.inner(
@@ -169,7 +169,7 @@ class TwoSubfuncPoroProblem(HyperelasticityProblem):
 
         self.res_form += dolfin.inner(
                 self.dWbulkdJs + self.dWpordJs,
-                self.subsols["Phi"].dsubtest) * self.dV
+                self.subsols["Phi0"].dsubtest) * self.dV
 
         self.jac_form = dolfin.derivative(
             self.res_form,
@@ -178,13 +178,13 @@ class TwoSubfuncPoroProblem(HyperelasticityProblem):
 
 
 
-    def add_Phi_qois(self):
+    def add_Phi0_qois(self):
 
-        basename = "PHI_"
+        basename = "PHI0_"
 
         self.add_qoi(
             name=basename,
-            expr=self.Phi / self.mesh_V0 * self.dV)
+            expr=self.Phi0 / self.mesh_V0 * self.dV)
 
 
 
