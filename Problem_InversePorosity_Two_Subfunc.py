@@ -74,23 +74,24 @@ class TwoSubfuncInversePoroProblem(InverseHyperelasticityProblem):
 
     def set_porosity_energy(self):
 
-        # # exp
-        # dWpordJs = self.eta * (self.Phi0 / (self.kinematics.Je * self.Phi))**2 * dolfin.exp(-self.kinematics.Je * self.Phi / (self.Phi0 - self.kinematics.Je * self.Phi)) / (self.Phi0 - self.kinematics.Je * self.Phi)
-        # # n = 2
-        # # dWpordJs = self.eta * n * ((self.Phi0 - self.kinematics.Je * self.Phi) / (self.kinematics.Je * self.Phi))**(n-1) * self.Phi0 / (self.kinematics.Je * self.Phi)**2
-        # # dWpordJs = 0
-        # dWpordJs_condition = dolfin.conditional(dolfin.lt(self.Phi, self.Phi0), dWpordJs, 0)
-        # self.dWpordJs = (1 - self.Phi0) * dWpordJs_condition
-
-        n = 4
-        dWpordJs = - self.eta * n * ((self.Phi0 - self.kinematics.Je * self.Phi) / (self.kinematics.Je * self.Phi*self.Phi0))**(n-1) / (self.kinematics.Je * self.Phi)**2
-        dWpordJs_condition = dolfin.conditional(dolfin.lt(self.Phi0, self.Phi), dWpordJs, 0)
+        # exp
+        dWpordJs = self.eta * (self.Phi0 / (self.kinematics.Je * self.Phi))**2 * dolfin.exp(-self.kinematics.Je * self.Phi / (self.Phi0 - self.kinematics.Je * self.Phi)) / (self.Phi0 - self.kinematics.Je * self.Phi)
+        # n = 2
+        # dWpordJs = self.eta * n * ((self.Phi0 - self.kinematics.Je * self.Phi) / (self.kinematics.Je * self.Phi))**(n-1) * self.Phi0 / (self.kinematics.Je * self.Phi)**2
+        # dWpordJs = 0
+        dWpordJs_condition = dolfin.conditional(dolfin.lt(self.Phi, self.Phi0), dWpordJs, 0)
         self.dWpordJs = (1 - self.Phi0) * dWpordJs_condition
+
+        # n = 4
+        # dWpordJs = - self.eta * n * ((self.Phi0 - self.kinematics.Je * self.Phi) / (self.kinematics.Je * self.Phi*self.Phi0))**(n-1) / (self.kinematics.Je * self.Phi)**2
+        # dWpordJs_condition = dolfin.conditional(dolfin.lt(self.Phi0, self.Phi), dWpordJs, 0)
+        # self.dWpordJs = (1 - self.Phi0) * dWpordJs_condition
 
 
 
     def set_bulk_energy(self):
 
+        self.Wbulk = self.kappa * (self.kinematics.Js / (1. - self.Phi0) - 1 - dolfin.ln(self.kinematics.Js / (1. - self.Phi0)))
         dWbulkdJs = self.kappa * (1. / (1. - self.Phi0) - 1./self.kinematics.Js)
         self.dWbulkdJs = (1 - self.Phi0) * dWbulkdJs
 
@@ -104,6 +105,8 @@ class TwoSubfuncInversePoroProblem(InverseHyperelasticityProblem):
             self.Phi  = Nan
         elif self.config_porosity == 'deformed':
             self.Phi0 = self.subsols["Phi0"].subfunc
+            # self.Phi0 = dolfin.conditional(dolfin.gt(self.Phi0,0), self.Phi0, 0)
+            self.Phi0bin = dolfin.conditional(dolfin.gt(self.Phi0,0), 1, 0)
             self.Phi  = self.porosity_given
 
 
@@ -161,14 +164,15 @@ class TwoSubfuncInversePoroProblem(InverseHyperelasticityProblem):
                 self.subsols["U"].dsubtest) * loading.measure
 
         self.res_form += dolfin.inner(
-            - (self.p0 + self.dWpordJs) * self.kinematics.Je * self.kinematics.Ce_inv,
+            self.dWbulkdJs * self.kinematics.Je * self.kinematics.Ce_inv,
+            # - (self.p0 + self.dWpordJs) * self.kinematics.Je * self.kinematics.Ce_inv,
             dolfin.derivative(
                     self.kinematics.Et,
                     self.subsols["U"].subfunc,
                     self.subsols["U"].dsubtest)) * self.dV
 
         self.res_form += dolfin.inner(
-                self.dWbulkdJs + self.dWpordJs,
+                self.Phi0bin * (self.dWbulkdJs + self.dWpordJs + self.p0) + (1 - self.Phi0bin) * self.subsols["Phi0"].subfunc,
                 self.subsols["Phi0"].dsubtest) * self.dV
 
         self.jac_form = dolfin.derivative(
@@ -215,3 +219,36 @@ class TwoSubfuncInversePoroProblem(InverseHyperelasticityProblem):
         self.add_qoi(
             name=basename,
             expr=self.dWbulkdJs / self.mesh_V0 * self.dV)
+
+
+
+    def add_Phi0bin_qois(self):
+
+        basename = "Phi0bin_"
+
+        self.add_qoi(
+            name=basename,
+            expr=self.Phi0bin * self.dV)
+
+
+
+    def add_psi_qois(self):
+
+        basename = "Psi_"
+        psi = 0
+        for subdomain in self.subdomains :
+            psi += subdomain.Psi * self.dV(subdomain.id)
+
+        self.add_qoi(
+            name=basename,
+            expr=psi)
+
+
+
+    def add_Wbulk_qois(self):
+
+        basename = "Wbulk_"
+
+        self.add_qoi(
+            name=basename,
+            expr=self.Wbulk * self.dV)
