@@ -79,7 +79,7 @@ class TwoSubfuncPoroProblem(HyperelasticityProblem):
         dWpordJs = self.eta * (self.Phi0 / (self.kinematics.Je * self.Phi))**2 * dolfin.exp(-self.kinematics.Je * self.Phi / (self.Phi0 - self.kinematics.Je * self.Phi)) / (self.Phi0 - self.kinematics.Je * self.Phi)
         # n = 2
         # dWpordJs = self.eta * n * ((self.Phi0 - self.kinematics.Je * self.Phi) / (self.kinematics.Je * self.Phi))**(n-1) * self.Phi0 / (self.kinematics.Je * self.Phi)**2
-        # dWpordJ = 0
+        # dWpordJs = 0
         dWpordJs_condition = dolfin.conditional(dolfin.lt(self.Phi, self.Phi0), dWpordJs, 0)
         self.dWpordJs = (1 - self.Phi0) * dWpordJs_condition
 
@@ -97,6 +97,8 @@ class TwoSubfuncPoroProblem(HyperelasticityProblem):
 
         if self.config_porosity == 'ref':
             self.Phi0 = self.porosity_given
+            # self.Phi0 = dolfin.conditional(dolfin.gt(self.Phi0,0), self.Phi0, 0)
+            self.Phi0bin = dolfin.conditional(dolfin.gt(self.Phi0,0), 1, 0)
             self.Phi  = self.subsols["Phi"].subfunc
         elif self.config_porosity == 'deformed':
             self.Phi0 = Nan
@@ -168,7 +170,7 @@ class TwoSubfuncPoroProblem(HyperelasticityProblem):
                     self.subsols["U"].dsubtest)) * self.dV
 
         self.res_form += dolfin.inner(
-                self.dWbulkdJs + self.dWpordJs,
+                self.dWbulkdJs + self.dWpordJs + self.p0,
                 self.subsols["Phi"].dsubtest) * self.dV
 
         self.jac_form = dolfin.derivative(
@@ -215,3 +217,13 @@ class TwoSubfuncPoroProblem(HyperelasticityProblem):
         self.add_qoi(
             name=basename,
             expr=self.dWbulkdJs / self.mesh_V0 * self.dV)
+
+
+
+    def add_Phi0bin_qois(self):
+
+        basename = "Phi0bin_"
+
+        self.add_qoi(
+            name=basename,
+            expr=self.Phi0bin * self.dV)
