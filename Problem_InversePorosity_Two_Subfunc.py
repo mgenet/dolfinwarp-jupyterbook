@@ -172,7 +172,7 @@ class TwoSubfuncInversePoroProblem(InverseHyperelasticityProblem):
                     self.subsols["U"].dsubtest)) * self.dV
 
         self.res_form += dolfin.inner(
-                self.Phi0bin * (self.dWbulkdJs + self.dWpordJs + self.p0) + (1 - self.Phi0bin) * self.subsols["Phi0"].subfunc,
+                self.Phi0bin * (self.dWbulkdJs + self.dWpordJs + self.p0) + (1 - self.Phi0bin) * self.Phi0,
                 self.subsols["Phi0"].dsubtest) * self.dV
 
         self.jac_form = dolfin.derivative(

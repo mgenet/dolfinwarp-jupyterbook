@@ -111,7 +111,7 @@ class TwoSubfuncPoroProblem(HyperelasticityProblem):
         HyperelasticityProblem.set_kinematics(self)
 
         self.set_Phi0_and_Phi(self.config_porosity)
-        self.kinematics.Js = self.kinematics.Je * (1 - self.subsols["Phi"].subfunc)
+        self.kinematics.Js = self.kinematics.Je * (1 - self.Phi)
 
 
 
@@ -163,14 +163,15 @@ class TwoSubfuncPoroProblem(HyperelasticityProblem):
                 self.subsols["U"].dsubtest) * loading.measure
 
         self.res_form += dolfin.inner(
-            - (self.p0 + self.dWpordJs) * self.kinematics.Je * self.kinematics.Ce_inv,
+            self.dWbulkdJs * self.kinematics.Je * self.kinematics.Ce_inv,
+            # - (self.p0 + self.dWpordJs) * self.kinematics.Je * self.kinematics.Ce_inv,
             dolfin.derivative(
                     self.kinematics.Et,
                     self.subsols["U"].subfunc,
                     self.subsols["U"].dsubtest)) * self.dV
 
         self.res_form += dolfin.inner(
-                self.dWbulkdJs + self.dWpordJs + self.p0,
+                self.Phi0bin * (self.dWbulkdJs + self.dWpordJs + self.p0) + (1 - self.Phi0bin) * self.Phi,
                 self.subsols["Phi"].dsubtest) * self.dV
 
         self.jac_form = dolfin.derivative(
