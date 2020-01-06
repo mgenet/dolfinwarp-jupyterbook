@@ -63,3 +63,7 @@ class SphericalKinematics(Kinematics):
 
         self.Ee     = (self.Ce     - self.I)/2
         self.Ee_old = (self.Ce_old - self.I)/2
+
+        self.Fe_mid = (self.Fe_old + self.Fe)/2
+        self.Ce_mid = (self.Ce_old + self.Ce)/2
+        self.Ee_mid = (self.Ee_old + self.Ee)/2
