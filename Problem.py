@@ -170,7 +170,8 @@ class Problem():
             name,
             family="CG",
             degree=1,
-            init_val=None):
+            init_val=None,
+            init_field=None):
 
         fe = dolfin.FiniteElement(
             family=family,
@@ -180,7 +181,8 @@ class Problem():
         self.add_subsol(
             name=name,
             fe=fe,
-            init_val=init_val)
+            init_val=init_val,
+            init_field=init_field)
 
 
 
@@ -283,20 +285,50 @@ class Problem():
             subsol.dfunc = dfuncs[k_subsol]
             subsol.dfunc.rename("d"+subsol.name, "d"+subsol.name)
 
-        init_val = [str(val) for val in numpy.concatenate([subsol.init_val.flatten() for subsol in self.subsols.values()])]
-        self.sol_func.interpolate(dolfin.Expression(
-            init_val,
-            element=self.sol_fe))
-        self.sol_old_func.interpolate(dolfin.Expression(
-            init_val,
-            element=self.sol_fe))
+        # init_val = [str(val) for val in numpy.concatenate([subsol.init_val.flatten() for subsol in self.subsols.values()])]
+        # self.sol_func.interpolate(dolfin.Expression(
+        #     init_val,
+        #     element=self.sol_fe))
+        # self.sol_old_func.interpolate(dolfin.Expression(
+        #     init_val,
+        #     element=self.sol_fe))
+        # if (len(self.subsols) > 1):
+        #     dolfin.assign(
+        #         self.get_subsols_func_lst(),
+        #         self.sol_func)
+        #     dolfin.assign(
+        #         self.get_subsols_func_old_lst(),
+        #         self.sol_old_func)
+
+        for subsol in self.subsols.values():
+            if subsol.init_val is not None:
+                init_val = [str(val) for val in numpy.concatenate([subsol.init_val.flatten()])]
+                if len(init_val) == 1:
+                    init_val = init_val[0]
+                subsol.func.interpolate(dolfin.Expression(
+                    init_val,
+                    element=subsol.fe))
+                subsol.func_old.interpolate(dolfin.Expression(
+                    init_val,
+                    element=subsol.fe))
+            elif subsol.init_field is not None:
+                #doesnt work for mf
+                # dolfin.assign(
+                #     subsol.func,
+                #     subsol.init_field)
+                # dolfin.assign(
+                #     subsol.func_old,
+                #     subsol.init_field)
+                #work with mf
+                subsol.func.vector()[:] = subsol.init_field.array()[:]
+                subsol.func_old.vector()[:] = subsol.init_field.array()[:]
         if (len(self.subsols) > 1):
             dolfin.assign(
-                self.get_subsols_func_lst(),
-                self.sol_func)
+                self.sol_func,
+                self.get_subsols_func_lst())
             dolfin.assign(
-                self.get_subsols_func_old_lst(),
-                self.sol_old_func)
+                self.sol_old_func,
+                self.get_subsols_func_old_lst())
 
 
 

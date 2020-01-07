@@ -28,29 +28,38 @@ class TwoSubfuncInversePoroProblem(InverseHyperelasticityProblem):
             p0 = 0):
 
         InverseHyperelasticityProblem.__init__(self,w_incompressibility=False)
-        self.eta   = eta
-        self.kappa = kappa
-        self.p0    = p0
+        self.eta                 = eta
+        self.kappa               = kappa
+        self.p0                  = p0
+        self.porosity_init_val   = None
+        self.porosity_init_field = None
+        self.porosity_given      = None
+        self.config_porosity     = None
 
 
 
     def add_porosity_subsol(self,
             degree):
 
+        if self.porosity_init_val is not None:
+            init_val = numpy.array([self.porosity_init_val])
+        else:
+            init_val = self.porosity_init_val
+
         if (degree == 0):
             self.add_scalar_subsol(
                 name="Phi0",
                 family="DG",
                 degree=0,
-                init_val=numpy.array([self.value_phi_given]))
-                # init_val=self.porosity_given)
+                init_val=init_val,
+                init_field=self.porosity_init_field)
         else:
             self.add_scalar_subsol(
                 name="Phi0",
                 family="CG",
                 degree=degree,
-                init_val=numpy.array([self.value_phi_given]))
-                # init_val=self.porosity_given)
+                init_val=init_val,
+                init_field=self.porosity_init_field)
 
 
 
