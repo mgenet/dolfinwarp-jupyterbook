@@ -97,7 +97,7 @@ class TwoSubfuncPoroProblem(HyperelasticityProblem):
 
         if self.config_porosity == 'ref':
             self.Phi0 = self.porosity_given
-            # self.Phi0 = dolfin.conditional(dolfin.gt(self.Phi0,0), self.Phi0, 0)
+            self.Phi0pos = dolfin.conditional(dolfin.gt(self.Phi0,0), self.Phi0, 0)
             self.Phi0bin = dolfin.conditional(dolfin.gt(self.Phi0,0), 1, 0)
             self.Phi  = self.subsols["Phi"].subfunc
         elif self.config_porosity == 'deformed':
