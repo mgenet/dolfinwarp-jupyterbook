@@ -46,9 +46,9 @@ class HookeElasticMaterial(ElasticMaterial):
             assert (epsilon.ufl_shape[0] == epsilon.ufl_shape[1])
             dim = epsilon.ufl_shape[0]
 
-        Psi = (self.lmbda/2) * dolfin.tr(epsilon)**2 + self.mu * dolfin.inner(epsilon, epsilon)
+        psi = (self.lmbda/2) * dolfin.tr(epsilon)**2 + self.mu * dolfin.inner(epsilon, epsilon)
 
         I = dolfin.Identity(dim)
-        Sigma = self.lmbda * dolfin.tr(epsilon) * I + 2 * self.mu * epsilon
+        sigma = self.lmbda * dolfin.tr(epsilon) * I + 2 * self.mu * epsilon
 
-        return Psi, Sigma
+        return psi, sigma

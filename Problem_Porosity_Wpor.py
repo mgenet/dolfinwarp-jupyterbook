@@ -82,10 +82,10 @@ class PoroWporProblem(HyperelasticityProblem):
 
     def add_Phydro_qois(self):
 
-        nb_subdomain = 0
+        n_subdomains = 0
         for subdomain in self.subdomains:
-            nb_subdomain += 1
-        if nb_subdomain == 1:
+            n_subdomains += 1
+        if n_subdomains == 1:
             basename = "Phydro_"
             P = -1./3. * dolfin.tr(self.subdomains[0].sigma)
 
@@ -97,10 +97,10 @@ class PoroWporProblem(HyperelasticityProblem):
 
     def add_dPsiBulkdJs_qois(self):
 
-        nb_subdomain = 0
+        n_subdomains = 0
         for subdomain in self.subdomains:
-            nb_subdomain += 1
-        if nb_subdomain == 1:
+            n_subdomains += 1
+        if n_subdomains == 1:
             basename = "dPsiBulkdJs_"
             kappa = 10**(9)
             deriv = kappa * (1 / (1 - self.porosity0) - 1 / self.kinematics.Js)
@@ -113,10 +113,10 @@ class PoroWporProblem(HyperelasticityProblem):
 
     def add_dPsiPordJ_qois(self):
 
-        nb_subdomain = 0
+        n_subdomains = 0
         for subdomain in self.subdomains:
-            nb_subdomain += 1
-        if nb_subdomain == 1:
+            n_subdomains += 1
+        if n_subdomains == 1:
             basename = "dPsiPordJ_"
             deriv = - self.eta_por / (self.kinematics.Je - self.kinematics.Js)
 
