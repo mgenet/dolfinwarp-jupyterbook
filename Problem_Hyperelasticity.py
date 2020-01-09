@@ -277,7 +277,7 @@ class HyperelasticityProblem(Problem):
 
 
 
-    def add_strain_qois(self,
+    def add_global_strain_qois(self,
             strain_type="elastic",
             configuration_type="loaded"):
 
@@ -318,7 +318,7 @@ class HyperelasticityProblem(Problem):
 
 
 
-    def add_J_qois(self,
+    def add_global_volume_ratio_qois(self,
             J_type="elastic",
             configuration_type="loaded"):
 
@@ -340,74 +340,60 @@ class HyperelasticityProblem(Problem):
 
 
 
-    def add_stress_qois(self,
+    def add_global_stress_qois(self,
             stress_type="cauchy"):
 
-        nb_subdomain = 0
+        n_subdomains = len(self.subdomains)
         for subdomain in self.subdomains:
-            nb_subdomain += 1
-
-        if nb_subdomain == 0:
-            if (stress_type in ("cauchy", "sigma")):
+            if (stress_type in ("Cauchy", "cauchy", "sigma")):
                 basename = "s_"
-                stress = self.sigma
-            elif (stress_type in ("piola", "PK2", "Sigma")):
+                stress = subdomain.sigma
+            elif (stress_type in ("Piola", "piola", "PK2", "Sigma")):
                 basename = "S_"
-                stress = self.Sigma
-            elif (stress_type in ("PK1", "P")):
+                stress = subdomain.Sigma
+            elif (stress_type in ("Boussinesq", "boussinesq", "PK1", "P")):
                 basename = "P_"
-                stress = self.PK1
+                stress = subdomain.PK1
 
-        elif nb_subdomain == 1:
-            if (stress_type in ("cauchy", "sigma")):
-                basename = "s_"
-                stress = self.subdomains[0].sigma
-            elif (stress_type in ("piola", "PK2", "Sigma")):
-                basename = "S_"
-                stress = self.subdomains[0].Sigma
-            elif (stress_type in ("PK1", "P")):
-                basename = "P_"
-                stress = self.subdomains[0].PK1
+            if (n_subdomains > 1):
+                basename += str(subdomain.id)+"_"
 
-        self.add_qoi(
-            name=basename+"XX",
-            expr=stress[0,0] * self.dV)
-        if (self.dim >= 2):
             self.add_qoi(
-                name=basename+"YY",
-                expr=stress[1,1] * self.dV)
-            if (self.dim >= 3):
+                name=basename+"XX",
+                expr=stress[0,0] * self.dV)
+            if (self.dim >= 2):
                 self.add_qoi(
-                    name=basename+"ZZ",
-                    expr=stress[2,2] * self.dV)
-        if (self.dim >= 2):
-            self.add_qoi(
-                name=basename+"XY",
-                expr=stress[0,1] * self.dV)
-            if (self.dim >= 3):
+                    name=basename+"YY",
+                    expr=stress[1,1] * self.dV)
+                if (self.dim >= 3):
+                    self.add_qoi(
+                        name=basename+"ZZ",
+                        expr=stress[2,2] * self.dV)
+            if (self.dim >= 2):
                 self.add_qoi(
-                    name=basename+"YZ",
-                    expr=stress[1,2] * self.dV)
-                self.add_qoi(
-                    name=basename+"ZX",
-                    expr=stress[2,0] * self.dV)
+                    name=basename+"XY",
+                    expr=stress[0,1] * self.dV)
+                if (self.dim >= 3):
+                    self.add_qoi(
+                        name=basename+"YZ",
+                        expr=stress[1,2] * self.dV)
+                    self.add_qoi(
+                        name=basename+"ZX",
+                        expr=stress[2,0] * self.dV)
 
 
 
-    def add_P_qois(self):
+    def add_global_pressure_qois(self):
 
-        nb_subdomain = 0
+        n_subdomains = len(self.subdomains)
         for subdomain in self.subdomains:
-            nb_subdomain += 1
-        # print nb_subdomain
 
-        if nb_subdomain == 0:
-             basename = "P_"
-             P = -1./3. * dolfin.tr(self.sigma)
-        elif nb_subdomain == 1:
-            basename = "P_"
-            P = -1./3. * dolfin.tr(self.subdomains[0].sigma)
+            basename = "p_"
+            if (n_subdomains > 1):
+                basename += str(subdomain.id)+"_"
 
-        self.add_qoi(
-            name=basename,
-            expr=P * self.dV)
+            p = -1./3. * dolfin.tr(subdomain.sigma)
+
+            self.add_qoi(
+                name=basename,
+                expr=p * self.dV)
