@@ -22,7 +22,8 @@ class HookeElasticMaterial(ElasticMaterial):
 
 
     def __init__(self,
-            parameters):
+            parameters,
+            PS=False):
 
         if ("lambda" in parameters) and ("mu" in parameters):
             self.lmbda = dolfin.Constant(parameters["lambda"])
@@ -30,8 +31,11 @@ class HookeElasticMaterial(ElasticMaterial):
         elif ("E" in parameters) and ("nu" in parameters):
             self.E  = dolfin.Constant(parameters["E"])
             self.nu = dolfin.Constant(parameters["nu"])
-            self.lmbda = self.E*self.nu/(1+self.nu)/(1-2*self.nu) # MG20180516: in 2d, plane strain
-            self.mu    = self.E/2/(1+self.nu)
+            if (PS):
+                self.lmbda = dolfin.Constant(self.E*self.nu/(1+self.nu)/(1-  self.nu))
+            else:
+                self.lmbda = dolfin.Constant(self.E*self.nu/(1+self.nu)/(1-2*self.nu))
+            self.mu    = dolfin.Constant(self.E/2/(1+self.nu))
 
 
 
