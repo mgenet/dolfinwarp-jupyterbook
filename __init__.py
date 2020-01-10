@@ -2,6 +2,7 @@
 
 from .Material_Elastic_Dev import *
 from .Kinematics_Linearized import *
+from .Material_Elastic_Jerome import *
 from .NonlinearSolver import *
 from .Material_Inelastic_Growth_StrainDriven import *
 from .Material_Elastic_Kirchhoff import *
@@ -19,7 +20,6 @@ from .XDMFFile import *
 from .QOI import *
 from .Material_Elastic_CiarletGeymonatNeoHookean import *
 from .Material_Elastic import *
-from .Material_Elastic_Jérôme import *
 from .Kinematics import *
 from .TimeVaryingConstant import *
 from .Step import *
