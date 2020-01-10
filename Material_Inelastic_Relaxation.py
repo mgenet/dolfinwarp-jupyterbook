@@ -18,8 +18,6 @@ from .Material_Inelastic import InelasticMaterial
 
 ################################################################################
 
-
-
 class RelaxationInelasticMaterial(InelasticMaterial):
 
 

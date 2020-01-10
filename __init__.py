@@ -4,7 +4,9 @@ from .Material_Elastic_Dev import *
 from .Kinematics_Linearized import *
 from .Material_Elastic_Jerome import *
 from .NonlinearSolver import *
+from .Material_Elastic_Damaged import *
 from .Material_Inelastic_Growth_StrainDriven import *
+from .Material_Inelastic_Damage import *
 from .Material_Elastic_Kirchhoff import *
 from .Material_Elastic_Bulk_Poro_Skeleton import *
 from .Material_Inelastic_Relaxation import *
@@ -17,6 +19,7 @@ from .Material_Elastic_Porous import *
 from .SubSol import *
 from .TimeIntegrator import *
 from .XDMFFile import *
+from .Problem_Damage import *
 from .QOI import *
 from .Material_Elastic_CiarletGeymonatNeoHookean import *
 from .Material_Elastic import *

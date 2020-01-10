@@ -145,7 +145,6 @@ class HyperelasticityProblem(Problem):
             elastic_behavior_dev=elastic_behavior_dev,
             elastic_behavior_bulk=elastic_behavior_bulk,
             id=subdomain_id)
-
         self.subdomains += [subdomain]
 
         self.add_foi(expr=subdomain.Sigma, fs=self.mfoi_fs, name="Sigma")

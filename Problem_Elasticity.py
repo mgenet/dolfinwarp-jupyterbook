@@ -69,28 +69,6 @@ class ElasticityProblem(Problem):
 
 
 
-    def set_solution_degree(self,
-            U_degree=1): #MG20190513: Should have different name, right?
-
-        self.set_subsols(
-            U_degree=U_degree)
-        self.set_solution_finite_element()
-        self.set_solution_function_space()
-        self.set_solution_functions()
-
-        if (self.mesh.ufl_cell().cellname() in ("triangle", "tetrahedron")):
-            quadrature_degree = max(1, 2*(U_degree-1))
-        elif (self.mesh.ufl_cell().cellname() in ("quadrilateral", "hexahedron")):
-            quadrature_degree = max(1, 2*(self.dim*U_degree-1))
-        self.set_quadrature_degree(
-            quadrature_degree=quadrature_degree)
-
-        self.set_foi_finite_elements_DG(
-            degree=0)
-        self.set_foi_function_spaces()
-
-
-
     def get_displacement_function_space(self):
 
         if (len(self.subsols) == 1):
@@ -139,7 +117,6 @@ class ElasticityProblem(Problem):
             elastic_behavior_dev=elastic_behavior_dev,
             elastic_behavior_bulk=elastic_behavior_bulk,
             id=subdomain_id)
-
         self.subdomains += [subdomain]
 
         self.add_foi(expr=subdomain.sigma, fs=self.mfoi_fs, name="sigma")

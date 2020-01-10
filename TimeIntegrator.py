@@ -229,7 +229,6 @@ class TimeIntegrator():
 
                 for inelastic_behavior in self.problem.inelastic_behaviors_internal:
                     inelastic_behavior.update_internal_variables_at_t(
-                        self.problem,
                         t)
 
                 self.problem.sol_old_func.vector()[:] = self.problem.sol_func.vector()[:]

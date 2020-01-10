@@ -36,16 +36,16 @@ class PorousMaterial(ElasticMaterial):
 
 
     def get_free_energy(self,
-            C=None):
+            C):
 
-        Psi_mat, Sigma_mat = self.material.get_free_energy(C=C)
-        if self.config_porosity == 'ref':
-            Psi = (1 - self.porosity) * Psi_mat
+        Psi_mat, Sigma_mat = self.material.get_free_energy(
+            C=C)
+        if   (self.config_porosity == 'ref'):
+            Psi   = (1 - self.porosity) * Psi_mat
             Sigma = (1 - self.porosity) * Sigma_mat
-        elif self.config_porosity == 'deformed':
-            assert C is not None
+        elif (self.config_porosity == 'deformed'):
             J = dolfin.sqrt(dolfin.det(C))
-            Psi = (1 - self.porosity) * J * Psi_mat
+            Psi   = (1 - self.porosity) * J * Psi_mat
             Sigma = (1 - self.porosity) * J * Sigma_mat
 
         return Psi, Sigma

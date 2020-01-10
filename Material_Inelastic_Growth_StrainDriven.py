@@ -18,8 +18,6 @@ from .Material_Inelastic_Growth import GrowthInelasticMaterial
 
 ################################################################################
 
-
-
 class StrainDrivenGrowthInelasticMaterial(GrowthInelasticMaterial):
 
 
