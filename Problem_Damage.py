@@ -54,19 +54,17 @@ class DamageProblem(ElasticityProblem):
 
 
     def set_materials(self,
-            damaged_behavior,
+            elastic_behavior,
             damage_behavior):
 
+        self.psi_eff, self.sigma_eff = elastic_behavior.get_free_energy(
+            epsilon=self.kinematics.epsilon)
+
         if   (self.w_damage == "mixed"):
-            self.psi, self.sigma = damaged_behavior.get_free_energy(
-                epsilon=self.kinematics.epsilon,
-                d=self.subsols["d"].subfunc)
+            damage_behavior.set_internal_variables_mixed()
             self.inelastic_behaviors_mixed += [damage_behavior]
         elif (self.w_damage == "internal"):
             damage_behavior.set_internal_variables_internal()
-            self.psi, self.sigma = damaged_behavior.get_free_energy(
-                epsilon=self.kinematics.epsilon,
-                d=damage_behavior.d)
             self.inelastic_behaviors_internal += [damage_behavior]
 
         self.add_foi(expr=self.sigma, fs=self.mfoi_fs, name="sigma")
@@ -115,6 +113,9 @@ class DamageProblem(ElasticityProblem):
             self.res_form,
             self.sol_func,
             self.dsol_tria)
+
+        for inelastic_behavior in self.inelastic_behaviors_internal:
+            self.jac_form += inelastic_behavior.get_jac_term()
 
 
 

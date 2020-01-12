@@ -270,6 +270,9 @@ class TimeIntegrator():
                             self.problem.get_subsols_func_lst(),
                             self.problem.sol_func)
 
+                    for inelastic_behavior in self.problem.inelastic_behaviors_internal:
+                        inelastic_behavior.restore_old_value()
+
                     for constraint in step.constraints:
                         constraint.restore_old_value()
 

@@ -34,26 +34,37 @@ class DamageInelasticMaterial(InelasticMaterial):
 
 
 
+    def get_d(self):
+
+        d = ((dolfin.tr(self.problem.kinematics.epsilon) - dolfin.Constant(self.epsilon0))/(dolfin.Constant(self.epsilon1)-dolfin.Constant(self.epsilon0)))**dolfin.Constant(self.gamma)
+        d = dolfin.conditional(dolfin.ge(d, 0.), d, 0.)
+        d = dolfin.conditional(dolfin.le(d, 1.), d, 1.)
+        # d = dolfin.conditional(dolfin.ge(d, self.d_old), d, self.d_old) # MG20200112: Does not work with mixed formulation?
+
+        return d
+
+
 ###################################################### for mixed formulation ###
 
 
 
     def set_internal_variables_mixed(self):
 
-        pass
+        self.d     = self.problem.subsols["d"].func
+        self.d_old = self.problem.subsols["d"].func_old
+
+        self.problem.psi   = (1 - self.d) * self.problem.psi_eff
+        self.problem.sigma = (1 - self.d) * self.problem.sigma_eff
 
 
 
     def get_res_term(self,
             dt):
 
-        d_new = ((dolfin.tr(self.problem.kinematics.epsilon) - self.epsilon0)/(self.epsilon1-self.epsilon0))**(self.gamma)
-        d_new = dolfin.conditional(dolfin.ge(d_new, 0.), d_new, 0.)
-        d_new = dolfin.conditional(dolfin.le(d_new, 1.), d_new, 1.)
-        d_new = dolfin.conditional(dolfin.ge(d_new, self.problem.subsols["d"].func_old), d_new, self.problem.subsols["d"].func_old)
+        d = self.get_d()
 
         res_form = dolfin.inner(
-            self.problem.subsols["d"].subfunc - d_new,
+            self.problem.subsols["d"].subfunc - d,
             self.problem.subsols["d"].dsubtest) * self.problem.dV
 
         return res_form
@@ -69,19 +80,23 @@ class DamageInelasticMaterial(InelasticMaterial):
         self.d_fs = self.problem.sfoi_fs
 
         self.d      = dolfin.Function(self.d_fs)
+        self.d_old  = dolfin.Function(self.d_fs)
+
+        self.problem.add_foi(expr=self.d, fs=self.d_fs, name="d")
+
+        self.problem.psi   = (1 - self.d) * self.problem.psi_eff
+        self.problem.sigma = (1 - self.d) * self.problem.sigma_eff
+
         self.d_test = dolfin.TestFunction(self.d_fs)
         self.d_tria = dolfin.TrialFunction(self.d_fs)
 
-        self.d_new = ((dolfin.tr(self.problem.kinematics.epsilon) - self.epsilon0)/(self.epsilon1-self.epsilon0))**(self.gamma)
-        self.d_new = dolfin.conditional(dolfin.ge(self.d_new,     0.), self.d_new, 0.    )
-        self.d_new = dolfin.conditional(dolfin.le(self.d_new,     1.), self.d_new, 1.    )
-        self.d_new = dolfin.conditional(dolfin.ge(self.d_new, self.d), self.d_new, self.d)
+        d = self.get_d()
 
         self.a_expr = dolfin.inner(
             self.d_tria,
             self.d_test) * self.problem.dV
         self.b_expr = dolfin.inner(
-            self.d_new,
+            d,
             self.d_test) * self.problem.dV
         self.local_solver = dolfin.LocalSolver(
             self.a_expr,
@@ -93,7 +108,31 @@ class DamageInelasticMaterial(InelasticMaterial):
     def update_internal_variables_at_t(self,
             t):
 
-        pass
+        self.d_old.vector()[:] = self.d.vector()[:]
+
+
+
+    def get_jac_term(self):
+
+        d = self.get_d()
+
+        jac_form = dolfin.inner(
+            dolfin.diff(
+                self.problem.sigma,
+                self.d),
+            dolfin.derivative(
+                self.problem.kinematics.epsilon,
+                self.problem.subsols["u"].subfunc,
+                self.problem.subsols["u"].dsubtest)) * dolfin.inner(
+            dolfin.diff(
+                d,
+                dolfin.variable(self.problem.kinematics.epsilon)),
+            dolfin.derivative(
+                self.problem.kinematics.epsilon,
+                self.problem.subsols["u"].subfunc,
+                self.problem.subsols["u"].dsubtria)) * self.problem.dV
+
+        return jac_form
 
 
 
@@ -101,3 +140,9 @@ class DamageInelasticMaterial(InelasticMaterial):
             dt, t):
 
         self.local_solver.solve_local_rhs(self.d)
+
+
+
+    def restore_old_value(self):
+
+        self.d.vector()[:] = self.d_old.vector()[:]
