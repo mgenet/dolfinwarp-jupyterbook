@@ -25,12 +25,15 @@ class TwoSubfuncInversePoroProblem(InverseHyperelasticityProblem):
     def __init__(self,
             eta,
             kappa,
+            w_contact = 1,
             p0 = 0):
 
         InverseHyperelasticityProblem.__init__(self,w_incompressibility=False)
         self.eta                 = eta
         self.kappa               = kappa
         self.p0                  = p0
+        self.w_contact           = w_contact
+        self.inertia             = None
         self.porosity_init_val   = None
         self.porosity_init_field = None
         self.porosity_given      = None
@@ -89,18 +92,20 @@ class TwoSubfuncInversePoroProblem(InverseHyperelasticityProblem):
         # dWpordJs = self.eta * n * ((self.Phi0 - self.kinematics.Je * self.Phi) / (self.kinematics.Je * self.Phi))**(n-1) * self.Phi0 / (self.kinematics.Je * self.Phi)**2
         # dWpordJs = 0
         dWpordJs_condition = dolfin.conditional(dolfin.lt(self.Phi, self.Phi0), dWpordJs, 0)
-        self.dWpordJs = dWpordJs_condition
+        self.dWpordJs = (1 - self.Phi0) * dWpordJs_condition
 
 
 
     def set_bulk_energy(self):
 
-        # self.Wbulk = self.kappa * (self.kinematics.Js / (1. - self.Phi0pos) - 1 - dolfin.ln(self.kinematics.Js / (1. - self.Phi0pos)))
-        dWbulkdJs_pos = self.kappa * (1. / (1. - self.Phi0pos) - 1./self.kinematics.Js)
-        self.dWbulkdJs_pos = (1 - self.Phi0pos) * dWbulkdJs_pos
-
         dWbulkdJs = self.kappa * (1. / (1. - self.Phi0) - 1./self.kinematics.Js)
         self.dWbulkdJs = (1 - self.Phi0) * dWbulkdJs
+
+        if self.w_contact:
+            dWbulkdJs_pos = self.kappa * (1. / (1. - self.Phi0pos) - 1./self.kinematics.Js)
+            self.dWbulkdJs_pos = (1 - self.Phi0pos) * dWbulkdJs_pos
+        else:
+            self.dWbulkdJs_pos = self.dWbulkdJs
 
 
 
@@ -112,7 +117,6 @@ class TwoSubfuncInversePoroProblem(InverseHyperelasticityProblem):
             self.Phi  = Nan
         elif self.config_porosity == 'deformed':
             self.Phi0 = self.subsols["Phi0"].subfunc
-            # self.Phi0pos = self.Phi0
             self.Phi0pos = dolfin.conditional(dolfin.gt(self.Phi0,0), self.Phi0, 0)
             self.Phi0bin = dolfin.conditional(dolfin.gt(self.Phi0,0), 1, 0)
             self.Phi  = self.porosity_given
@@ -161,6 +165,11 @@ class TwoSubfuncInversePoroProblem(InverseHyperelasticityProblem):
 
         self.res_form = 0
 
+        if self.inertia is not None:
+            self.res_form += self.inertia / dt * dolfin.inner(
+                    self.subsols["U"].subfunc,
+                    self.subsols["U"].dsubtest) * self.dV
+
         for subdomain in self.subdomains :
             self.res_form += dolfin.inner(
                 subdomain.sigma,
@@ -181,8 +190,9 @@ class TwoSubfuncInversePoroProblem(InverseHyperelasticityProblem):
             # - (self.p0 + self.dWpordJs) * self.kinematics.I,
             dolfin.sym(dolfin.grad(self.subsols["U"].dsubtest))) * self.dV
 
+        p0_loading_val = pressure0_loadings[0].val
         self.res_form += dolfin.inner(
-                self.dWbulkdJs + self.dWpordJs + self.p0,
+                self.dWbulkdJs + self.dWpordJs + p0_loading_val,
                 self.subsols["Phi0"].dsubtest) * self.dV
 
         self.jac_form = dolfin.derivative(
@@ -199,6 +209,16 @@ class TwoSubfuncInversePoroProblem(InverseHyperelasticityProblem):
         self.add_qoi(
             name=basename,
             expr=self.Phi0 / self.mesh_V0 * self.dV)
+
+
+
+    def add_Phi_qois(self):
+
+        basename = "PHI_"
+
+        self.add_qoi(
+            name=basename,
+            expr=self.Phi / self.mesh_V0 * self.dV)
 
 
 
@@ -238,7 +258,7 @@ class TwoSubfuncInversePoroProblem(InverseHyperelasticityProblem):
 
         self.add_qoi(
             name=basename,
-            expr=self.Phi0bin * self.dV)
+            expr=self.Phi0bin / self.mesh_V0 * self.dV)
 
 
 
@@ -248,20 +268,64 @@ class TwoSubfuncInversePoroProblem(InverseHyperelasticityProblem):
 
         self.add_qoi(
             name=basename,
-            expr=self.Phi0pos * self.dV)
+            expr=self.Phi0pos / self.mesh_V0 * self.dV)
 
 
 
-    def add_psi_qois(self):
+    def add_mnorm_qois(self):
 
-        basename = "Psi_"
-        psi = 0
-        for subdomain in self.subdomains :
-            psi += subdomain.Psi * self.dV(subdomain.id)
+        basename = "M_NORM"
+        value = self.kinematics.Je * self.Phi - self.Phi0
 
         self.add_qoi(
             name=basename,
-            expr=psi)
+            expr=value / self.mesh_V0 * self.dV)
+
+
+
+    # def add_nb_phi_zero(self):
+    #
+    #     basename = 'NB_PHI_0'
+    #     nb_phi_zero = 0
+    #     nb_phi_zero_1 = 0
+    #
+    #     cell_domains = dolfin.MeshFunction("size_t", self.mesh, 3)
+    #     assert len(cell_domains) == len(self.mesh.cells())
+    #     for k_cell in range(len(self.mesh.cells())):
+    #         cell_domains.set_all(0)
+    #         cell_domains[k_cell] = 1
+    #         dV = dolfin.Measure(
+    #             "dx",
+    #             domain=self.mesh,
+    #             subdomain_data=cell_domains)
+    #         cell_V0 = dolfin.assemble(dolfin.Constant(1) * dV(1))
+    #         foi_phi0pos = self.Phi0pos
+    #         value_phiopos = dolfin.assemble(foi_phi0pos * dV(1)) / cell_V0
+    #         if value_phiopos <= 0:
+    #             nb_phi_zero += 1
+    #         foi_phi0 = self.Phi0
+    #         value_phio = dolfin.assemble(foi_phi0pos * dV(1)) / cell_V0
+    #         if value_phio <= 0:
+    #             nb_phi_zero_1 += 1
+    #     assert nb_phi_zero == nb_phi_zero_1
+    #     # print nb_phi_zero
+    #
+    #     self.add_qoi(
+    #         name=basename,
+    #         expr=nb_phi_zero / self.mesh_V0 * self.dV)
+
+
+
+    # def add_psi_qois(self):
+    #
+    #     basename = "Psi_"
+    #     psi = 0
+    #     for subdomain in self.subdomains :
+    #         psi += subdomain.Psi * self.dV(subdomain.id)
+    #
+    #     self.add_qoi(
+    #         name=basename,
+    #         expr=psi)
 
 
 

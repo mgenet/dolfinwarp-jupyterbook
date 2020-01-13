@@ -28,6 +28,7 @@ class InverseHyperelasticityProblem(Problem):
         Problem.__init__(self)
 
         self.w_incompressibility = w_incompressibility
+        self.inertia = None
         assert (not (self.w_incompressibility)), "To do. Aborting."
 
 
@@ -165,6 +166,12 @@ class InverseHyperelasticityProblem(Problem):
         # self.res_form = dolfin.Constant(0.) * self.dV # MG20190417: arity mismatch??
 
         self.res_form = 0
+
+        if self.inertia is not None:
+            self.res_form += self.inertia / dt * dolfin.inner(
+                    self.subsols["U"].subfunc,
+                    self.subsols["U"].dsubtest) * self.dV
+
         for subdomain in self.subdomains :
             self.res_form += dolfin.inner(
                 subdomain.sigma,
@@ -199,7 +206,8 @@ class InverseHyperelasticityProblem(Problem):
 
     def add_J_qois(self,
             J_type="elastic",
-            configuration_type="loaded"):
+            configuration_type="loaded",
+            id_zone=None):
 
         if (configuration_type == "loaded"):
             kin = self.kinematics
@@ -213,9 +221,14 @@ class InverseHyperelasticityProblem(Problem):
             basename = "J^t_"
             J = kin.Jt
 
-        self.add_qoi(
-            name=basename,
-            expr=J / self.mesh_V0 * self.dV)
+        if id_zone == None:
+            self.add_qoi(
+                name=basename,
+                expr=J / self.mesh_V0 * self.dV)
+        else:
+            self.add_qoi(
+                name=basename,
+                expr=J / self.mesh_V0 * self.dV(id_zone))
 
 
 

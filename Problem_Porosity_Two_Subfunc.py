@@ -29,29 +29,40 @@ class TwoSubfuncPoroProblem(HyperelasticityProblem):
             p0 = 0):
 
         HyperelasticityProblem.__init__(self,w_incompressibility=False)
-        self.eta   = eta
-        self.kappa = kappa
-        self.p0    = p0
+        self.eta                 = eta
+        self.kappa               = kappa
+        self.p0                  = p0
+        self.w_contact           = w_contact
+        self.inertia             = None
+        self.porosity_init_val   = None
+        self.porosity_init_field = None
+        self.porosity_given      = None
+        self.config_porosity     = None
 
 
 
     def add_porosity_subsol(self,
             degree):
 
+        if self.porosity_init_val is not None:
+            init_val = numpy.array([self.porosity_init_val])
+        else:
+            init_val = self.porosity_init_val
+
         if (degree == 0):
             self.add_scalar_subsol(
                 name="Phi",
                 family="DG",
                 degree=0,
-                init_val=numpy.array([self.value_phi_given]))
-                # init_val=self.porosity_given)
+                init_val=init_val,
+                init_field=self.porosity_init_field)
         else:
             self.add_scalar_subsol(
                 name="Phi",
                 family="CG",
                 degree=degree,
-                init_val=numpy.array([self.value_phi_given]))
-                # init_val=self.porosity_given)
+                init_val=init_val,
+                init_field=self.porosity_init_field)
 
 
 
@@ -89,6 +100,12 @@ class TwoSubfuncPoroProblem(HyperelasticityProblem):
 
         dWbulkdJs = self.kappa * (1. / (1. - self.Phi0) - 1./self.kinematics.Js)
         self.dWbulkdJs = (1 - self.Phi0) * dWbulkdJs
+
+        if self.w_contact:
+            dWbulkdJs_pos = self.kappa * (1. / (1. - self.Phi0pos) - 1./self.kinematics.Js)
+            self.dWbulkdJs_pos = (1 - self.Phi0pos) * dWbulkdJs_pos
+        else:
+            self.dWbulkdJs_pos = self.dWbulkdJs
 
 
 
@@ -154,6 +171,11 @@ class TwoSubfuncPoroProblem(HyperelasticityProblem):
             self.sol_func,
             self.dsol_test);
 
+        if self.inertia is not None:
+            self.res_form += self.inertia / dt * dolfin.inner(
+                    self.subsols["U"].subfunc,
+                    self.subsols["U"].dsubtest) * self.dV
+
         for loading in pressure_loadings:
             T = dolfin.dot(
                -loading.val * self.mesh_normals,
@@ -163,21 +185,31 @@ class TwoSubfuncPoroProblem(HyperelasticityProblem):
                 self.subsols["U"].dsubtest) * loading.measure
 
         self.res_form += dolfin.inner(
-            self.dWbulkdJs * self.kinematics.Je * self.kinematics.Ce_inv,
-            # - (self.p0 + self.dWpordJs) * self.kinematics.Je * self.kinematics.Ce_inv,
+            self.dWbulkdJs_pos * self.kinematics.Je * self.kinematics.Ce_inv,
             dolfin.derivative(
                     self.kinematics.Et,
                     self.subsols["U"].subfunc,
                     self.subsols["U"].dsubtest)) * self.dV
 
+        p0_loading_val = pressure0_loadings[0].val
         self.res_form += dolfin.inner(
-                self.Phi0bin * (self.dWbulkdJs + self.dWpordJs + self.p0) + (1 - self.Phi0bin) * self.Phi,
+                self.dWbulkdJs + self.dWpordJs + p0_loading_val,
                 self.subsols["Phi"].dsubtest) * self.dV
 
         self.jac_form = dolfin.derivative(
             self.res_form,
             self.sol_func,
             self.dsol_tria)
+
+
+
+    def add_Phi0_qois(self):
+
+        basename = "PHI0_"
+
+        self.add_qoi(
+            name=basename,
+            expr=self.Phi0 / self.mesh_V0 * self.dV)
 
 
 
@@ -223,8 +255,29 @@ class TwoSubfuncPoroProblem(HyperelasticityProblem):
 
     def add_Phi0bin_qois(self):
 
-        basename = "Phi0bin_"
+        basename = "PHI0bin_"
 
         self.add_qoi(
             name=basename,
-            expr=self.Phi0bin * self.dV)
+            expr=self.Phi0bin / self.mesh_V0 * self.dV)
+
+
+
+    def add_Phi0pos_qois(self):
+
+        basename = "PHI0pos_"
+
+        self.add_qoi(
+            name=basename,
+            expr=self.Phi0pos / self.mesh_V0 * self.dV)
+
+
+
+    def add_mnorm_qois(self):
+
+        basename = "M_NORM"
+        value = self.kinematics.Je * self.Phi - self.Phi0
+
+        self.add_qoi(
+            name=basename,
+            expr=value / self.mesh_V0 * self.dV)

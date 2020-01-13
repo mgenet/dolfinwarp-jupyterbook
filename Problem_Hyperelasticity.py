@@ -28,6 +28,7 @@ class HyperelasticityProblem(Problem):
         Problem.__init__(self)
 
         self.w_incompressibility = w_incompressibility
+        self.inertia = None
 
 
 
@@ -213,6 +214,11 @@ class HyperelasticityProblem(Problem):
             self.Pi,
             self.sol_func,
             self.dsol_test)
+
+        if self.inertia is not None:
+            self.res_form += self.inertia / dt * dolfin.inner(
+                    self.subsols["U"].subfunc,
+                    self.subsols["U"].dsubtest) * self.dV
 
         # self.res_form += dolfin.inner(
         #     self.Sigma,
