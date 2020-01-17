@@ -2,7 +2,7 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2019                                       ###
+### Created by Martin Genet, 2018-2020                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
@@ -229,7 +229,6 @@ class TimeIntegrator():
 
                 for inelastic_behavior in self.problem.inelastic_behaviors_internal:
                     inelastic_behavior.update_internal_variables_at_t(
-                        self.problem,
                         t)
 
                 self.problem.sol_old_func.vector()[:] = self.problem.sol_func.vector()[:]
@@ -270,6 +269,9 @@ class TimeIntegrator():
                         dolfin.assign(
                             self.problem.get_subsols_func_lst(),
                             self.problem.sol_func)
+
+                    for inelastic_behavior in self.problem.inelastic_behaviors_internal:
+                        inelastic_behavior.restore_old_value()
 
                     for constraint in step.constraints:
                         constraint.restore_old_value()

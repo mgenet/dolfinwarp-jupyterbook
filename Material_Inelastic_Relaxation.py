@@ -2,7 +2,7 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2019                                       ###
+### Created by Martin Genet, 2018-2020                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
@@ -17,8 +17,6 @@ import dolfin_cm as dcm
 from .Material_Inelastic import InelasticMaterial
 
 ################################################################################
-
-
 
 class RelaxationInelasticMaterial(InelasticMaterial):
 

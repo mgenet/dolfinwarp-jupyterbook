@@ -2,7 +2,7 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2019                                       ###
+### Created by Martin Genet, 2018-2020                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
@@ -14,11 +14,11 @@ import dolfin
 import numpy
 
 import dolfin_cm as dcm
-from .Problem import Problem
+from .Problem_Hyperelasticity import HyperelasticityProblem
 
 ################################################################################
 
-class InverseHyperelasticityProblem(Problem):
+class InverseHyperelasticityProblem(HyperelasticityProblem):
 
 
 
@@ -30,75 +30,6 @@ class InverseHyperelasticityProblem(Problem):
         self.w_incompressibility = w_incompressibility
         self.inertia = None
         assert (not (self.w_incompressibility)), "To do. Aborting."
-
-
-
-    def add_displacement_subsol(self,
-            degree):
-
-        self.add_vector_subsol(
-            name="U",
-            family="CG",
-            degree=degree)
-
-
-
-    def add_pressure_subsol(self,
-            degree):
-
-        if (degree == 0):
-            self.add_scalar_subsol(
-                name="P",
-                family="DG",
-                degree=0)
-        else:
-            self.add_scalar_subsol(
-                name="P",
-                family="CG",
-                degree=degree)
-
-
-
-    def set_subsols(self,
-            U_degree=1):
-
-        self.add_displacement_subsol(
-            degree=U_degree)
-
-        if (self.w_incompressibility):
-            self.add_pressure_subsol(
-                degree=U_degree-1)
-
-
-
-    def set_solution_degree(self,
-            U_degree=1): #MG20190513: Should have different name, right?
-
-        self.set_subsols(
-            U_degree=U_degree)
-        self.set_solution_finite_element()
-        self.set_solution_function_space()
-        self.set_solution_functions()
-
-        if (self.mesh.ufl_cell().cellname() in ("triangle", "tetrahedron")):
-            quadrature_degree = max(1, 2*(U_degree-1))
-        elif (self.mesh.ufl_cell().cellname() in ("quadrilateral", "hexahedron")):
-            quadrature_degree = max(1, 2*(self.dim*U_degree-1))
-        self.set_quadrature_degree(
-            quadrature_degree=quadrature_degree)
-
-        self.set_foi_finite_elements_DG(
-            degree=U_degree-1)
-        self.set_foi_function_spaces()
-
-
-
-    def get_displacement_function_space(self):
-
-        if (len(self.subsols) == 1):
-            return self.sol_fs
-        else:
-            return self.get_subsol_function_space(name="U")
 
 
 

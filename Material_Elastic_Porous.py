@@ -2,12 +2,12 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2019                                       ###
+### Created by Martin Genet, 2018-2020                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
 ###                                                                          ###
-### And Cécile Patte, 2019                                                   ###
+### And Cécile Patte, 2019-2020                                              ###
 ###                                                                          ###
 ### INRIA, Palaiseau, France                                                 ###
 ###                                                                          ###
@@ -38,7 +38,7 @@ class PorousMaterial(ElasticMaterial):
 
 
     def get_free_energy(self,
-            C=None):
+            C):
 
         Psi_mat, Sigma_mat = self.material.get_free_energy(C=C)
 

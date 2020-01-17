@@ -2,9 +2,14 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2019                                       ###
+### Created by Martin Genet, 2018-2020                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
+###                                                                          ###
+###                                                                          ###
+### And Cécile Patte, 2019-2020                                              ###
+###                                                                          ###
+### INRIA, Palaiseau, France                                                 ###
 ###                                                                          ###
 ################################################################################
 
@@ -157,10 +162,10 @@ class PoroWporProblem(HyperelasticityProblem):
 
     def add_Phydro_qois(self):
 
-        nb_subdomain = 0
+        n_subdomains = 0
         for subdomain in self.subdomains:
-            nb_subdomain += 1
-        if nb_subdomain == 1:
+            n_subdomains += 1
+        if n_subdomains == 1:
             basename = "Phydro_"
             P = -1./3. * dolfin.tr(self.subdomains[0].sigma)
 

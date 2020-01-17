@@ -2,7 +2,7 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2019                                       ###
+### Created by Martin Genet, 2018-2020                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
@@ -175,7 +175,6 @@ class NonlinearSolver():
             # internal variables update
             for inelastic_behavior in self.problem.inelastic_behaviors_internal:
                 inelastic_behavior.update_internal_variables_after_solve(
-                    self.problem,
                     dt, t)
 
             # write
