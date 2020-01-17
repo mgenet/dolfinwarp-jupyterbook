@@ -26,6 +26,7 @@ class TwoSubfuncPoroProblem(HyperelasticityProblem):
     def __init__(self,
             eta,
             kappa,
+            w_contact = 1,
             p0 = 0):
 
         HyperelasticityProblem.__init__(self,w_incompressibility=False)
