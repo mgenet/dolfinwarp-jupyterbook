@@ -29,7 +29,7 @@ class RelaxedGrowthProblem(HyperelasticityProblem):
             w_relaxation=False,
             w_unloaded_configuration=False):
 
-        Problem.__init__(self)
+        HyperelasticityProblem.__init__(self)
 
         self.w_incompressibility = w_incompressibility
         self.w_growth = w_growth
@@ -71,11 +71,11 @@ class RelaxedGrowthProblem(HyperelasticityProblem):
             name="thetag",
             family="DG",
             degree=degree)
-        #self.add_tensor_subsol(
-            #name="Fg",
-            #family="DG",
-            #degree=degree,
-            #init_val=numpy.eye(self.dim))
+        # self.add_tensor_subsol(
+        #     name="Fg",
+        #     family="DG",
+        #     degree=degree,
+        #     init_val=numpy.eye(self.dim))
 
 
 

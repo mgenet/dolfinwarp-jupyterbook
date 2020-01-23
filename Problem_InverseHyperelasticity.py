@@ -25,7 +25,7 @@ class InverseHyperelasticityProblem(HyperelasticityProblem):
     def __init__(self,
             w_incompressibility=False):
 
-        Problem.__init__(self)
+        HyperelasticityProblem.__init__(self)
 
         self.w_incompressibility = w_incompressibility
         assert (not (self.w_incompressibility)), "To do. Aborting."

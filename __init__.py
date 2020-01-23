@@ -4,7 +4,6 @@ from .Material_Elastic_Dev import *
 from .Kinematics_Linearized import *
 from .Material_Elastic_Jerome import *
 from .NonlinearSolver import *
-from .Material_Elastic_Damaged import *
 from .Material_Inelastic_Growth_StrainDriven import *
 from .Material_Inelastic_Damage import *
 from .Material_Elastic_Kirchhoff import *
