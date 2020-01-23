@@ -284,6 +284,10 @@ class Problem():
             subsol.dfunc.rename("d"+subsol.name, "d"+subsol.name)
 
         init_val = [str(val) for val in numpy.concatenate([subsol.init_val.flatten() for subsol in self.subsols.values()])]
+        # print("init_val = "+str(init_val))
+        if (init_val == ["0.0"]):
+            init_val = "0.0"
+            # print("init_val = "+str(init_val))
         self.sol_func.interpolate(dolfin.Expression(
             init_val,
             element=self.sol_fe))

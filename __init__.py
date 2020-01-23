@@ -12,6 +12,8 @@ from .Material_Inelastic_Relaxation import *
 from .Problem_Porosity_Condition import *
 from .Material_Elastic_Bulk_Pneumo import *
 from .Material_Elastic_Bulk_CiarletGeymonat import *
+from .Material_Elastic_Dev_MooneyRivlin import *
+from .Kinematics_Spherical import *
 from .Loading import *
 from .Problem_Porosity_Wpor import *
 from .Material_Elastic_Porous import *
@@ -32,6 +34,7 @@ from .Material_Elastic_Dev_NeoHookean import *
 from .Problem_Elasticity import *
 from .Constraint import *
 from .FOI import *
+from .Problem_Spherical import *
 from .Material_Elastic_Bulk import *
 from .Material_Elastic_Hooke import *
 from .Material_Inelastic_Growth_TimeDriven import *
