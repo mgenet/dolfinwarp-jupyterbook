@@ -26,6 +26,7 @@ from .Material_Elastic_CiarletGeymonatNeoHookean import *
 from .Material_Elastic import *
 from .Kinematics import *
 from .TimeVaryingConstant import *
+from .write_VTU_file import *
 from .Step import *
 from .SubDomain_Linearized import *
 from .Problem_RelaxedGrowth import *
