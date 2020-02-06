@@ -17,23 +17,23 @@ from .Material_Elastic_Dev import DevElasticMaterial
 
 ################################################################################
 
-class NeoHookeanDevElasticMaterial(DevElasticMaterial):
+class PureMooneyRivlinDevElasticMaterial(DevElasticMaterial):
 
 
 
     def __init__(self,
             parameters):
 
-        if ("C1" in parameters) and ("C2" in parameters):
-            self.C1 = dolfin.Constant(parameters["C1"])
+        if ("C2" in parameters):
+            self.C2 = dolfin.Constant(parameters["C2"])
         elif ("mu" in parameters):
             self.mu = dolfin.Constant(parameters["mu"])
-            self.C1 = self.mu/2
+            self.C2 = self.mu/2
         elif ("E" in parameters) and ("nu" in parameters):
             self.E  = dolfin.Constant(parameters["E"])
             self.nu = dolfin.Constant(parameters["nu"])
             self.mu = self.E/2/(1+self.nu)
-            self.C1 = self.mu/2
+            self.C2 = self.mu/2
 
 
 
@@ -53,13 +53,14 @@ class NeoHookeanDevElasticMaterial(DevElasticMaterial):
 
         JF    = dolfin.sqrt(dolfin.det(C))
         IC    = dolfin.tr(C)
+        IIC   = (dolfin.tr(C)**2 - dolfin.tr(C*C))/2
         C_inv = dolfin.inv(C)
 
         if   (dim == 2):
-            Psi   =   self.C1 * (IC - 2 - 2*dolfin.ln(JF)) #MG20200206: plane strain
-            Sigma = 2*self.C1 * (I - C_inv)                #MG20200206: plane strain
+            Psi   =   self.C2 * (IIC + IC - 3 - 4*dolfin.ln(JF)) #MG20200206: plane strain
+            Sigma = 2*self.C2 * (IC * I - C + I - 2*C_inv)       #MG20200206: plane strain
         elif (dim == 3):
-            Psi   =   self.C1 * (IC - 3 - 2*dolfin.ln(JF))
-            Sigma = 2*self.C1 * (I - C_inv)
+            Psi   =   self.C2 * (IIC - 3 - 4*dolfin.ln(JF))
+            Sigma = 2*self.C2 * (IC * I - C - 2*C_inv)
 
         return Psi, Sigma

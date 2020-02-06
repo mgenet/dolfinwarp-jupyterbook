@@ -19,6 +19,7 @@ from .Problem_Porosity_Wpor import *
 from .Material_Elastic_Porous import *
 from .SubSol import *
 from .TimeIntegrator import *
+from .Material_Elastic_Dev_PureMooneyRivlin import *
 from .XDMFFile import *
 from .Problem_Damage import *
 from .QOI import *
@@ -45,5 +46,6 @@ from .Material_Inelastic import *
 from .SubDomain import *
 from .Problem_InverseHyperelasticity import *
 from .Problem import *
+from .Material_Elastic_CiarletGeymonatMooneyRivlin import *
 from .compute_error import *
 from .Material_Inelastic_Growth import *

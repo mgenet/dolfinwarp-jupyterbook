@@ -17,7 +17,7 @@ from .Material_Elastic import ElasticMaterial
 
 ################################################################################
 
-class CiarletGeymonatNeoHookeanElasticMaterial(ElasticMaterial):
+class CiarletGeymonatMooneyRivlinElasticMaterial(ElasticMaterial):
 
 
 
@@ -25,7 +25,7 @@ class CiarletGeymonatNeoHookeanElasticMaterial(ElasticMaterial):
             parameters):
 
         self.bulk = dcm.CiarletGeymonatBulkElasticMaterial(parameters)
-        self.dev  = dcm.NeoHookeanDevElasticMaterial(parameters)
+        self.dev  = dcm.MooneyRivlinDevElasticMaterial(parameters)
 
 
 
