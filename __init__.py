@@ -14,6 +14,7 @@ from .Material_Elastic_Bulk_Pneumo import *
 from .Material_Elastic_Bulk_CiarletGeymonat import *
 from .Material_Elastic_Dev_MooneyRivlin import *
 from .Kinematics_Spherical import *
+from .Kinematics_Cylindrical import *
 from .Loading import *
 from .Problem_Porosity_Wpor import *
 from .Material_Elastic_Porous import *
@@ -32,6 +33,7 @@ from .Step import *
 from .SubDomain_Linearized import *
 from .Problem_RelaxedGrowth import *
 from .Problem_Hyperelasticity import *
+from .Problem_Cylindrical import *
 from .Material_Elastic_Dev_NeoHookean import *
 from .Problem_Elasticity import *
 from .Constraint import *
