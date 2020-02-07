@@ -19,7 +19,6 @@ from .Problem_Porosity_Wpor import *
 from .Material_Elastic_Porous import *
 from .SubSol import *
 from .TimeIntegrator import *
-from .Material_Elastic_Dev_PureMooneyRivlin import *
 from .XDMFFile import *
 from .Problem_Damage import *
 from .QOI import *
@@ -30,6 +29,7 @@ from .TimeVaryingConstant import *
 from .write_VTU_file import *
 from .Step import *
 from .SubDomain_Linearized import *
+from .Material_Elastic_CiarletGeymonatNeoHookeanMooneyRivlin import *
 from .Problem_RelaxedGrowth import *
 from .Problem_Hyperelasticity import *
 from .Material_Elastic_Dev_NeoHookean import *
@@ -37,6 +37,7 @@ from .Problem_Elasticity import *
 from .Constraint import *
 from .FOI import *
 from .Problem_Spherical import *
+from .Material_Elastic_Dev_NeoHookeanMooneyRivlin import *
 from .Material_Elastic_Bulk import *
 from .Material_Elastic_Hooke import *
 from .Material_Inelastic_Growth_TimeDriven import *
@@ -46,6 +47,5 @@ from .Material_Inelastic import *
 from .SubDomain import *
 from .Problem_InverseHyperelasticity import *
 from .Problem import *
-from .Material_Elastic_CiarletGeymonatMooneyRivlin import *
 from .compute_error import *
 from .Material_Inelastic_Growth import *

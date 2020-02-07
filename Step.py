@@ -26,7 +26,7 @@ class Step():
             dt_ini=None,
             dt_min=None,
             dt_max=None,
-            constraints=None, #MG20180508: Do not use list as default value because it is static
+            constraints=None, # MG20180508: Do not use list as default value because it is static
             normal_penalties=None,
             directional_penalties=None,
             surface_tensions=None,

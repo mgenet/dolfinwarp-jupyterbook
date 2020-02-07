@@ -24,30 +24,44 @@ class MooneyRivlinDevElasticMaterial(DevElasticMaterial):
     def __init__(self,
             parameters):
 
-        if ("mu" in parameters):
-            parameters["C1"] = parameters["mu"]/4
-            parameters["C2"] = parameters["mu"]/4
+        if ("C2" in parameters):
+            self.C2 = dolfin.Constant(parameters["C2"])
+        elif ("mu" in parameters):
+            mu = dolfin.Constant(parameters["mu"])
+            self.C2 = mu/2
         elif ("E" in parameters) and ("nu" in parameters):
-            parameters["mu"] = parameters["E"]/2/(1+parameters["nu"])
-            parameters["C1"] = parameters["mu"]/4
-            parameters["C2"] = parameters["mu"]/4
+            E  = dolfin.Constant(parameters["E"])
+            nu = dolfin.Constant(parameters["nu"])
+            mu = E/2/(1+nu)
+            self.C2 = mu/2
 
-        self.nh = dcm.NeoHookeanDevElasticMaterial(parameters)
-        self.mr = dcm.PureMooneyRivlinDevElasticMaterial(parameters)
 
 
     def get_free_energy(self,
-            *args,
-            **kwargs):
+            U=None,
+            C=None):
 
-        Psi_nh, Sigma_nh = self.nh.get_free_energy(
-            *args,
-            **kwargs)
-        Psi_mr, Sigma_mr = self.mr.get_free_energy(
-            *args,
-            **kwargs)
+        assert (U is not None) or (C is not None), "Must provide U or C. Aborting."
+        if (U is not None):
+            dim = U.ufl_shape[0]
+            I = dolfin.Identity(dim)
+            F = I + dolfin.grad(U)
+            JF = dolfin.det(F)
+            C = F.T * F
+        elif (C is not None):
+            assert (C.ufl_shape[0] == C.ufl_shape[1])
+            dim = C.ufl_shape[0]
+            JF = dolfin.sqrt(dolfin.det(C)) # MG20200207: Watch out! This is well defined for inverted elements!
 
-        Psi   = Psi_nh   + Psi_mr
-        Sigma = Sigma_nh + Sigma_mr
+        IC    = dolfin.tr(C)
+        IIC   = (dolfin.tr(C)*dolfin.tr(C) - dolfin.tr(C*C))/2
+        C_inv = dolfin.inv(C)
+
+        if   (dim == 2):
+            Psi   =   self.C2 * (IIC + IC - 3 - 4*dolfin.ln(JF)) # MG20200206: plane strain
+            Sigma = 2*self.C2 * (IC * I - C + I - 2*C_inv)       # MG20200206: plane strain
+        elif (dim == 3):
+            Psi   =   self.C2 * (IIC - 3 - 4*dolfin.ln(JF))
+            Sigma = 2*self.C2 * (IC * I - C - 2*C_inv)
 
         return Psi, Sigma

@@ -70,7 +70,7 @@ class HyperelasticityProblem(Problem):
 
 
     def set_solution_degree(self,
-            U_degree=1): #MG20190513: Should have different name, right?
+            U_degree=1): # MG20190513: Should have different name, right?
 
         self.set_subsols(
             U_degree=U_degree)
@@ -177,7 +177,7 @@ class HyperelasticityProblem(Problem):
                 self.subsols["U"].subfunc,
                 self.mesh_normals)**2 * loading.measure
 
-        # for loading in directional_penalties: #MG20190513: Cannot use point integral within assemble_system
+        # for loading in directional_penalties: # MG20190513: Cannot use point integral within assemble_system
         #     self.Pi += (loading.val/2) * dolfin.inner(
         #         self.subsols["U"].subfunc,
         #         loading.N)**2 * loading.measure

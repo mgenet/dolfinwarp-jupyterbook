@@ -27,9 +27,9 @@ class CiarletGeymonatBulkElasticMaterial(BulkElasticMaterial):
         if ("lambda" in parameters):
             self.lmbda = dolfin.Constant(parameters["lambda"])
         elif ("E" in parameters) and ("nu" in parameters):
-            self.E     = dolfin.Constant(parameters["E"])
-            self.nu    = dolfin.Constant(parameters["nu"])
-            self.lmbda = self.E*self.nu/(1+self.nu)/(1-2*self.nu) # MG20180516: in 2d, plane strain
+            E  = dolfin.Constant(parameters["E"])
+            nu = dolfin.Constant(parameters["nu"])
+            self.lmbda = E*nu/(1+nu)/(1-2*nu) # MG20180516: in 2d, plane strain
 
 
 
@@ -37,13 +37,16 @@ class CiarletGeymonatBulkElasticMaterial(BulkElasticMaterial):
             U=None,
             C=None):
 
-        if (C is None):
+        assert (U is not None) or (C is not None), "Must provide U or C. Aborting."
+        if (U is not None):
             dim = U.ufl_shape[0]
             I = dolfin.Identity(dim)
             F = I + dolfin.grad(U)
+            JF = dolfin.det(F)
             C = F.T * F
+        elif (C is not None):
+            JF = dolfin.sqrt(dolfin.det(C)) # MG20200207: Watch out! This is well defined for inverted elements!
 
-        JF    = dolfin.sqrt(dolfin.det(C))
         IC    = dolfin.tr(C)
         C_inv = dolfin.inv(C)
 
