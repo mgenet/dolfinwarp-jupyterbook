@@ -20,7 +20,7 @@ def write_VTU_file(
         filebasename,
         function,
         time,
-        zfill=2):
+        zfill=3):
 
     file_pvd = dolfin.File(filebasename+"__.pvd")
     file_pvd << (function, float(time))

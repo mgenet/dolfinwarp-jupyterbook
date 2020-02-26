@@ -29,7 +29,8 @@ class TimeIntegrator():
             print_sta=True,
             write_qois=True,
             write_sol=True,
-            write_vtus=False):
+            write_vtus=False,
+            write_xmls=False):
 
         self.problem = problem
 
@@ -94,12 +95,16 @@ class TimeIntegrator():
             self.problem.update_fois()
             self.xdmf_file_sol.write(0.)
 
-        self.write_vtus = bool(write_vtus)
-        if (self.write_sol):
-            dcm.write_VTU_file(
-                filebasename=self.write_sol_filebasename,
-                function=self.problem.subsols["U"].subfunc,
-                time=0)
+            self.write_vtus = bool(write_vtus)
+            if (self.write_vtus):
+                dcm.write_VTU_file(
+                    filebasename=self.write_sol_filebasename,
+                    function=self.problem.subsols["U"].subfunc,
+                    time=0)
+
+            self.write_xmls = bool(write_xmls)
+            if (self.write_xmls):
+                dolfin.File(self.write_sol_filebasename+"_"+str(0).zfill(3)+".xml") << self.problem.subsols["U"].subfunc
 
 
 
@@ -257,11 +262,14 @@ class TimeIntegrator():
                         self.problem.update_fois()
                         self.xdmf_file_sol.write(t)
 
-                    if (self.write_vtus):
-                        dcm.write_VTU_file(
-                            filebasename=self.write_sol_filebasename,
-                            function=self.problem.subsols["U"].subfunc,
-                            time=k_t_tot)
+                        if (self.write_vtus):
+                            dcm.write_VTU_file(
+                                filebasename=self.write_sol_filebasename,
+                                function=self.problem.subsols["U"].subfunc,
+                                time=k_t_tot)
+
+                        if (self.write_xmls):
+                            dolfin.File(self.write_sol_filebasename+"_"+str(k_t_tot).zfill(3)+".xml") << self.problem.subsols["U"].subfunc
 
                     if (self.write_qois):
                         self.problem.update_qois()
