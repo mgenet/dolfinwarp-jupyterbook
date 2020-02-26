@@ -51,6 +51,7 @@ class NeoHookeanDevElasticMaterial(DevElasticMaterial):
         elif (C is not None):
             assert (C.ufl_shape[0] == C.ufl_shape[1])
             dim = C.ufl_shape[0]
+            I = dolfin.Identity(dim)
             JF = dolfin.sqrt(dolfin.det(C)) # MG20200207: Watch out! This is well defined for inverted elements!
 
         IC    = dolfin.tr(C)
