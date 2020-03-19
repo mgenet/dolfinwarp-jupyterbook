@@ -6,11 +6,6 @@
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
-###                                                                          ###
-### And Cécile Patte, 2019-2020                                              ###
-###                                                                          ###
-### INRIA, Palaiseau, France                                                 ###
-###                                                                          ###
 ################################################################################
 
 # from builtins import *
@@ -18,25 +13,34 @@
 import dolfin
 
 import dolfin_cm as dcm
-from .Material_Elastic_Bulk import BulkElasticMaterial
+from .Material_Elastic import ElasticMaterial
 
 ################################################################################
 
-class SkeletonPoroBulkElasticMaterial(BulkElasticMaterial):
+class CiarletGeymonatNeoHookeanMooneyRivlinElasticMaterial(ElasticMaterial):
 
 
 
     def __init__(self,
             parameters):
 
-        self.kappa = dolfin.Constant(parameters["kappa"])
+        self.bulk = dcm.CiarletGeymonatBulkElasticMaterial(parameters)
+        self.dev  = dcm.NeoHookeanMooneyRivlinDevElasticMaterial(parameters)
 
 
 
     def get_free_energy(self,
-            Js,
-            Phi0):
+            *args,
+            **kwargs):
 
-        dev_bulk_mat_Js = self.kappa * (1/(1-Phi0) - 1/Js)
+        Psi_bulk, Sigma_bulk = self.bulk.get_free_energy(
+            *args,
+            **kwargs)
+        Psi_dev, Sigma_dev = self.dev.get_free_energy(
+            *args,
+            **kwargs)
 
-        return 0, dev_bulk_mat_Js
+        Psi   = Psi_bulk   + Psi_dev
+        Sigma = Sigma_bulk + Sigma_dev
+
+        return Psi, Sigma

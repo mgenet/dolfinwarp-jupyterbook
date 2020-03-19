@@ -327,13 +327,13 @@ class RelaxedGrowthProblem(HyperelasticityProblem):
                     self.subsols["Up"].subfunc,
                     self.mesh_normals)**2 * loading.measure
 
-        # for loading in directional_penalties: #MG20190513: Cannot use point integral within assemble_system
+        # for loading in directional_penalties: # MG20190513: Cannot use point integral within assemble_system
         #     self.Pi += (loading.val/2) * dolfin.inner(
         #         self.subsols["U"].subfunc,
         #         loading.N)**2 * loading.measure
         #
         # if (self.w_unloaded_configuration):
-        #     for loading in directional_penalties: #MG20190513: Cannot use point integral within assemble_system
+        #     for loading in directional_penalties: # MG20190513: Cannot use point integral within assemble_system
         #         self.Pi += (loading.val/2) * dolfin.inner(
         #             self.subsols["Up"].subfunc,
         #             loading.N)**2 * loading.measure

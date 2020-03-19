@@ -219,7 +219,7 @@ class NonlinearSolver():
             self.res_old_norm = self.res_norm
 
         # linear system: Assembly
-        if (len(self.problem.directional_penalties)): #MG20190513: Cannot use point integral within assemble_system
+        if (len(self.problem.directional_penalties)): # MG20190513: Cannot use point integral within assemble_system
             self.printer.print_str("Assembly…",newline=False)
             timer = time.time()
             dolfin.assemble_system(
