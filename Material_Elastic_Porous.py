@@ -42,16 +42,33 @@ class PorousMaterial(ElasticMaterial):
 
         Psi_mat, Sigma_mat = self.material.get_free_energy(C=C)
 
-        if isinstance(self.problem, dcm.TwoSubfuncPoroProblem) or isinstance(self.problem, dcm.TwoSubfuncInversePoroProblem) or isinstance(self.problem, dcm.CondTwoSubfuncPoroProblem):
-            assert 'Phi0pos' in self.problem.__dict__
-            assert 'coef_1_minus_phi0' not in self.problem.__dict__
+        # if isinstance(self.problem, dcm.TwoSubfuncPoroProblem) or isinstance(self.problem, dcm.TwoSubfuncInversePoroProblem):
+        #     assert 'Phi0pos' in self.problem.__dict__
+        #     assert 'coef_1_minus_phi0' not in self.problem.__dict__
 
         if 'coef_1_minus_phi0' in self.problem.__dict__:
             Psi   = self.problem.coef_1_minus_phi0 * Psi_mat
             Sigma = self.problem.coef_1_minus_phi0 * Sigma_mat
         elif 'Phi0pos' in self.problem.__dict__:
-            Psi   = (1 - self.problem.Phi0pos) * Psi_mat
-            Sigma = (1 - self.problem.Phi0pos) * Sigma_mat
+            # Psi   = (1 - self.problem.Phi0pos) * Psi_mat
+            # Sigma = (1 - self.problem.Phi0pos) * Sigma_mat
+            if isinstance(self.problem, dcm.InverseHyperelasticityProblem):
+                if self.problem.w_contact == 1:
+                    Psi   = (1 - self.problem.Phi0pos) * Psi_mat
+                    Sigma = (1 - self.problem.Phi0pos) * Sigma_mat
+                else:
+                    if 'type_porosity' in self.problem.__dict__ and self.problem.type_porosity == 'internal':
+                        Psi   = (1 - self.problem.get_Phi0()) * Psi_mat
+                        Sigma = (1 - self.problem.get_Phi0()) * Sigma_mat
+                    elif 'type_porosity' in self.problem.__dict__ and self.problem.type_porosity == 'mixed':
+                        Psi   = (1 - self.problem.Phi0) * Psi_mat
+                        Sigma = (1 - self.problem.Phi0) * Sigma_mat
+                    elif 'type_porosity' not in self.problem.__dict__:
+                        Psi   = (1 - self.problem.Phi0) * Psi_mat
+                        Sigma = (1 - self.problem.Phi0) * Sigma_mat
+            elif isinstance(self.problem, dcm.HyperelasticityProblem):
+                Psi   = (1 - self.problem.Phi0pos) * Psi_mat
+                Sigma = (1 - self.problem.Phi0pos) * Sigma_mat
         else:
             if self.config_porosity == 'ref':
                 Psi   = (1-self.porosity_given) * Psi_mat
@@ -63,3 +80,9 @@ class PorousMaterial(ElasticMaterial):
                 Sigma = (1-self.porosity_given) * J * Sigma_mat
 
         return Psi, Sigma
+
+
+
+    def get_res_term(self):
+
+        return self.material.get_res_term()
