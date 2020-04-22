@@ -12,14 +12,13 @@
 
 import dolfin
 import numpy
-# import math
 
 import dolfin_cm as dcm
 from .Problem_Hyperelasticity import HyperelasticityProblem
 
 ################################################################################
 
-class DoingTwoSubfuncPoroProblem(HyperelasticityProblem):
+class TwoFormulationsPoroProblem(HyperelasticityProblem):
 
 
 
@@ -41,6 +40,8 @@ class DoingTwoSubfuncPoroProblem(HyperelasticityProblem):
         self.porosity_given      = None
         self.config_porosity     = None
         self.type_porosity       = type_porosity
+
+        assert (w_contact == 0) or (eta == 0)
 
 
 
@@ -77,7 +78,7 @@ class DoingTwoSubfuncPoroProblem(HyperelasticityProblem):
 
 
 
-    def set_internal_variables_porosity(self):
+    def set_internal_variables_internal(self):
 
         self.Phi_fs = self.sfoi_fs
 
@@ -143,8 +144,7 @@ class DoingTwoSubfuncPoroProblem(HyperelasticityProblem):
 
 
 
-    def set_Phi0_and_Phi(self,
-            config_porosity='ref'):
+    def set_Phi0_and_Phi(self):
 
         if self.config_porosity == 'ref':
             self.Phi0 = self.porosity_given
@@ -152,9 +152,15 @@ class DoingTwoSubfuncPoroProblem(HyperelasticityProblem):
             self.Phi0bin = dolfin.conditional(dolfin.gt(self.Phi0,0), 1, 0)
             if self.type_porosity == 'mixed':
                 self.Phi  = self.subsols["Phi"].subfunc
+                self.Phipos  = dolfin.conditional(dolfin.gt(self.Phi,0), self.Phi, 0)
+                self.Phibin = dolfin.conditional(dolfin.gt(self.Phi,0), 1, 0)
             elif self.type_porosity == 'internal':
-                self.set_internal_variables_porosity()
+                self.set_internal_variables_internal()
                 self.inelastic_behaviors_internal += [self]
+                Phi = self.get_Phi()
+                # Phi = self.Phi
+                self.Phipos  = dolfin.conditional(dolfin.gt(Phi,0), Phi, 0)
+                self.Phibin = dolfin.conditional(dolfin.gt(Phi,0), 1, 0)
         elif self.config_porosity == 'deformed':
             assert(0)
 
@@ -164,8 +170,13 @@ class DoingTwoSubfuncPoroProblem(HyperelasticityProblem):
 
         HyperelasticityProblem.set_kinematics(self)
 
-        self.set_Phi0_and_Phi(self.config_porosity)
-        self.kinematics.Js = self.kinematics.Je * (1 - self.Phi)
+        self.set_Phi0_and_Phi()
+        if self.type_porosity == 'internal':
+            self.kinematics.Js = self.kinematics.Je * (1 - self.get_Phi())
+            # self.kinematics.Js = self.kinematics.Je * (1 - self.Phi)
+        elif self.type_porosity == 'mixed':
+            self.kinematics.Js = self.kinematics.Je * (1 - self.Phi)
+            # self.kinematics.Js_pos = self.kinematics.Je * (1 - self.Phipos)
 
 
 
@@ -178,30 +189,30 @@ class DoingTwoSubfuncPoroProblem(HyperelasticityProblem):
         self.set_kinematics()
 
         HyperelasticityProblem.set_materials(self,
-                elastic_behavior=elastic_behavior,
-                elastic_behavior_dev=elastic_behavior_dev,
-                elastic_behavior_bulk=elastic_behavior_bulk,
-                subdomain_id=subdomain_id)
+            elastic_behavior=elastic_behavior,
+            elastic_behavior_dev=elastic_behavior_dev,
+            elastic_behavior_bulk=elastic_behavior_bulk,
+            subdomain_id=subdomain_id)
 
         self.wbulk_behavior = dcm.SkeletonPoroBulkElasticMaterial(
-                problem = self,
-                kappa = self.kappa)
+            problem = self,
+            parameters = {'kappa':self.kappa})
         self.wpor_behavior = dcm.WporPoroElasticMaterial(
-                problem = self,
-                eta = self.eta,
-                type = 'exp')
+            problem = self,
+            parameters = {'eta':self.eta},
+            type = 'exp')
 
         # self.wbulk_behavior = dcm.PorousMaterial(
         #     material=dcm.SkeletonPoroBulkElasticMaterial(
         #         problem = self,
-        #         kappa = self.kappa),
+        #         parameters = {'kappa':self.kappa}),
         #     problem=self,
         #     porosity=self.porosity_given,
         #     config_porosity=self.config_porosity)
         # self.wpor_behavior = dcm.PorousMaterial(
         #     material=dcm.WporPoroElasticMaterial(
         #         problem = self,
-        #         eta = self.eta,
+        #         parameters = {'eta':self.eta},
         #         type = 'exp'),
         #     problem=self,
         #     porosity=self.porosity_given,
@@ -222,12 +233,11 @@ class DoingTwoSubfuncPoroProblem(HyperelasticityProblem):
             dt=None):
 
         self.Pi = sum([subdomain.Psi * self.dV(subdomain.id) for subdomain in self.subdomains])
-        # print (self.Pi)
 
         self.res_form = dolfin.derivative(
             self.Pi,
             self.sol_func,
-            self.dsol_test);
+            self.dsol_test)
 
         if self.inertia is not None:
             self.res_form += self.inertia / dt * dolfin.inner(
@@ -242,22 +252,21 @@ class DoingTwoSubfuncPoroProblem(HyperelasticityProblem):
                 T,
                 self.subsols["U"].dsubtest) * loading.measure
 
-        # self.res_form += dolfin.inner(
-        #     self.dWbulkdJs_pos * self.kinematics.Je * self.kinematics.Ce_inv,
-        #     dolfin.derivative(
-        #             self.kinematics.Et,
-        #             self.subsols["U"].subfunc,
-        #             self.subsols["U"].dsubtest)) * self.dV
-
-        self.res_form += self.wbulk_behavior.get_res_term(self.Phi0pos, w_U=1)
+        if self.w_contact:
+            self.res_form += self.wbulk_behavior.get_res_term(self.Phi0pos, self.Phipos, w_U=1)
+        else:
+            if self.type_porosity == 'mixed':
+                self.res_form += self.wbulk_behavior.get_res_term(self.Phi0, self.Phi, w_U=1)
+            elif self.type_porosity == 'internal':
+                self.res_form += self.wbulk_behavior.get_res_term(self.Phi0, self.get_Phi(), w_U=1)
 
         if self.type_porosity == 'mixed':
             p0_loading_val = pressure0_loadings[0].val
             self.res_form += dolfin.inner(
                     p0_loading_val,
                     self.subsols["Phi"].dsubtest) * self.dV
-            self.res_form += self.wbulk_behavior.get_res_term(self.Phi0, w_Phi=1)
-            self.res_form += self.wpor_behavior.get_res_term()
+            self.res_form += self.wbulk_behavior.get_res_term(self.Phi0, self.Phi, w_Phi=1)
+            self.res_form += self.wpor_behavior.get_res_term(w_Phi=1)
 
         self.jac_form = dolfin.derivative(
             self.res_form,
@@ -265,8 +274,10 @@ class DoingTwoSubfuncPoroProblem(HyperelasticityProblem):
             self.dsol_tria)
 
         if self.type_porosity == 'internal':
-            self.jac_form += self.wbulk_behavior.get_jac_term()
-
+            if self.w_contact:
+                self.jac_form += self.wbulk_behavior.get_jac_term(self.Phi0pos, self.Phipos, w_Phi=1)
+            else:
+                self.jac_form += self.wbulk_behavior.get_jac_term(self.Phi0, self.get_Phi(), w_Phi=1)
 
 
     def add_Phi0_qois(self):
@@ -305,9 +316,7 @@ class DoingTwoSubfuncPoroProblem(HyperelasticityProblem):
 
         self.add_qoi(
             name=basename,
-            # expr=0 / self.mesh_V0 * self.dV)
             expr=self.wpor_behavior.get_dWpordJs() / self.mesh_V0 * self.dV)
-            # expr=self.dWpordJs / self.mesh_V0 * self.dV)
 
 
 
@@ -317,9 +326,7 @@ class DoingTwoSubfuncPoroProblem(HyperelasticityProblem):
 
         self.add_qoi(
             name=basename,
-            # expr=0 / self.mesh_V0 * self.dV)
-            expr=self.wbulk_behavior.get_dWbulkdJs(self.Phi0) / self.mesh_V0 * self.dV)
-            # expr=self.dWbulkdJs / self.mesh_V0 * self.dV)
+            expr=self.wbulk_behavior.get_dWbulkdJs(self.Phi0, self.Phi) / self.mesh_V0 * self.dV)
 
 
 

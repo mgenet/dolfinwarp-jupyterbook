@@ -28,12 +28,13 @@ class WporPoroElasticMaterial(ElasticMaterial):
 
     def __init__(self,
             problem,
-            eta,
+            parameters,
             type):
 
         self.problem = problem
 
-        self.eta = eta
+        assert 'eta' in parameters
+        self.eta = parameters['eta']
 
         assert type is 'exp' or isinstance(type, int)
         self.type = type
@@ -57,13 +58,24 @@ class WporPoroElasticMaterial(ElasticMaterial):
 
 ###################################################### for mixed formulation ###
 
-    def get_res_term(self):
+    def get_res_term(self, w_Phi0 = None, w_Phi = None):
+
+        assert (w_Phi0 is None) or (w_Phi is None)
+        assert (w_Phi0 is not None) or (w_Phi is not None)
 
         dWpordJs = self.get_dWpordJs()
 
-        res_form = dolfin.inner(
-                dWpordJs,
-                self.problem.subsols["Phi"].dsubtest) * self.problem.dV
+        if w_Phi0 is not None:
+
+            res_form = dolfin.inner(
+                    dWpordJs,
+                    self.problem.subsols["Phi0"].dsubtest) * self.problem.dV
+
+        elif w_Phi is not None:
+
+            res_form = dolfin.inner(
+                    dWpordJs,
+                    self.problem.subsols["Phi"].dsubtest) * self.problem.dV
 
         return res_form
 

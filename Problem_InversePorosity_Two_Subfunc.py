@@ -38,6 +38,7 @@ class TwoSubfuncInversePoroProblem(InverseHyperelasticityProblem):
         self.porosity_init_field = None
         self.porosity_given      = None
         self.config_porosity     = None
+        assert (w_contact == 0) or (eta == 0)
 
 
 
@@ -102,24 +103,24 @@ class TwoSubfuncInversePoroProblem(InverseHyperelasticityProblem):
         self.dWbulkdJs = (1 - self.Phi0) * dWbulkdJs
 
         if self.w_contact:
-            dWbulkdJs_pos = self.kappa * (1. / (1. - self.Phi0pos) - 1./self.kinematics.Js)
+            dWbulkdJs_pos = self.kappa * (1. / (1. - self.Phi0pos) - 1./self.kinematics.Js_pos)
             self.dWbulkdJs_pos = (1 - self.Phi0pos) * dWbulkdJs_pos
         else:
             self.dWbulkdJs_pos = self.dWbulkdJs
 
 
 
-    def set_Phi0_and_Phi(self,
-            config_porosity='ref'):
+    def set_Phi0_and_Phi(self):
 
         if self.config_porosity == 'ref':
-            self.Phi0 = Nan
-            self.Phi  = Nan
+            assert(0)
         elif self.config_porosity == 'deformed':
-            self.Phi0 = self.subsols["Phi0"].subfunc
+            self.Phi0    = self.subsols["Phi0"].subfunc
             self.Phi0pos = dolfin.conditional(dolfin.gt(self.Phi0,0), self.Phi0, 0)
             self.Phi0bin = dolfin.conditional(dolfin.gt(self.Phi0,0), 1, 0)
-            self.Phi  = self.porosity_given
+            self.Phi     = self.porosity_given
+            self.Phipos  = dolfin.conditional(dolfin.gt(self.Phi,0), self.Phi, 0)
+            self.Phibin  = dolfin.conditional(dolfin.gt(self.Phi,0), 1, 0)
 
 
 
@@ -127,8 +128,9 @@ class TwoSubfuncInversePoroProblem(InverseHyperelasticityProblem):
 
         InverseHyperelasticityProblem.set_kinematics(self)
 
-        self.set_Phi0_and_Phi(self.config_porosity)
+        self.set_Phi0_and_Phi()
         self.kinematics.Js = self.kinematics.Je * (1 - self.Phi)
+        self.kinematics.Js_pos = self.kinematics.Je * (1 - self.Phipos)
 
 
 
@@ -336,3 +338,23 @@ class TwoSubfuncInversePoroProblem(InverseHyperelasticityProblem):
     #     self.add_qoi(
     #         name=basename,
     #         expr=self.Wbulk * self.dV)
+
+
+
+    def add_Phibin_qois(self):
+
+        basename = "PHIbin_"
+
+        self.add_qoi(
+            name=basename,
+            expr=self.Phibin / self.mesh_V0 * self.dV)
+
+
+
+    def add_Phipos_qois(self):
+
+        basename = "PHIpos_"
+
+        self.add_qoi(
+            name=basename,
+            expr=self.Phipos / self.mesh_V0 * self.dV)
