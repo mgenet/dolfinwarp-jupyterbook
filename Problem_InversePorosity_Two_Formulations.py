@@ -90,6 +90,28 @@ class TwoFormulationsInversePoroProblem(InverseHyperelasticityProblem):
         self.Phi0_test = dolfin.TestFunction(self.Phi0_fs)
         self.Phi0_tria = dolfin.TrialFunction(self.Phi0_fs)
 
+        #initialisation
+        # Phi0ForInit = 0.5
+        # Phi0ForInit = self.porosity_given
+        # Phi0ForInit = self.porosity_init_field
+        if self.porosity_init_val is not None:
+            c_expr = dolfin.inner(
+                self.Phi_tria,
+                self.Phi_test) * self.dV
+            d_expr = dolfin.inner(
+                self.porosity_init_val,
+                self.Phi_test) * self.dV
+            local_solver = dolfin.LocalSolver(
+                c_expr,
+                d_expr)
+            local_solver.factorize()
+            local_solver.solve_local_rhs(self.Phi)
+            # print self.Phi.vector().array()
+        elif self.porosity_init_field is not None:
+            self.Phi.vector()[:] = self.porosity_init_field.array()[:]
+            # print self.Phi.vector().array()
+        ###
+
         Phi0 = self.get_Phi0()
 
         self.a_expr = dolfin.inner(

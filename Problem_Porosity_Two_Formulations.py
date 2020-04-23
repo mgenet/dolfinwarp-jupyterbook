@@ -90,6 +90,40 @@ class TwoFormulationsPoroProblem(HyperelasticityProblem):
         self.Phi_test = dolfin.TestFunction(self.Phi_fs)
         self.Phi_tria = dolfin.TrialFunction(self.Phi_fs)
 
+        #initialisation
+        # PhiForInit = numpy.array([0.5])
+        # PhiForInit = self.porosity_given
+        # PhiForInit = self.porosity_init_field
+
+        # fe = dolfin.VectorElement(
+        #     family='DG',
+        #     cell=self.mesh.ufl_cell(),
+        #     degree=0)
+        # init_val = [str(val) for val in numpy.concatenate([PhiForInit.flatten()])]
+        # if len(init_val) == 1:
+        #     init_val = init_val[0]
+        # self.Phi.interpolate(dolfin.Expression(
+        #     init_val,
+        #     element=fe))
+
+        if self.porosity_init_val is not None:
+            c_expr = dolfin.inner(
+                self.Phi_tria,
+                self.Phi_test) * self.dV
+            d_expr = dolfin.inner(
+                self.porosity_init_val,
+                self.Phi_test) * self.dV
+            local_solver = dolfin.LocalSolver(
+                c_expr,
+                d_expr)
+            local_solver.factorize()
+            local_solver.solve_local_rhs(self.Phi)
+            # print self.Phi.vector().array()
+        elif self.porosity_init_field is not None:
+            self.Phi.vector()[:] = self.porosity_init_field.array()[:]
+            # print self.Phi.vector().array()
+        ###
+
         Phi = self.get_Phi()
 
         self.a_expr = dolfin.inner(

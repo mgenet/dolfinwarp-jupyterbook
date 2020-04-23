@@ -135,7 +135,7 @@ class InverseHyperelasticityProblem(HyperelasticityProblem):
 
 
 
-    def add_J_qois(self,
+    def add_global_volume_ratio_qois(self,
             J_type="elastic",
             configuration_type="loaded",
             id_zone=None):
@@ -180,3 +180,25 @@ class InverseHyperelasticityProblem(HyperelasticityProblem):
         self.add_qoi(
             name=basename,
             expr=P / self.mesh_V0 * self.dV)
+
+
+
+    def add_Phi0_qois(self):
+
+        basename = "PHI0_"
+        PHI0 = 1 - self.kinematics.Je * (1 - self.porosity_given)
+
+        self.add_qoi(
+            name=basename,
+            expr=PHI0 / self.mesh_V0 * self.dV)
+
+
+
+    def add_Phi_qois(self):
+
+        basename = "PHI_"
+        PHI = self.porosity_given
+
+        self.add_qoi(
+            name=basename,
+            expr=PHI / self.mesh_V0 * self.dV)
