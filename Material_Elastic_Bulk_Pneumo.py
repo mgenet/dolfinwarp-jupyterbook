@@ -35,9 +35,19 @@ class PneumoBulkElasticMaterial(BulkElasticMaterial):
 
 
     def get_free_energy(self,
-            C):
+            U=None,
+            C=None):
 
-        JF    = dolfin.sqrt(dolfin.det(C))
+        assert (U is not None) or (C is not None), "Must provide U or C. Aborting."
+        if (U is not None):
+            dim = U.ufl_shape[0]
+            I = dolfin.Identity(dim)
+            F = I + dolfin.grad(U)
+            JF = dolfin.det(F)
+            C = F.T * F
+        elif (C is not None):
+            JF = dolfin.sqrt(dolfin.det(C)) # MG20200207: Watch out! This is well defined for inverted elements!
+
         IC    = dolfin.tr(C)
         C_inv = dolfin.inv(C)
 

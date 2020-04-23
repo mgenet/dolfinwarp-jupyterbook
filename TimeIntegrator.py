@@ -28,7 +28,9 @@ class TimeIntegrator():
             print_out=True,
             print_sta=True,
             write_qois=True,
-            write_sol=True):
+            write_sol=True,
+            write_vtus=False,
+            write_xmls=False):
 
         self.problem = problem
 
@@ -88,10 +90,21 @@ class TimeIntegrator():
             self.functions_to_write += self.problem.get_fois_func_lst()
 
             self.xdmf_file_sol = dcm.XDMFFile(
-            filename=self.write_sol_filebasename+".xdmf",
-            functions=self.functions_to_write)
+                filename=self.write_sol_filebasename+".xdmf",
+                functions=self.functions_to_write)
             self.problem.update_fois()
             self.xdmf_file_sol.write(0.)
+
+            self.write_vtus = bool(write_vtus)
+            if (self.write_vtus):
+                dcm.write_VTU_file(
+                    filebasename=self.write_sol_filebasename,
+                    function=self.problem.subsols["U"].subfunc,
+                    time=0)
+
+            self.write_xmls = bool(write_xmls)
+            if (self.write_xmls):
+                dolfin.File(self.write_sol_filebasename+"_"+str(0).zfill(3)+".xml") << self.problem.subsols["U"].subfunc
 
 
 
@@ -111,6 +124,7 @@ class TimeIntegrator():
     def integrate(self):
 
         k_step = 0
+        k_t_tot = 0
         n_iter_tot = 0
         self.printer.inc()
         for step in self.problem.steps:
@@ -173,6 +187,7 @@ class TimeIntegrator():
             self.printer.inc()
             while (True):
                 k_t += 1
+                k_t_tot += 1
                 self.printer.print_var("k_t",k_t,-1)
 
                 if (t+dt > step.t_fin):
@@ -247,6 +262,15 @@ class TimeIntegrator():
                         self.problem.update_fois()
                         self.xdmf_file_sol.write(t)
 
+                        if (self.write_vtus):
+                            dcm.write_VTU_file(
+                                filebasename=self.write_sol_filebasename,
+                                function=self.problem.subsols["U"].subfunc,
+                                time=k_t_tot)
+
+                        if (self.write_xmls):
+                            dolfin.File(self.write_sol_filebasename+"_"+str(k_t_tot).zfill(3)+".xml") << self.problem.subsols["U"].subfunc
+
                     if (self.write_qois):
                         self.problem.update_qois()
                         self.qoi_printer.write_line([t]+[qoi.value for qoi in self.problem.qois])
@@ -277,6 +301,7 @@ class TimeIntegrator():
                         constraint.restore_old_value()
 
                     k_t -= 1
+                    k_t_tot -= 1
                     t -= dt
 
                     dt /= self.decel_coeff

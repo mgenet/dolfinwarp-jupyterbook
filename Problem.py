@@ -76,10 +76,10 @@ class Problem():
                 degree=1)
 
             self.eR_expr = dolfin.Expression(
-                cppcode=("+x[0]/sqrt(pow(x[0],2)+pow(x[1],2))", "+x[1]/sqrt(pow(x[0],2)+pow(x[1],2))"),
+                ("+x[0]/sqrt(pow(x[0],2)+pow(x[1],2))", "+x[1]/sqrt(pow(x[0],2)+pow(x[1],2))"),
                 element=self.local_basis_fe)
             self.eT_expr = dolfin.Expression(
-                cppcode=("-x[1]/sqrt(pow(x[0],2)+pow(x[1],2))", "+x[0]/sqrt(pow(x[0],2)+pow(x[1],2))"),
+                ("-x[1]/sqrt(pow(x[0],2)+pow(x[1],2))", "+x[0]/sqrt(pow(x[0],2)+pow(x[1],2))"),
                 element=self.local_basis_fe)
 
             self.Q_expr = dolfin.as_matrix([[self.eR_expr[0], self.eR_expr[1]],

@@ -29,7 +29,7 @@ class RelaxedGrowthProblem(HyperelasticityProblem):
             w_relaxation=False,
             w_unloaded_configuration=False):
 
-        Problem.__init__(self)
+        HyperelasticityProblem.__init__(self)
 
         self.w_incompressibility = w_incompressibility
         self.w_growth = w_growth
@@ -71,11 +71,11 @@ class RelaxedGrowthProblem(HyperelasticityProblem):
             name="thetag",
             family="DG",
             degree=degree)
-        #self.add_tensor_subsol(
-            #name="Fg",
-            #family="DG",
-            #degree=degree,
-            #init_val=numpy.eye(self.dim))
+        # self.add_tensor_subsol(
+        #     name="Fg",
+        #     family="DG",
+        #     degree=degree,
+        #     init_val=numpy.eye(self.dim))
 
 
 
@@ -327,13 +327,13 @@ class RelaxedGrowthProblem(HyperelasticityProblem):
                     self.subsols["Up"].subfunc,
                     self.mesh_normals)**2 * loading.measure
 
-        # for loading in directional_penalties: #MG20190513: Cannot use point integral within assemble_system
+        # for loading in directional_penalties: # MG20190513: Cannot use point integral within assemble_system
         #     self.Pi += (loading.val/2) * dolfin.inner(
         #         self.subsols["U"].subfunc,
         #         loading.N)**2 * loading.measure
         #
         # if (self.w_unloaded_configuration):
-        #     for loading in directional_penalties: #MG20190513: Cannot use point integral within assemble_system
+        #     for loading in directional_penalties: # MG20190513: Cannot use point integral within assemble_system
         #         self.Pi += (loading.val/2) * dolfin.inner(
         #             self.subsols["Up"].subfunc,
         #             loading.N)**2 * loading.measure

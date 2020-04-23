@@ -13,6 +13,8 @@ from .Material_Elastic_Bulk_Pneumo import *
 from .Material_Elastic_Bulk_Poro_Skeleton import *
 from .Material_Elastic_Poro_Wpor import *
 from .Material_Elastic_Bulk_CiarletGeymonat import *
+from .Material_Elastic_Dev_MooneyRivlin import *
+from .Kinematics_Spherical import *
 from .Loading import *
 from .Problem_Porosity_Wpor import *
 from .Material_Elastic_Porous import *
@@ -26,8 +28,10 @@ from .Material_Elastic_Lung import *
 from .Material_Elastic import *
 from .Kinematics import *
 from .TimeVaryingConstant import *
+from .write_VTU_file import *
 from .Step import *
 from .SubDomain_Linearized import *
+from .Material_Elastic_CiarletGeymonatNeoHookeanMooneyRivlin import *
 from .Problem_RelaxedGrowth import *
 from .Problem_Hyperelasticity import *
 from .Material_Elastic_Dev_NeoHookean import *
@@ -45,6 +49,8 @@ from .Material_Elastic_Dev_MooneyRivlin import *
 # from .Material_Elastic_Dev_MooneyRivlin_reduced import *
 from .Constraint import *
 from .FOI import *
+from .Problem_Spherical import *
+from .Material_Elastic_Dev_NeoHookeanMooneyRivlin import *
 from .Material_Elastic_Bulk import *
 from .Material_Elastic_Hooke import *
 from .Material_Inelastic_Growth_TimeDriven import *

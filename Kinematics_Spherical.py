@@ -14,29 +14,32 @@ import dolfin
 import numpy
 
 import dolfin_cm as dcm
+from .Kinematics import Kinematics
 
 ################################################################################
 
-class Kinematics():
+class SphericalKinematics(Kinematics):
 
 
 
     def __init__(self,
-            dim,
-            U,
-            U_old,
-            Q_expr=None,
-            w_growth=False,
-            Fg=None,
-            Fg_old=None,
-            w_relaxation=False,
-            Fr=None,
-            Fr_old=None):
+            R,
+            Rho,
+            Rho_old,
+            dim=3):
 
         self.I = dolfin.Identity(dim)
 
-        self.Ft     = self.I + dolfin.grad(U)
-        self.Ft_old = self.I + dolfin.grad(U_old)
+        # self.U = dolfin.as_vector([R*Rho, 0., 0.])
+
+        self.Ft = dolfin.as_matrix([
+            [1+Rho+R*Rho.dx(0),  0   ,  0   ],
+            [     0           , 1+Rho,  0   ],
+            [     0           ,  0   , 1+Rho]])
+        self.Ft_old = dolfin.as_matrix([
+            [1+Rho_old+R*Rho_old.dx(0),  0       ,  0       ],
+            [         0               , 1+Rho_old,  0       ],
+            [         0               ,  0       , 1+Rho_old]])
 
         self.Jt     = dolfin.det(self.Ft    )
         self.Jt_old = dolfin.det(self.Ft_old)
@@ -49,12 +52,6 @@ class Kinematics():
 
         self.Fe     = self.Ft
         self.Fe_old = self.Ft_old
-        if (w_growth):
-            self.Fe     = dolfin.dot(self.Fe    , dolfin.inv(Fg    ))
-            self.Fe_old = dolfin.dot(self.Fe_old, dolfin.inv(Fg_old))
-        if (w_relaxation):
-            self.Fe     = dolfin.dot(self.Fe    , dolfin.inv(Fr    ))
-            self.Fe_old = dolfin.dot(self.Fe_old, dolfin.inv(Fr_old))
 
         self.Je     = dolfin.det(self.Fe    )
         self.Je_old = dolfin.det(self.Fe_old)
@@ -67,13 +64,6 @@ class Kinematics():
         self.Ee     = (self.Ce     - self.I)/2
         self.Ee_old = (self.Ce_old - self.I)/2
 
-        if (Q_expr is not None):
-            self.Ee_loc = dolfin.dot(dolfin.dot(Q_expr, self.Ee), Q_expr.T)
-
         self.Fe_mid = (self.Fe_old + self.Fe)/2
         self.Ce_mid = (self.Ce_old + self.Ce)/2
         self.Ee_mid = (self.Ee_old + self.Ee)/2
-
-        self.Fe_bar  = self.Je**(-1./3) * self.Fe
-        self.Ce_bar  = self.Fe_bar.T * self.Fe_bar
-        self.ICe_bar = dolfin.tr(self.Ce_bar)

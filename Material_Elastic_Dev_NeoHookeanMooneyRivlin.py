@@ -13,19 +13,30 @@
 import dolfin
 
 import dolfin_cm as dcm
-from .Material_Elastic import ElasticMaterial
+from .Material_Elastic_Dev import DevElasticMaterial
 
 ################################################################################
 
-class CiarletGeymonatNeoHookeanElasticMaterial(ElasticMaterial):
+class NeoHookeanMooneyRivlinDevElasticMaterial(DevElasticMaterial):
 
 
 
     def __init__(self,
             parameters):
 
-        self.bulk = dcm.CiarletGeymonatBulkElasticMaterial(parameters)
-        self.dev  = dcm.NeoHookeanDevElasticMaterial(parameters)
+        if ("mu" in parameters):
+            mu = parameters["mu"]
+            parameters["C1"] = mu/4
+            parameters["C2"] = mu/4
+        elif ("E" in parameters) and ("nu" in parameters):
+            E  = parameters["E"]
+            nu = parameters["nu"]
+            mu = E/2/(1+nu)
+            parameters["C1"] = mu/4
+            parameters["C2"] = mu/4
+
+        self.nh = dcm.NeoHookeanDevElasticMaterial(parameters)
+        self.mr = dcm.MooneyRivlinDevElasticMaterial(parameters)
 
 
 
@@ -33,14 +44,14 @@ class CiarletGeymonatNeoHookeanElasticMaterial(ElasticMaterial):
             *args,
             **kwargs):
 
-        Psi_bulk, Sigma_bulk = self.bulk.get_free_energy(
+        Psi_nh, Sigma_nh = self.nh.get_free_energy(
             *args,
             **kwargs)
-        Psi_dev, Sigma_dev = self.dev.get_free_energy(
+        Psi_mr, Sigma_mr = self.mr.get_free_energy(
             *args,
             **kwargs)
 
-        Psi   = Psi_bulk   + Psi_dev
-        Sigma = Sigma_bulk + Sigma_dev
+        Psi   = Psi_nh   + Psi_mr
+        Sigma = Sigma_nh + Sigma_mr
 
         return Psi, Sigma

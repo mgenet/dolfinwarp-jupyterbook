@@ -50,7 +50,7 @@ class DamageInelasticMaterial(InelasticMaterial):
 
     def set_internal_variables_mixed(self):
 
-        self.d     = self.problem.subsols["d"].func
+        self.d     = self.problem.subsols["d"].func # MG20200117: why not subfunc?
         self.d_old = self.problem.subsols["d"].func_old
 
         self.problem.psi   = (1 - self.d) * self.problem.psi_eff
@@ -119,7 +119,7 @@ class DamageInelasticMaterial(InelasticMaterial):
         jac_form = dolfin.inner(
             dolfin.diff(
                 self.problem.sigma,
-                self.d),
+                  ),
             dolfin.derivative(
                 self.problem.kinematics.epsilon,
                 self.problem.subsols["u"].subfunc,
