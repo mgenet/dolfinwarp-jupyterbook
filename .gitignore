@@ -1,4 +1,6 @@
 *.pyc
 *.kdev4*
 .DS_Store
-
+build
+dist
+*.egg-info
