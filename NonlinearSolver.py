@@ -23,7 +23,7 @@ import time
 
 import myPythonLibrary as mypy
 
-import dolfin_cm as dcm
+import dolfin_mech as dmech
 
 ################################################################################
 
@@ -141,7 +141,7 @@ class NonlinearSolver():
 
         # write
         if (self.write_iter):
-            xdmf_file_iter = dcm.XDMFFile(
+            xdmf_file_iter = dmech.XDMFFile(
                 filename=sys.argv[0][:-3]+"-sol-k_step="+str(k_step)+"-k_t="+str(k_t)+".xdmf",
                 functions=self.functions_to_write)
             self.problem.update_fois()
@@ -296,7 +296,7 @@ class NonlinearSolver():
         if (self.k_iter == 1):
             self.res_norm0 = self.res_norm
         else:
-            self.res_err = dcm.compute_error(
+            self.res_err = dmech.compute_error(
                 val=self.res_norm,
                 ref=self.res_norm0)
             self.printer.print_sci("res_err",self.res_err)
@@ -316,7 +316,7 @@ class NonlinearSolver():
 
         # res_err_rel
         if (self.k_iter > 1):
-            self.res_err_rel = dcm.compute_error(
+            self.res_err_rel = dmech.compute_error(
                 val=self.dres_norm,
                 ref=self.res_old_norm)
             self.printer.print_sci("res_err_rel",self.res_err_rel)
@@ -406,7 +406,7 @@ class NonlinearSolver():
             n_converged = jac_eigensolver.get_number_converged()
             self.printer.print_str(" ("+str(n_converged)+" converged modes)",tab=False)
 
-            xdmf_file_modes = dcm.XDMFFile(
+            xdmf_file_modes = dmech.XDMFFile(
                 filename=sys.argv[0][:-3]+"-eigenmodes-"+spectrum+".xdmf",
                 functions=[mode_func])
             for k_mode in range(n_converged):
@@ -579,7 +579,7 @@ class NonlinearSolver():
 
     def compute_sol_err(self):
 
-        self.subsol_err_lst = [dcm.compute_error(
+        self.subsol_err_lst = [dmech.compute_error(
             val=self.dsubsol_norm_lst[k_subsol],
             ref=max(
                 self.subsol_norm_lst[k_subsol],

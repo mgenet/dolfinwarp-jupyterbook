@@ -15,7 +15,7 @@ import dolfin
 import numpy
 import operator
 
-import dolfin_cm as dcm
+import dolfin_mech as dmech
 
 ################################################################################
 
@@ -157,7 +157,7 @@ class Problem():
             *args,
             **kwargs):
 
-        subsol = dcm.SubSol(
+        subsol = dmech.SubSol(
             name=name,
             *args,
             **kwargs)
@@ -401,7 +401,7 @@ class Problem():
             *args,
             **kwargs):
 
-        foi = dcm.FOI(
+        foi = dmech.FOI(
             *args,
             form_compiler_parameters=self.form_compiler_parameters,
             **kwargs)
@@ -427,7 +427,7 @@ class Problem():
             *args,
             **kwargs):
 
-        qoi = dcm.QOI(
+        qoi = dmech.QOI(
             *args,
             form_compiler_parameters=self.form_compiler_parameters,
             **kwargs)
@@ -447,7 +447,7 @@ class Problem():
             *args,
             **kwargs):
 
-        constraint = dcm.Constraint(
+        constraint = dmech.Constraint(
             *args,
             **kwargs)
         self.constraints += [constraint]
@@ -459,7 +459,7 @@ class Problem():
             *args,
             **kwargs):
 
-        loading = dcm.Loading(
+        loading = dmech.Loading(
             *args,
             **kwargs)
         self.normal_penalties += [loading]
@@ -471,7 +471,7 @@ class Problem():
             *args,
             **kwargs):
 
-        loading = dcm.Loading(
+        loading = dmech.Loading(
             *args,
             **kwargs)
         self.directional_penalties += [loading]
@@ -483,7 +483,7 @@ class Problem():
             *args,
             **kwargs):
 
-        loading = dcm.Loading(
+        loading = dmech.Loading(
             *args,
             **kwargs)
         self.surface_tensions += [loading]
@@ -495,7 +495,7 @@ class Problem():
             *args,
             **kwargs):
 
-        loading = dcm.Loading(
+        loading = dmech.Loading(
             *args,
             **kwargs)
         self.surface0_loadings += [loading]
@@ -507,7 +507,7 @@ class Problem():
             *args,
             **kwargs):
 
-        loading = dcm.Loading(
+        loading = dmech.Loading(
             *args,
             **kwargs)
         self.pressure0_loadings += [loading]
@@ -519,7 +519,7 @@ class Problem():
             *args,
             **kwargs):
 
-        loading = dcm.Loading(
+        loading = dmech.Loading(
             *args,
             **kwargs)
         self.volume0_loadings += [loading]
@@ -531,7 +531,7 @@ class Problem():
             *args,
             **kwargs):
 
-        loading = dcm.Loading(
+        loading = dmech.Loading(
             *args,
             **kwargs)
         self.surface_loadings += [loading]
@@ -543,7 +543,7 @@ class Problem():
             *args,
             **kwargs):
 
-        loading = dcm.Loading(
+        loading = dmech.Loading(
             *args,
             **kwargs)
         self.pressure_loadings += [loading]
@@ -555,7 +555,7 @@ class Problem():
             *args,
             **kwargs):
 
-        loading = dcm.Loading(
+        loading = dmech.Loading(
             *args,
             **kwargs)
         self.volume_loadings += [loading]
@@ -574,7 +574,7 @@ class Problem():
         else:
             t_ini = self.steps[-1].t_fin
             t_fin = t_ini + Deltat
-        step = dcm.Step(
+        step = dmech.Step(
             t_ini=t_ini,
             t_fin=t_fin,
             *args,

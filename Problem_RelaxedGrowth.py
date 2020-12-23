@@ -13,7 +13,7 @@
 import dolfin
 import numpy
 
-import dolfin_cm as dcm
+import dolfin_mech as dmech
 from .Problem import Problem
 from .Problem_Hyperelasticity import HyperelasticityProblem
 
@@ -184,7 +184,7 @@ class RelaxedGrowthProblem(HyperelasticityProblem):
             inelastic_behavior.set_internal_variables_internal(
                 problem=self)
 
-        self.kinematics = dcm.Kinematics(
+        self.kinematics = dmech.Kinematics(
             dim=self.dim,
             U=self.subsols["U"].subfunc,
             U_old=self.subsols["U"].func_old,
@@ -245,7 +245,7 @@ class RelaxedGrowthProblem(HyperelasticityProblem):
             self.add_foi(expr=self.sigma_loc, fs=self.mfoi_fs, name="sigma_loc")
 
         if (self.w_unloaded_configuration):
-            self.unloaded_kinematics = dcm.Kinematics(
+            self.unloaded_kinematics = dmech.Kinematics(
                 dim=self.dim,
                 U=self.subsols["Up"].subfunc,
                 U_old=self.subsols["Up"].func_old,

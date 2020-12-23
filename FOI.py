@@ -13,7 +13,7 @@
 import dolfin
 import time
 
-import dolfin_cm as dcm
+import dolfin_mech as dmech
 
 ################################################################################
 

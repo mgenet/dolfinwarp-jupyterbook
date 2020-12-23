@@ -12,7 +12,7 @@
 
 import dolfin
 
-import dolfin_cm as dcm
+import dolfin_mech as dmech
 from .Material_Elastic_Dev import DevElasticMaterial
 
 ################################################################################
@@ -35,8 +35,8 @@ class NeoHookeanMooneyRivlinDevElasticMaterial(DevElasticMaterial):
             parameters["C1"] = mu/4
             parameters["C2"] = mu/4
 
-        self.nh = dcm.NeoHookeanDevElasticMaterial(parameters)
-        self.mr = dcm.MooneyRivlinDevElasticMaterial(parameters)
+        self.nh = dmech.NeoHookeanDevElasticMaterial(parameters)
+        self.mr = dmech.MooneyRivlinDevElasticMaterial(parameters)
 
 
 

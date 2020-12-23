@@ -12,7 +12,7 @@
 
 import dolfin
 
-import dolfin_cm as dcm
+import dolfin_mech as dmech
 
 ################################################################################
 
@@ -61,7 +61,7 @@ class Step():
             *args,
             **kwargs):
 
-        constraint = dcm.Constraint(
+        constraint = dmech.Constraint(
             *args,
             **kwargs)
         self.constraints += [constraint]
@@ -73,7 +73,7 @@ class Step():
             *args,
             **kwargs):
 
-        loading = dcm.Loading(
+        loading = dmech.Loading(
             *args,
             **kwargs)
         self.normal_penalties += [loading]
@@ -85,7 +85,7 @@ class Step():
             *args,
             **kwargs):
 
-        loading = dcm.Loading(
+        loading = dmech.Loading(
             *args,
             **kwargs)
         self.directional_penalties += [loading]
@@ -97,7 +97,7 @@ class Step():
             *args,
             **kwargs):
 
-        loading = dcm.Loading(
+        loading = dmech.Loading(
             *args,
             **kwargs)
         self.surface_tensions += [loading]
@@ -109,7 +109,7 @@ class Step():
             *args,
             **kwargs):
 
-        loading = dcm.Loading(
+        loading = dmech.Loading(
             *args,
             **kwargs)
         self.surface0_loadings += [loading]
@@ -121,7 +121,7 @@ class Step():
             *args,
             **kwargs):
 
-        loading = dcm.Loading(
+        loading = dmech.Loading(
             *args,
             **kwargs)
         self.pressure0_loadings += [loading]
@@ -133,7 +133,7 @@ class Step():
             *args,
             **kwargs):
 
-        loading = dcm.Loading(
+        loading = dmech.Loading(
             *args,
             **kwargs)
         self.volume0_loadings += [loading]
@@ -145,7 +145,7 @@ class Step():
             *args,
             **kwargs):
 
-        loading = dcm.Loading(
+        loading = dmech.Loading(
             *args,
             **kwargs)
         self.surface_loadings += [loading]
@@ -157,7 +157,7 @@ class Step():
             *args,
             **kwargs):
 
-        loading = dcm.Loading(
+        loading = dmech.Loading(
             *args,
             **kwargs)
         self.pressure_loadings += [loading]
@@ -169,7 +169,7 @@ class Step():
             *args,
             **kwargs):
 
-        loading = dcm.Loading(
+        loading = dmech.Loading(
             *args,
             **kwargs)
         self.volume_loadings += [loading]

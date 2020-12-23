@@ -12,7 +12,7 @@
 
 import dolfin
 
-import dolfin_cm as dcm
+import dolfin_mech as dmech
 
 ################################################################################
 
@@ -31,11 +31,11 @@ class Constraint():
             method=None): # topological, geometric, pointwise
 
         if (val is not None) and (val_ini is None) and (val_fin is None):
-            self.tv_val = dcm.TimeVaryingConstant(
+            self.tv_val = dmech.TimeVaryingConstant(
                 val_ini=val,
                 val_fin=val)
         elif (val is None) and (val_ini is not None) and (val_fin is not None):
-            self.tv_val = dcm.TimeVaryingConstant(
+            self.tv_val = dmech.TimeVaryingConstant(
                 val_ini=val_ini,
                 val_fin=val_fin)
 

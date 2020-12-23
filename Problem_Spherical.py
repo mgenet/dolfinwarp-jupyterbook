@@ -12,7 +12,7 @@ import dolfin
 import math
 import numpy
 
-import dolfin_cm as dcm
+import dolfin_mech as dmech
 from .Problem import Problem
 
 ################################################################################
@@ -153,7 +153,7 @@ class SphericalProblem(Problem):
 
     def set_kinematics(self):
 
-        self.kinematics = dcm.SphericalKinematics(
+        self.kinematics = dmech.SphericalKinematics(
             R=self.R,
             Rho=self.subsols["Rho"].subfunc,
             Rho_old=self.subsols["Rho"].func_old)
@@ -180,7 +180,7 @@ class SphericalProblem(Problem):
                 or  ((elastic_behavior_dev  is not None)
                 and  (elastic_behavior_bulk is not None)))
 
-        subdomain = dcm.SubDomain(
+        subdomain = dmech.SubDomain(
             problem=self,
             elastic_behavior=elastic_behavior,
             elastic_behavior_dev=elastic_behavior_dev,

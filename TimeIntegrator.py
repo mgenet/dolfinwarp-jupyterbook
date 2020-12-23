@@ -15,7 +15,7 @@ import sys
 
 import myPythonLibrary as mypy
 
-import dolfin_cm as dcm
+import dolfin_mech as dmech
 
 ################################################################################
 
@@ -89,7 +89,7 @@ class TimeIntegrator():
             self.functions_to_write += self.problem.get_subsols_func_old_lst()
             self.functions_to_write += self.problem.get_fois_func_lst()
 
-            self.xdmf_file_sol = dcm.XDMFFile(
+            self.xdmf_file_sol = dmech.XDMFFile(
                 filename=self.write_sol_filebasename+".xdmf",
                 functions=self.functions_to_write)
             self.problem.update_fois()
@@ -97,7 +97,7 @@ class TimeIntegrator():
 
             self.write_vtus = bool(write_vtus)
             if (self.write_vtus):
-                dcm.write_VTU_file(
+                dmech.write_VTU_file(
                     filebasename=self.write_sol_filebasename,
                     function=self.problem.subsols["U"].subfunc,
                     time=0)
@@ -263,7 +263,7 @@ class TimeIntegrator():
                         self.xdmf_file_sol.write(t)
 
                         if (self.write_vtus):
-                            dcm.write_VTU_file(
+                            dmech.write_VTU_file(
                                 filebasename=self.write_sol_filebasename,
                                 function=self.problem.subsols["U"].subfunc,
                                 time=k_t_tot)

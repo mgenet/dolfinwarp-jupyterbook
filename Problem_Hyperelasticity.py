@@ -13,7 +13,7 @@
 import dolfin
 import numpy
 
-import dolfin_cm as dcm
+import dolfin_mech as dmech
 from .Problem import Problem
 
 ################################################################################
@@ -109,7 +109,7 @@ class HyperelasticityProblem(Problem):
 
     def set_kinematics(self):
 
-        self.kinematics = dcm.Kinematics(
+        self.kinematics = dmech.Kinematics(
             dim=self.dim,
             U=self.subsols["U"].subfunc,
             U_old=self.subsols["U"].func_old,
@@ -139,7 +139,7 @@ class HyperelasticityProblem(Problem):
                 or  ((elastic_behavior_dev  is not None)
                 and  (elastic_behavior_bulk is not None)))
 
-        subdomain = dcm.SubDomain(
+        subdomain = dmech.SubDomain(
             problem=self,
             elastic_behavior=elastic_behavior,
             elastic_behavior_dev=elastic_behavior_dev,

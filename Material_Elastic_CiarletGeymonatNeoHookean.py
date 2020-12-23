@@ -12,7 +12,7 @@
 
 import dolfin
 
-import dolfin_cm as dcm
+import dolfin_mech as dmech
 from .Material_Elastic import ElasticMaterial
 
 ################################################################################
@@ -24,8 +24,8 @@ class CiarletGeymonatNeoHookeanElasticMaterial(ElasticMaterial):
     def __init__(self,
             parameters):
 
-        self.bulk = dcm.CiarletGeymonatBulkElasticMaterial(parameters)
-        self.dev  = dcm.NeoHookeanDevElasticMaterial(parameters)
+        self.bulk = dmech.CiarletGeymonatBulkElasticMaterial(parameters)
+        self.dev  = dmech.NeoHookeanDevElasticMaterial(parameters)
 
 
 

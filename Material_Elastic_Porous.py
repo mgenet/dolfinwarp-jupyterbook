@@ -15,7 +15,7 @@
 
 import dolfin
 
-import dolfin_cm as dcm
+import dolfin_mech as dmech
 from .Material_Elastic import ElasticMaterial
 
 ################################################################################

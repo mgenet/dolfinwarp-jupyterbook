@@ -13,7 +13,7 @@
 import dolfin
 import numpy
 
-import dolfin_cm as dcm
+import dolfin_mech as dmech
 from .Problem_Hyperelasticity import HyperelasticityProblem
 
 ################################################################################
@@ -34,7 +34,7 @@ class InverseHyperelasticityProblem(HyperelasticityProblem):
 
     def set_kinematics(self):
 
-        self.kinematics = dcm.InverseKinematics(
+        self.kinematics = dmech.InverseKinematics(
             dim=self.dim,
             U=self.subsols["U"].subfunc,
             U_old=self.subsols["U"].func_old)

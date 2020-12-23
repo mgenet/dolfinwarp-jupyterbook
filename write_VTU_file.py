@@ -12,7 +12,7 @@ import dolfin
 import os
 import shutil
 
-import dolfin_cm as dcm
+import dolfin_mech as dmech
 
 ################################################################################
 
