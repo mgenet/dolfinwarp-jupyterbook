@@ -12,7 +12,7 @@
 
 import dolfin
 
-import dolfin_cm as dcm
+import dolfin_mech as dmech
 from .Material_Elastic import ElasticMaterial
 
 ################################################################################
@@ -27,12 +27,12 @@ class LungElasticMaterial(ElasticMaterial):
 
         if version == 1:
             assert set(["alpha", "gamma", "mu"]).issubset(set(parameters.keys()))
-            self.bulk = dcm.PneumoBulkElasticMaterial(parameters)
-            self.dev = dcm.NeoHookeanDevElasticMaterial(parameters)
+            self.bulk = dmech.PneumoBulkElasticMaterial(parameters)
+            self.dev = dmech.NeoHookeanDevElasticMaterial(parameters)
         elif version == 2:
             assert set(["alpha", "gamma", "c1", "c2"]).issubset(set(parameters.keys()))
-            self.bulk = dcm.PneumoBulkElasticMaterial(parameters)
-            self.dev = dcm.MooneyRivlinDevElasticMaterial(parameters)
+            self.bulk = dmech.PneumoBulkElasticMaterial(parameters)
+            self.dev = dmech.MooneyRivlinDevElasticMaterial(parameters)
 
 
 

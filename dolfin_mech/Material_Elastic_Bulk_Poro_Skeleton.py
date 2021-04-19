@@ -58,12 +58,12 @@ class SkeletonPoroBulkElasticMaterial(BulkElasticMaterial):
         dWbulkdJs = self.get_dWbulkdJs(Phi0, Phi)
 
         if w_U is not None:
-            if isinstance(self.problem, dcm.InverseHyperelasticityProblem):
+            if isinstance(self.problem, dmech.InverseHyperelasticityProblem):
                 res_form = dolfin.inner(
                     dWbulkdJs * self.problem.kinematics.I,
                     dolfin.sym(dolfin.grad(self.problem.subsols["U"].dsubtest))) * self.problem.dV
 
-            elif isinstance(self.problem, dcm.HyperelasticityProblem):
+            elif isinstance(self.problem, dmech.HyperelasticityProblem):
                 res_form = dolfin.inner(
                     dWbulkdJs * self.problem.kinematics.Je * self.problem.kinematics.Ce_inv,
                     dolfin.derivative(

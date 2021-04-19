@@ -13,7 +13,7 @@
 import dolfin
 import numpy
 
-import dolfin_cm as dcm
+import dolfin_mech as dmech
 from .Problem_Hyperelasticity import HyperelasticityProblem
 
 ################################################################################
@@ -228,23 +228,23 @@ class TwoFormulationsPoroProblem(HyperelasticityProblem):
             elastic_behavior_bulk=elastic_behavior_bulk,
             subdomain_id=subdomain_id)
 
-        self.wbulk_behavior = dcm.SkeletonPoroBulkElasticMaterial(
+        self.wbulk_behavior = dmech.SkeletonPoroBulkElasticMaterial(
             problem = self,
             parameters = {'kappa':self.kappa})
-        self.wpor_behavior = dcm.WporPoroElasticMaterial(
+        self.wpor_behavior = dmech.WporPoroElasticMaterial(
             problem = self,
             parameters = {'eta':self.eta},
             type = 'exp')
 
-        # self.wbulk_behavior = dcm.PorousMaterial(
-        #     material=dcm.SkeletonPoroBulkElasticMaterial(
+        # self.wbulk_behavior = dmech.PorousMaterial(
+        #     material=dmech.SkeletonPoroBulkElasticMaterial(
         #         problem = self,
         #         parameters = {'kappa':self.kappa}),
         #     problem=self,
         #     porosity=self.porosity_given,
         #     config_porosity=self.config_porosity)
-        # self.wpor_behavior = dcm.PorousMaterial(
-        #     material=dcm.WporPoroElasticMaterial(
+        # self.wpor_behavior = dmech.PorousMaterial(
+        #     material=dmech.WporPoroElasticMaterial(
         #         problem = self,
         #         parameters = {'eta':self.eta},
         #         type = 'exp'),

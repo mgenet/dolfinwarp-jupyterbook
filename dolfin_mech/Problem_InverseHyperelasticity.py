@@ -66,7 +66,7 @@ class InverseHyperelasticityProblem(HyperelasticityProblem):
                 or  ((elastic_behavior_dev  is not None)
                 and  (elastic_behavior_bulk is not None)))
 
-        subdomain = dcm.SubDomain(
+        subdomain = dmech.SubDomain(
             problem=self,
             elastic_behavior=elastic_behavior,
             elastic_behavior_dev=elastic_behavior_dev,
