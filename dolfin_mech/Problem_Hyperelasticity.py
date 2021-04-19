@@ -28,6 +28,7 @@ class HyperelasticityProblem(Problem):
         Problem.__init__(self)
 
         self.w_incompressibility = w_incompressibility
+        self.inertia = None
 
 
 
@@ -130,6 +131,8 @@ class HyperelasticityProblem(Problem):
             elastic_behavior_bulk=None,
             subdomain_id=None):
 
+        self.set_kinematics()
+
         if (self.w_incompressibility):
             assert (elastic_behavior      is     None)
             assert (elastic_behavior_dev  is not None)
@@ -210,6 +213,11 @@ class HyperelasticityProblem(Problem):
             self.Pi,
             self.sol_func,
             self.dsol_test)
+
+        if self.inertia is not None:
+            self.res_form += self.inertia / dt * dolfin.inner(
+                    self.subsols["U"].subfunc,
+                    self.subsols["U"].dsubtest) * self.dV
 
         # self.res_form += dolfin.inner(
         #     self.Sigma,
@@ -335,7 +343,7 @@ class HyperelasticityProblem(Problem):
 
         self.add_qoi(
             name=basename,
-            expr=J * self.dV)
+            expr=J / self.mesh_V0 * self.dV)
 
 
 

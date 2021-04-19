@@ -9,8 +9,9 @@ from .Material_Inelastic_Damage import *
 from .Material_Elastic_Kirchhoff import *
 from .Material_Elastic_Bulk_Poro_Skeleton import *
 from .Material_Inelastic_Relaxation import *
-from .Problem_Porosity_Condition import *
 from .Material_Elastic_Bulk_Pneumo import *
+from .Material_Elastic_Bulk_Poro_Skeleton import *
+from .Material_Elastic_Poro_Wpor import *
 from .Material_Elastic_Bulk_CiarletGeymonat import *
 from .Material_Elastic_Dev_MooneyRivlin import *
 from .Kinematics_Spherical import *
@@ -23,6 +24,7 @@ from .XDMFFile import *
 from .Problem_Damage import *
 from .QOI import *
 from .Material_Elastic_CiarletGeymonatNeoHookean import *
+from .Material_Elastic_Lung import *
 from .Material_Elastic import *
 from .Kinematics import *
 from .TimeVaryingConstant import *
@@ -34,6 +36,17 @@ from .Problem_RelaxedGrowth import *
 from .Problem_Hyperelasticity import *
 from .Material_Elastic_Dev_NeoHookean import *
 from .Problem_Elasticity import *
+# from .Problem_Porosity_Wpor import *
+from .Problem_Porosity_Two_Subfunc import *
+from .Problem_Porosity_Two_Formulations import *
+# from .Problem_Porosity_Two_Subfunc_cond import *
+# from .Problem_InversePorosity_Wpor import *
+from .Problem_InversePorosity_Two_Subfunc import *
+from .Problem_InversePorosity_Two_Formulations import *
+# from .Problem_Porosity_Condition import *
+from .Material_Elastic_Dev_NeoHookean import *
+from .Material_Elastic_Dev_MooneyRivlin import *
+# from .Material_Elastic_Dev_MooneyRivlin_reduced import *
 from .Constraint import *
 from .FOI import *
 from .Problem_Spherical import *

@@ -2,14 +2,9 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2020                                       ###
+### Created by Martin Genet, 2018-2019                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
-###                                                                          ###
-###                                                                          ###
-### And Cécile Patte, 2019-2020                                              ###
-###                                                                          ###
-### INRIA, Palaiseau, France                                                 ###
 ###                                                                          ###
 ################################################################################
 
@@ -18,12 +13,12 @@
 import dolfin
 import numpy
 
-import dolfin_mech as dmech
-from .Problem_Hyperelasticity import HyperelasticityProblem
+import dolfin_cm as dcm
+from .Problem_InverseHyperelasticity import InverseHyperelasticityProblem
 
 ################################################################################
 
-class PoroWporProblem(HyperelasticityProblem):
+class InversePoroWporProblem(InverseHyperelasticityProblem):
 
 
 
@@ -31,7 +26,7 @@ class PoroWporProblem(HyperelasticityProblem):
             eta,
             kappa):
 
-        HyperelasticityProblem.__init__(self,w_incompressibility=False)
+        InverseHyperelasticityProblem.__init__(self,w_incompressibility=False)
         self.eta = eta
         self.kappa = kappa
 
@@ -40,17 +35,17 @@ class PoroWporProblem(HyperelasticityProblem):
     def set_porosity_energy(self):
 
         # Wpor = - self.eta * dolfin.log(self.kinematics.Je - self.kinematics.Js)
-        dWpordJ = - self.eta / (self.kinematics.Je - self.kinematics.Js)
-        # self.dWpordJ = dWpordJ
+        dWpordJ = - self.eta / (self.kinematics.Je * self.kinematics.Phi)
+        # dWpordJ = - self.eta / (self.kinematics.Je * self.porosity_given)
         self.dWpordJ = self.coef_1_minus_phi0 * dWpordJ
 
         if self.config_porosity == 'ref':
-            if self.kappa == 0:
-                Js0 = self.coef_1_minus_phi0
-            else:
-                Js0 = self.coef_1_minus_phi0/2 * (1 + 1/self.coef_1_minus_phi0 + self.eta/self.kappa - ((1 + 1/self.coef_1_minus_phi0 + self.eta/self.kappa)**2 - 4 / self.coef_1_minus_phi0)**(1./2.))
-            self.dWpordJ += self.coef_1_minus_phi0 * self.eta / (1 - Js0)
-
+            coef0 = 1 - self.porosity_given
+        elif self.config_porosity == 'deformed':
+            coef0 = (1 - self.porosity_given) * self.porosity_given / (self.porosity_given - self.eta / self.kappa * (1 - self.porosity_given))
+        Phi0 = 1 - coef0
+        self.dWpordJ += coef0 * self.eta / (Phi0)
+        # self.dWpordJ += coef0 * self.eta / self.porosity_given
 
 
     def set_coef_1_minus_phi0(self,
@@ -59,7 +54,8 @@ class PoroWporProblem(HyperelasticityProblem):
         if self.config_porosity == 'ref':
             coef = 1 - self.porosity_given
         elif self.config_porosity == 'deformed':
-            coef = Nan
+            assert self.kinematics.Je is not None
+            coef = (1 - self.porosity_given) * self.kinematics.Je * self.porosity_given / (self.porosity_given - self.eta / self.kappa * (1 - self.porosity_given))
 
         self.coef_1_minus_phi0 = coef
 
@@ -67,36 +63,24 @@ class PoroWporProblem(HyperelasticityProblem):
 
     def set_kinematics(self):
 
-        HyperelasticityProblem.set_kinematics(self)
+        InverseHyperelasticityProblem.set_kinematics(self)
 
         self.set_coef_1_minus_phi0(self.config_porosity)
 
-        if self.config_porosity == 'ref':
-            # first solution
-            # self.kinematics.Phi = 1 - (1 - self.porosity0) / self.kinematics.Je
-            # self.kinematics.Js = self.kinematics.Je * (1-self.kinematics.Phi)
+        self.kinematics.Phi = 1 - self.coef_1_minus_phi0
+        self.kinematics.Js = self.kinematics.Je * (1 - self.kinematics.Phi)
 
-            # the same
-            # self.kinematics.Phi = 1 - (1 - self.porosity0) / self.kinematics.Je
-            # self.kinematics.Js = 1 - self.porosity0
+        # self.kinematics.Phi = 1 - (1 - self.porosity0) * self.kinematics.Je
+        # self.kinematics.Js = (1-self.kinematics.Phi) / self.kinematics.Je
 
-            # better
-            if self.eta == 0:
-                self.kinematics.Js = self.coef_1_minus_phi0
-                self.kinematics.Phi = 1 - self.kinematics.Js / self.kinematics.Je
+        # work
+        # self.kinematics.Phi = 1 - (1 - self.porosity0) * self.kinematics.Je**2
+        # self.kinematics.Js = (1-self.kinematics.Phi) / self.kinematics.Je
 
-            # first way to write
-            # delta = (self.eta + self.kappa*(1 + (self.kinematics.Je / (1-self.porosity0))**(1./2.))**2) * (self.eta + self.kappa*(1 - (self.kinematics.Je / (1-self.porosity0))**(1./2.))**2)
-            # self.kinematics.Js = (1-self.porosity0)/(2*self.kappa) * (self.eta + self.kappa*(1+self.kinematics.Je/(1-self.porosity0)) - delta**(1./2.))
-            # self.kinematics.Phi = 1 - self.kinematics.Js / self.kinematics.Je
-
-            # second way to write (kappa)
-            else:
-                self.kinematics.Js = self.coef_1_minus_phi0/2 * (1 + self.kinematics.Je/self.coef_1_minus_phi0 + self.eta/self.kappa - ((1 + self.kinematics.Je/self.coef_1_minus_phi0 + self.eta/self.kappa)**2 - 4*self.kinematics.Je / self.coef_1_minus_phi0)**(1./2.))
-                self.kinematics.Phi = 1 - self.kinematics.Js / self.kinematics.Je
-        else:
-            self.kinematics.Js = Nan
-            self.kinematics.Phi = Nan
+        #
+        # Js = (1-self.porosity0)* self.kinematics.Je/2 * (1 + 1/((1-self.porosity0)* self.kinematics.Je**2) + self.eta/self.kappa - ((1 + 1/((1-self.porosity0)* self.kinematics.Je**2) + self.eta/self.kappa)**2 - 4 / ((1-self.porosity0)* self.kinematics.Je**2))**(1./2.))
+        # self.kinematics.Phi = 1 - Js / self.kinematics.Je
+        # self.kinematics.Js = (1-self.kinematics.Phi) / self.kinematics.Je
 
 
 
@@ -108,7 +92,7 @@ class PoroWporProblem(HyperelasticityProblem):
 
         self.set_kinematics()
 
-        HyperelasticityProblem.set_materials(self,
+        InverseHyperelasticityProblem.set_materials(self,
                 elastic_behavior=elastic_behavior,
                 elastic_behavior_dev=elastic_behavior_dev,
                 elastic_behavior_bulk=elastic_behavior_bulk,
@@ -130,20 +114,16 @@ class PoroWporProblem(HyperelasticityProblem):
             volume_loadings=[],
             dt=None):
 
-        self.Pi = sum([subdomain.Psi * self.dV(subdomain.id) for subdomain in self.subdomains])
-        # print (self.Pi)
+        self.res_form = 0
 
-        self.res_form = dolfin.derivative(
-            self.Pi,
-            self.sol_func,
-            self.dsol_test);
+        for subdomain in self.subdomains :
+            self.res_form += dolfin.inner(
+                subdomain.sigma,
+                dolfin.sym(dolfin.grad(self.subsols["U"].dsubtest))) * self.dV(subdomain.id)
 
         for loading in pressure_loadings:
-            T = dolfin.dot(
+            self.res_form -= dolfin.inner(
                -loading.val * self.mesh_normals,
-                dolfin.inv(self.kinematics.Ft))
-            self.res_form -= self.kinematics.Jt * dolfin.inner(
-                T,
                 self.subsols["U"].dsubtest) * loading.measure
 
         self.res_form += dolfin.inner(
@@ -159,13 +139,12 @@ class PoroWporProblem(HyperelasticityProblem):
             self.dsol_tria)
 
 
-
     def add_Phydro_qois(self):
 
-        n_subdomains = 0
+        nb_subdomain = 0
         for subdomain in self.subdomains:
-            n_subdomains += 1
-        if n_subdomains == 1:
+            nb_subdomain += 1
+        if nb_subdomain == 1:
             basename = "Phydro_"
             P = -1./3. * dolfin.tr(self.subdomains[0].sigma)
 
@@ -182,7 +161,8 @@ class PoroWporProblem(HyperelasticityProblem):
     #         nb_subdomain += 1
     #     if nb_subdomain == 1:
     #         basename = "dPsiBulkdJs_"
-    #         deriv = self.kappa * (1 / (1 - self.porosity0) - 1 / self.kinematics.Js)
+    #         kappa = 10**(9)
+    #         deriv = kappa * (1 / (1 - self.porosity0) - 1 / self.kinematics.Js)
     #
     #     self.add_qoi(
     #         name=basename,
