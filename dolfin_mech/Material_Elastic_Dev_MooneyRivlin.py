@@ -24,10 +24,10 @@ class MooneyRivlinDevElasticMaterial(DevElasticMaterial):
     def __init__(self,
             parameters):
 
-        if ("c1" in parameters):
-            self.c1 = dolfin.Constant(parameters["c1"])
-        if ("c2" in parameters):
-            self.c2 = dolfin.Constant(parameters["c2"])
+        if ("C1" in parameters):
+            self.C1 = dolfin.Constant(parameters["C1"])
+        if ("C2" in parameters):
+            self.C2 = dolfin.Constant(parameters["C2"])
 
 
 
@@ -50,7 +50,7 @@ class MooneyRivlinDevElasticMaterial(DevElasticMaterial):
         I2    = 1./2. * (IC**2 - dolfin.tr(C.T * C))
         C_inv = dolfin.inv(C)
 
-        Psi   = self.c1 * (IC - dim) + self.c2 * (I2 - dim) - 2 * (self.c1 + 2*self.c2) * dolfin.ln(JF)
-        Sigma = 2 * self.c1 * I + 2 * self.c2 * (IC * I - C) - 2 * (self.c1 + 2*self.c2) * C_inv
+        Psi   = self.C1 * (IC - dim) + self.C2 * (I2 - dim) - 2 * (self.C1 + 2*self.C2) * dolfin.ln(JF)
+        Sigma = 2 * self.C1 * I + 2 * self.C2 * (IC * I - C) - 2 * (self.C1 + 2*self.C2) * C_inv
 
         return Psi, Sigma
