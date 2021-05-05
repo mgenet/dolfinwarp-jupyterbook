@@ -26,6 +26,8 @@ class NeoHookeanDevElasticMaterial(DevElasticMaterial):
 
         if ("C1" in parameters):
             self.C1 = dolfin.Constant(parameters["C1"])
+        elif ("c1" in parameters):
+            self.C1 = dolfin.Constant(parameters["c1"])
         elif ("mu" in parameters):
             mu = dolfin.Constant(parameters["mu"])
             self.C1 = mu/2
@@ -34,6 +36,9 @@ class NeoHookeanDevElasticMaterial(DevElasticMaterial):
             nu = dolfin.Constant(parameters["nu"])
             mu = E/2/(1+nu)
             self.C1 = mu/2
+        else:
+            assert (0), \
+                "No parameter found: \"+str(parameters)+\". Need to provide C1 or mu or E & nu. Aborting."
 
 
 

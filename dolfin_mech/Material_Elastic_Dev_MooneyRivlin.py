@@ -26,6 +26,8 @@ class MooneyRivlinDevElasticMaterial(DevElasticMaterial):
 
         if ("C2" in parameters):
             self.C2 = dolfin.Constant(parameters["C2"])
+        elif ("c2" in parameters):
+            self.C2 = dolfin.Constant(parameters["c2"])
         elif ("mu" in parameters):
             mu = dolfin.Constant(parameters["mu"])
             self.C2 = mu/2
@@ -34,6 +36,9 @@ class MooneyRivlinDevElasticMaterial(DevElasticMaterial):
             nu = dolfin.Constant(parameters["nu"])
             mu = E/2/(1+nu)
             self.C2 = mu/2
+        else:
+            assert (0), \
+                "No parameter found: \"+str(parameters)+\". Need to provide C2 or mu or E & nu. Aborting."
 
 
 

@@ -32,6 +32,9 @@ class KirchhoffElasticMaterial(ElasticMaterial):
             self.nu = dolfin.Constant(parameters["nu"])
             self.lmbda = self.E*self.nu/(1+self.nu)/(1-2*self.nu) # MG20180516: in 2d, plane strain
             self.mu    = self.E/2/(1+self.nu)
+        else:
+            assert (0), \
+                "No parameter found: \"+str(parameters)+\". Need to provide lambda & mu or E & nu. Aborting."
 
 
 

@@ -29,8 +29,12 @@ class PneumoBulkElasticMaterial(BulkElasticMaterial):
     def __init__(self,
             parameters):
 
-        self.alpha = dolfin.Constant(parameters["alpha"])
-        self.gamma = dolfin.Constant(parameters["gamma"])
+        if ("alpha" in parameters) and ("gamma" in parameters):
+            self.alpha = dolfin.Constant(parameters["alpha"])
+            self.gamma = dolfin.Constant(parameters["gamma"])
+        else:
+            assert (0), \
+                "No parameter found: \"+str(parameters)+\". Need to provide alpha & gamma. Aborting."
 
 
 

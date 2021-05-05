@@ -30,6 +30,9 @@ class CiarletGeymonatBulkElasticMaterial(BulkElasticMaterial):
             E  = dolfin.Constant(parameters["E"])
             nu = dolfin.Constant(parameters["nu"])
             self.lmbda = E*nu/(1+nu)/(1-2*nu) # MG20180516: in 2d, plane strain
+        else:
+            assert (0), \
+                "No parameter found: \"+str(parameters)+\". Need to provide lambda or E & nu. Aborting."
 
 
 

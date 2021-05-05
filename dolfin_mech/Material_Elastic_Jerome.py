@@ -24,9 +24,13 @@ class JeromeElasticMaterial(ElasticMaterial):
     def __init__(self,
             parameters):
 
-        self.Kappa1 = dolfin.Constant(parameters["Kappa1"])
-        self.Kappa2 = dolfin.Constant(parameters["Kappa2"])
-        self.Bulk   = dolfin.Constant(parameters["Bulk"])
+        if ("Kappa1" in parameters) and ("Kappa2" in parameters) and ("Bulk" in parameters):
+            self.Kappa1 = dolfin.Constant(parameters["Kappa1"])
+            self.Kappa2 = dolfin.Constant(parameters["Kappa2"])
+            self.Bulk   = dolfin.Constant(parameters["Bulk"])
+        else:
+            assert (0), \
+                "No parameter found: \"+str(parameters)+\". Need to provide Kappa1 & Kappa2 & Bulk. Aborting."
 
 
 

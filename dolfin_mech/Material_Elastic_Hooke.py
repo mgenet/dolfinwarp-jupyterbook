@@ -36,6 +36,9 @@ class HookeElasticMaterial(ElasticMaterial):
             else:
                 self.lmbda = dolfin.Constant(self.E*self.nu/(1+self.nu)/(1-2*self.nu))
             self.mu    = dolfin.Constant(self.E/2/(1+self.nu))
+        else:
+            assert (0), \
+                "No parameter found: \"+str(parameters)+\". Need to provide lambda & mu or E & nu. Aborting."
 
 
 

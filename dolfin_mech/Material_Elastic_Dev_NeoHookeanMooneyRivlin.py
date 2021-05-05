@@ -34,6 +34,9 @@ class NeoHookeanMooneyRivlinDevElasticMaterial(DevElasticMaterial):
             mu = E/2/(1+nu)
             parameters["C1"] = mu/4
             parameters["C2"] = mu/4
+        else:
+            assert (0), \
+                "No parameter found: \"+str(parameters)+\". Need to provide mu or E & nu. Aborting."
 
         self.nh = dmech.NeoHookeanDevElasticMaterial(parameters)
         self.mr = dmech.MooneyRivlinDevElasticMaterial(parameters)

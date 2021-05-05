@@ -28,10 +28,13 @@ class StrainDrivenGrowthInelasticMaterial(GrowthInelasticMaterial):
 
         self.problem = problem
 
-        self.thetag_max = parameters["thetag_max"]
-        self.Ee_thr = parameters["Ee_thr"]
-        self.taug = parameters["taug"]
-
+        if ("thetag_max" in parameters) and ("Ee_thr" in parameters) and ("taug" in parameters):
+            self.thetag_max = parameters["thetag_max"]
+            self.Ee_thr = parameters["Ee_thr"]
+            self.taug = parameters["taug"]
+        else:
+            assert (0), \
+                "No parameter found: \"+str(parameters)+\". Need to provide thetag_max & Ee_thr & taug. Aborting."
 
 
     # growth kinematics

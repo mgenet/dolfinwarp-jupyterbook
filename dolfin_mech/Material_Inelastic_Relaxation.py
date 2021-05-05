@@ -25,7 +25,11 @@ class RelaxationInelasticMaterial(InelasticMaterial):
     def __init__(self,
             parameters):
 
-        self.taur = parameters["taur"]
+        if ("taur" in parameters):
+            self.taur = parameters["taur"]
+        else:
+            assert (0), \
+                "No parameter found: \"+str(parameters)+\". Need to provide taur. Aborting."   
 
 
 

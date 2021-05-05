@@ -28,9 +28,13 @@ class DamageInelasticMaterial(InelasticMaterial):
 
         self.problem = problem
 
-        self.epsilon0 = parameters["epsilon0"]
-        self.epsilon1 = parameters["epsilon1"]
-        self.gamma    = parameters["gamma"]
+        if ("epsilon0" in parameters) and ("epsilon1" in parameters) and ("gamma" in parameters):
+            self.epsilon0 = parameters["epsilon0"]
+            self.epsilon1 = parameters["epsilon1"]
+            self.gamma    = parameters["gamma"]
+        else:
+            assert (0), \
+                "No parameter found: \"+str(parameters)+\". Need to provide epsilon0 & epsilon1 & gamma. Aborting."
 
 
 

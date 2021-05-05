@@ -28,8 +28,11 @@ class TimeDrivenGrowthInelasticMaterial(GrowthInelasticMaterial):
 
         self.problem = problem
 
-        self.taug = parameters["taug"]
-
+        if ("taug" in parameters):
+            self.taug = parameters["taug"]
+        else:
+            assert (0), \
+                "No parameter found: \"+str(parameters)+\". Need to provide taug. Aborting."        
 
 
     # growth kinematics
