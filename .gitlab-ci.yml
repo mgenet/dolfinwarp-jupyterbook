@@ -1,0 +1,32 @@
+# This file is a template, and might need editing before it works on your project.
+# To contribute improvements to CI/CD templates, please follow the Development guide at:
+# https://docs.gitlab.com/ee/development/cicd/templates.html
+# This specific template is located at:
+# https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Pages/HTML.gitlab-ci.yml
+
+# Full project: https://gitlab.com/pages/plain-html
+stages:
+  - build
+  - deploy
+
+jupyter-build:
+  stage: build
+  image: python:slim
+  script:
+    - pip install -U jupyter-book
+    - jupyter-book clean .
+    - jupyter-book build .
+  artifacts:
+    paths:
+      - _build/
+
+pages:
+  stage: deploy
+  image: busybox:latest
+  script:
+    - mv _build/html public
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
