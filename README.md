@@ -1,10 +1,6 @@
-![Build Status](https://gitlab.com/pages/<project>/badges/master/build.svg)
-
----
-
 Example Jupyter Book website using GitLab Pages.
 
-Learn more about GitLab Pages at https://pages.gitlab.io and the official
+Learn more about GitLab Pages at https://about.gitlab.com/stages-devops-lifecycle/pages/ and the official
 documentation https://docs.gitlab.com/ce/user/project/pages/.
 
 ---
@@ -23,11 +19,11 @@ documentation https://docs.gitlab.com/ce/user/project/pages/.
 
 ## GitLab CI
 
-This project's static Pages are built by [GitLab CI][ci], following the steps
+This project's static Pages are built by [GitLab CI/CD][ci], following the steps
 defined in [`.gitlab-ci.yml`](.gitlab-ci.yml):
 
 ```bash
-# Full project: https://gitlab.com/pages/jupyter-book-example
+# Full project: https://gitlab.com/pages/jupyterbook
 
 stages:
   - build
