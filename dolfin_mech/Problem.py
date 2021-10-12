@@ -36,13 +36,15 @@ class Problem():
         self.normal_penalties      = []
         self.directional_penalties = []
 
-        self.surface_tensions   = []
-        self.surface0_loadings  = []
-        self.pressure0_loadings = []
-        self.volume0_loadings   = []
-        self.surface_loadings   = []
-        self.pressure_loadings  = []
-        self.volume_loadings    = []
+        self.surface_tensions            = []
+        self.surface0_loadings           = []
+        self.pressure0_loadings          = []
+        self.gradient_pressure0_loadings = []
+        self.volume0_loadings            = []
+        self.surface_loadings            = []
+        self.pressure_loadings           = []
+        self.gradient_pressure_loadings  = []
+        self.volume_loadings             = []
 
         self.steps = []
 
@@ -543,6 +545,18 @@ class Problem():
 
 
 
+    def add_gradient_pressure0_loading(self,
+            *args,
+            **kwargs):
+
+        loading = dmech.Loading(
+            *args,
+            **kwargs)
+        self.gradient_pressure0_loadings += [loading]
+        return loading
+
+
+
     def add_volume0_loading(self,
             *args,
             **kwargs):
@@ -575,6 +589,18 @@ class Problem():
             *args,
             **kwargs)
         self.pressure_loadings += [loading]
+        return loading
+
+
+
+    def add_gradient_pressure_loading(self,
+            *args,
+            **kwargs):
+
+        loading = dmech.Loading(
+            *args,
+            **kwargs)
+        self.gradient_pressure_loadings += [loading]
         return loading
 
 

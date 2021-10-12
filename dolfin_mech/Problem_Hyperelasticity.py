@@ -166,14 +166,15 @@ class HyperelasticityProblem(Problem):
             surface_tensions=[],
             surface0_loadings=[],
             pressure0_loadings=[],
+            gradient_pressure0_loadings=[],
             volume0_loadings=[],
             surface_loadings=[],
             pressure_loadings=[],
             volume_loadings=[],
+            gradient_pressure_loadings=[],
             dt=None):
 
         self.Pi = sum([subdomain.Psi * self.dV(subdomain.id) for subdomain in self.subdomains])
-        # print (self.Pi)
 
         for loading in normal_penalties:
             self.Pi += (loading.val/2) * dolfin.inner(
@@ -202,6 +203,13 @@ class HyperelasticityProblem(Problem):
         for loading in pressure0_loadings:
             self.Pi -= dolfin.inner(
                -loading.val * self.mesh_normals,
+                self.subsols["U"].subfunc) * loading.measure
+
+        for loading in gradient_pressure0_loadings:
+            self.Pi -= dolfin.inner(
+                dolfin.inner(
+                    -(dolfin.SpatialCoordinate(self.mesh) - loading.xyz_ini),
+                    loading.val) * self.mesh_normals,
                 self.subsols["U"].subfunc) * loading.measure
 
         for loading in volume0_loadings:
@@ -267,6 +275,16 @@ class HyperelasticityProblem(Problem):
         for loading in pressure_loadings:
             T = dolfin.dot(
                -loading.val * self.mesh_normals,
+                dolfin.inv(self.kinematics.Ft))
+            self.res_form -= self.kinematics.Jt * dolfin.inner(
+                T,
+                self.subsols["U"].dsubtest) * loading.measure
+
+        for loading in gradient_pressure_loadings:
+            T = dolfin.dot(
+                    dolfin.dot(
+                    -(dolfin.SpatialCoordinate(self.mesh) + self.subsols["U"].subfunc - loading.xyz_ini),
+                    loading.val) * self.mesh_normals,
                 dolfin.inv(self.kinematics.Ft))
             self.res_form -= self.kinematics.Jt * dolfin.inner(
                 T,

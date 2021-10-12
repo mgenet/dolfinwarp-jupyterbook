@@ -33,7 +33,8 @@ class SkeletonPoroBulkElasticMaterial(BulkElasticMaterial):
         self.problem = problem
 
         assert 'kappa' in parameters
-        self.kappa = parameters['kappa']
+        self.kappa = dolfin.Constant(parameters['kappa'])
+
 
 
     def get_dWbulkdJs(self, Phi0, Phi):
@@ -52,7 +53,7 @@ class SkeletonPoroBulkElasticMaterial(BulkElasticMaterial):
 
     def get_res_term(self, Phi0, Phi, w_U = None, w_Phi0 = None, w_Phi = None):
 
-        assert (w_U is None) or (w_Phi0 is None) or (w_Phi is None)
+        assert (w_U is     None) or (w_Phi0 is     None) or (w_Phi is     None)
         assert (w_U is not None) or (w_Phi0 is not None) or (w_Phi is not None)
 
         dWbulkdJs = self.get_dWbulkdJs(Phi0, Phi)
@@ -89,19 +90,20 @@ class SkeletonPoroBulkElasticMaterial(BulkElasticMaterial):
 
     def get_jac_term(self, Phi0, Phi, w_Phi0 = None, w_Phi = None):
 
-        assert (w_Phi0 is None) or (w_Phi is None)
+        assert (w_Phi0 is     None) or (w_Phi is     None)
         assert (w_Phi0 is not None) or (w_Phi is not None)
+
+        dWbulkdJs = self.get_dWbulkdJs(Phi0, Phi)
 
         if w_Phi is not None:
 
-            dWbulkdJs = self.get_dWbulkdJs(Phi0, Phi)
             # Phi = self.problem.get_Phi()
             # if self.problem.w_contact:
             #     dWbulkdJs = self.get_dWbulkdJs(self.problem.Phi0pos, self.problem.Phipos)
             # else:
             #     dWbulkdJs = self.get_dWbulkdJs(self.problem.Phi0, Phi)
-            # # dWbulkdJs = self.get_dWbulkdJs(self.problem.Phi0, self.problem.Phi)
-            # # dWbulkdJspos = self.get_dWbulkdJs(self.problem.Phi0pos, self.problem.Phipos)
+            #     # dWbulkdJs = self.get_dWbulkdJs(self.problem.Phi0, self.problem.Phi)
+            #     # dWbulkdJspos = self.get_dWbulkdJs(self.problem.Phi0pos, self.problem.Phipos)
 
             jac_form = dolfin.inner(
                 dolfin.diff(
@@ -123,8 +125,6 @@ class SkeletonPoroBulkElasticMaterial(BulkElasticMaterial):
                     self.problem.subsols["U"].dsubtria)) * self.problem.dV
 
         elif w_Phi0 is not None:
-
-            dWbulkdJs = self.get_dWbulkdJs(Phi0, Phi)
 
             jac_form = dolfin.inner(
                 dolfin.diff(

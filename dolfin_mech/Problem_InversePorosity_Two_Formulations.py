@@ -25,14 +25,16 @@ class TwoFormulationsInversePoroProblem(InverseHyperelasticityProblem):
     def __init__(self,
             eta,
             kappa,
+            n,
             w_contact = 1,
             type_porosity = 'mixed',
             p0 = 0):
 
         InverseHyperelasticityProblem.__init__(self,w_incompressibility=False)
-        self.eta                 = eta
-        self.kappa               = kappa
-        self.p0                  = p0
+        self.eta                 = dolfin.Constant(eta)
+        self.kappa               = dolfin.Constant(kappa)
+        self.n                   = dolfin.Constant(n)
+        self.p0                  = dolfin.Constant(p0)
         self.w_contact           = w_contact
         self.inertia             = None
         self.porosity_init_val   = None
@@ -82,18 +84,14 @@ class TwoFormulationsInversePoroProblem(InverseHyperelasticityProblem):
 
         self.Phi0_fs  = self.sfoi_fs
 
-        self.Phi0      = dolfin.Function(self.Phi0_fs)
-        self.Phi0_old  = dolfin.Function(self.Phi0_fs)
+        self.Phi0     = dolfin.Function(self.Phi0_fs)
+        self.Phi0_old = dolfin.Function(self.Phi0_fs)
 
         self.add_foi(expr=self.Phi0, fs=self.Phi0_fs, name="Phi0")
 
         self.Phi0_test = dolfin.TestFunction(self.Phi0_fs)
         self.Phi0_tria = dolfin.TrialFunction(self.Phi0_fs)
 
-        #initialisation
-        # Phi0ForInit = 0.5
-        # Phi0ForInit = self.porosity_given
-        # Phi0ForInit = self.porosity_init_field
         if self.porosity_init_val is not None:
             c_expr = dolfin.inner(
                 self.Phi0_tria,
@@ -106,11 +104,8 @@ class TwoFormulationsInversePoroProblem(InverseHyperelasticityProblem):
                 d_expr)
             local_solver.factorize()
             local_solver.solve_local_rhs(self.Phi0)
-            # print self.Phi.vector().array()
         elif self.porosity_init_field is not None:
             self.Phi0.vector()[:] = self.porosity_init_field.array()[:]
-            # print self.Phi.vector().array()
-        ###
 
         Phi0 = self.get_Phi0()
 
@@ -168,23 +163,22 @@ class TwoFormulationsInversePoroProblem(InverseHyperelasticityProblem):
 
     def set_Phi0_and_Phi(self):
 
-        if self.config_porosity == 'ref':
+        if self.config_porosity == 'reference':
             assert(0)
         elif self.config_porosity == 'deformed':
             self.Phi    = self.porosity_given
-            self.Phipos = dolfin.conditional(dolfin.gt(self.Phi,0), self.Phi, 0)
-            self.Phibin = dolfin.conditional(dolfin.gt(self.Phi,0), 1, 0)
+            self.Phipos = dolfin.conditional(dolfin.gt(self.Phi, 0), self.Phi, 0)
+            self.Phibin = dolfin.conditional(dolfin.gt(self.Phi, 0),        1, 0)
             if self.type_porosity == 'mixed':
                 self.Phi0    = self.subsols["Phi0"].subfunc
-                self.Phi0pos = dolfin.conditional(dolfin.gt(self.Phi0,0), self.Phi0, 0)
-                self.Phi0bin = dolfin.conditional(dolfin.gt(self.Phi0,0), 1, 0)
+                self.Phi0pos = dolfin.conditional(dolfin.gt(self.Phi0, 0), self.Phi0, 0)
+                self.Phi0bin = dolfin.conditional(dolfin.gt(self.Phi0, 0),         1, 0)
             elif self.type_porosity == 'internal':
                 self.set_internal_variables_internal()
                 self.inelastic_behaviors_internal += [self]
                 Phi0 = self.get_Phi0()
-                # Phi0 = self.Phi0
-                self.Phi0pos  = dolfin.conditional(dolfin.gt(Phi0,0), Phi0, 0)
-                self.Phi0bin = dolfin.conditional(dolfin.gt(Phi0,0), 1, 0)
+                self.Phi0pos = dolfin.conditional(dolfin.gt(Phi0, 0), Phi0, 0)
+                self.Phi0bin = dolfin.conditional(dolfin.gt(Phi0, 0),    1, 0)
 
 
 
@@ -208,8 +202,6 @@ class TwoFormulationsInversePoroProblem(InverseHyperelasticityProblem):
             elastic_behavior_bulk=None,
             subdomain_id=None):
 
-        self.set_kinematics()
-
         InverseHyperelasticityProblem.set_materials(self,
             elastic_behavior=elastic_behavior,
             elastic_behavior_dev=elastic_behavior_dev,
@@ -221,24 +213,9 @@ class TwoFormulationsInversePoroProblem(InverseHyperelasticityProblem):
             parameters = {'kappa':self.kappa})
         self.wpor_behavior = dmech.WporPoroElasticMaterial(
             problem = self,
-            parameters = {'eta':self.eta},
-            type = 'exp')
-
-        # self.wbulk_behavior = dmech.PorousMaterial(
-        #     material=dmech.SkeletonPoroBulkElasticMaterial(
-        #         problem = self,
-        #         parameters = {'kappa':self.kappa}),
-        #     problem=self,
-        #     porosity=self.porosity_given,
-        #     config_porosity=self.config_porosity)
-        # self.wpor_behavior = dmech.PorousMaterial(
-        #     material=dmech.WporPoroElasticMaterial(
-        #         problem = self,
-        #         parameters = {'eta':self.eta},
-        #         type = 'exp'),
-        #     problem=self,
-        #     porosity=self.porosity_given,
-        #     config_porosity=self.config_porosity)
+            parameters = {'eta':self.eta, 'n':self.n},
+            type = 'inverse')
+            # type = 'exp')
 
 
 
@@ -251,7 +228,6 @@ class TwoFormulationsInversePoroProblem(InverseHyperelasticityProblem):
             jac_form += dolfin.inner(
                 dolfin.diff(
                     E_hyper,
-                    # dWbulkdJspos * self.problem.kinematics.Je * self.problem.kinematics.Ce_inv,
                     self.Phi0),
                 dolfin.derivative(
                     self.kinematics.Et,
@@ -277,10 +253,12 @@ class TwoFormulationsInversePoroProblem(InverseHyperelasticityProblem):
             surface_tensions=[],
             surface0_loadings=[],
             pressure0_loadings=[],
+            gradient_pressure0_loadings=[],
             volume0_loadings=[],
             surface_loadings=[],
             pressure_loadings=[],
             volume_loadings=[],
+            gradient_pressure_loadings=[],
             dt=None):
 
         self.res_form = 0
@@ -295,9 +273,26 @@ class TwoFormulationsInversePoroProblem(InverseHyperelasticityProblem):
                 subdomain.sigma,
                 dolfin.sym(dolfin.grad(self.subsols["U"].dsubtest))) * self.dV(subdomain.id)
 
+        for loading in surface_loadings:
+            self.res_form -= dolfin.inner(
+                loading.val,
+                self.subsols["U"].dsubtest) * loading.measure
+
         for loading in pressure_loadings:
             self.res_form -= dolfin.inner(
                -loading.val * self.mesh_normals,
+                self.subsols["U"].dsubtest) * loading.measure
+
+        for loading in gradient_pressure_loadings:
+            self.res_form -= dolfin.inner(
+                dolfin.inner(
+                    -(dolfin.SpatialCoordinate(self.mesh) - loading.xyz_ini),
+                    loading.val) * self.mesh_normals,
+                self.subsols["U"].dsubtest) * loading.measure
+
+        for loading in volume_loadings:
+            self.res_form -= dolfin.inner(
+                loading.val,
                 self.subsols["U"].dsubtest) * loading.measure
 
         if self.w_contact:
@@ -323,7 +318,6 @@ class TwoFormulationsInversePoroProblem(InverseHyperelasticityProblem):
 
         if self.type_porosity == 'internal':
             self.jac_form += self.set_jac_form_hyperelastic()
-            # self.jac_form += self.jac_form_hyperelastic()
             if self.w_contact:
                 self.jac_form += self.wbulk_behavior.get_jac_term(self.Phi0pos, self.Phipos, w_Phi0=1)
             else:
@@ -398,6 +392,26 @@ class TwoFormulationsInversePoroProblem(InverseHyperelasticityProblem):
         self.add_qoi(
             name=basename,
             expr=self.Phi0pos / self.mesh_V0 * self.dV)
+
+
+
+    def add_Phipos_qois(self):
+
+        basename = "PHIpos_"
+
+        self.add_qoi(
+            name=basename,
+            expr=self.Phipos / self.mesh_V0 * self.dV)
+
+
+
+    def add_Phibin_qois(self):
+
+        basename = "PHIbin_"
+
+        self.add_qoi(
+            name=basename,
+            expr=self.Phibin / self.mesh_V0 * self.dV)
 
 
 

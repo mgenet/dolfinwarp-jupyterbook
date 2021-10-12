@@ -35,22 +35,28 @@ class WporPoroElasticMaterial(ElasticMaterial):
 
         assert ('eta' in parameters)
         self.eta = parameters['eta']
+        self.n   = parameters['n']
 
-        assert ((type == 'exp') or isinstance(type, int))
+        assert ((type in ['inverse','exp']) or isinstance(type, int))
         self.type = type
 
 
 
     def get_dWpordJs(self):
-
+        # Jf = self.kinematics.Je - self.kinematics.Js
         Jf = self.problem.kinematics.Je * self.problem.Phi
-        if (self.type == 'exp'):
+        if (self.type == 'inverse'): # inverse problem
+            dWpor1dJs =   self.eta * (self.n+1) * ((self.problem.Phi0 - Jf) / Jf)**self.n * self.problem.Phi0 / (Jf)**2
+            dWpor2dJs = - self.eta * (self.n+1) * ((Jf / self.problem.Phi0) - 1.)**self.n / self.problem.Phi0
+            dWpordJs  = dolfin.conditional(dolfin.lt(self.problem.Phi, self.problem.Phi0), dWpor1dJs, dWpor2dJs)
+        elif (self.type == 'exp'):
             dWpordJs = self.eta * (self.problem.Phi0 / (Jf))**2 * dolfin.exp(-Jf / (self.problem.Phi0 - Jf)) / (self.problem.Phi0 - Jf)
-        elif (isintance(self.type, int)):
+            dWpordJs = dolfin.conditional(dolfin.lt(self.problem.Phi, self.problem.Phi0), dWpordJs, 0)
+        elif (isinstance(self.type, int)):
             if (self.type == 2):
-                dWpordJs = self.eta * n * ((self.problem.Phi0 - Jf) / (Jf))**(n-1) * self.problem.Phi0 / (Jf)**2
-        dWpordJs = dolfin.conditional(dolfin.lt(self.problem.Phi, self.problem.Phi0), dWpordJs, 0)
-        dWpordJs = (1 - self.problem.Phi0) * dWpordJs
+                dWpordJs = self.eta * self.n * ((self.problem.Phi0 - Jf) / Jf)**(self.n-1) * self.problem.Phi0 / (Jf)**2
+                dWpordJs = dolfin.conditional(dolfin.lt(self.problem.Phi, self.problem.Phi0), dWpordJs, 0)
+        dWpordJs = (1. - self.problem.Phi0) * dWpordJs
 
         return dWpordJs
 
@@ -81,3 +87,14 @@ class WporPoroElasticMaterial(ElasticMaterial):
 
 
 ########################################## for internal variable formulation ###
+
+    def get_jac_term(self, w_Phi0 = None, w_Phi = None):
+
+        assert (w_Phi0 is     None) or (w_Phi is     None)
+        assert (w_Phi0 is not None) or (w_Phi is not None)
+
+        # dWpordJs = self.get_dWpordJs()
+
+        assert(0)
+
+        return jac_form

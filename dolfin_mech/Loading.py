@@ -25,6 +25,7 @@ class Loading():
             val=None,
             val_ini=None,
             val_fin=None,
+            xyz_ini=None,
             N=None):
 
         self.measure = measure
@@ -41,6 +42,9 @@ class Loading():
 
         if (N is not None):
             self.N = dolfin.Constant(N)
+
+        if (xyz_ini is not None):
+            self.xyz_ini = dolfin.Constant(xyz_ini)
 
 
 

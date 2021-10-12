@@ -25,14 +25,16 @@ class TwoFormulationsPoroProblem(HyperelasticityProblem):
     def __init__(self,
             eta,
             kappa,
+            n,
             w_contact = 1,
             type_porosity = 'mixed',
             p0 = 0):
 
         HyperelasticityProblem.__init__(self,w_incompressibility=False)
-        self.eta                 = eta
-        self.kappa               = kappa
-        self.p0                  = p0
+        self.eta                 = dolfin.Constant(eta)
+        self.kappa               = dolfin.Constant(kappa)
+        self.n                   = dolfin.Constant(n)
+        self.p0                  = dolfin.Constant(p0)
         self.w_contact           = w_contact
         self.inertia             = None
         self.porosity_init_val   = None
@@ -82,29 +84,13 @@ class TwoFormulationsPoroProblem(HyperelasticityProblem):
 
         self.Phi_fs = self.sfoi_fs
 
-        self.Phi      = dolfin.Function(self.Phi_fs)
-        self.Phi_old  = dolfin.Function(self.Phi_fs)
+        self.Phi     = dolfin.Function(self.Phi_fs)
+        self.Phi_old = dolfin.Function(self.Phi_fs)
 
         self.add_foi(expr=self.Phi, fs=self.Phi_fs, name="Phi")
 
         self.Phi_test = dolfin.TestFunction(self.Phi_fs)
         self.Phi_tria = dolfin.TrialFunction(self.Phi_fs)
-
-        #initialisation
-        # PhiForInit = numpy.array([0.5])
-        # PhiForInit = self.porosity_given
-        # PhiForInit = self.porosity_init_field
-
-        # fe = dolfin.VectorElement(
-        #     family='DG',
-        #     cell=self.mesh.ufl_cell(),
-        #     degree=0)
-        # init_val = [str(val) for val in numpy.concatenate([PhiForInit.flatten()])]
-        # if len(init_val) == 1:
-        #     init_val = init_val[0]
-        # self.Phi.interpolate(dolfin.Expression(
-        #     init_val,
-        #     element=fe))
 
         if self.porosity_init_val is not None:
             c_expr = dolfin.inner(
@@ -118,11 +104,8 @@ class TwoFormulationsPoroProblem(HyperelasticityProblem):
                 d_expr)
             local_solver.factorize()
             local_solver.solve_local_rhs(self.Phi)
-            # print self.Phi.vector().array()
         elif self.porosity_init_field is not None:
             self.Phi.vector()[:] = self.porosity_init_field.array()[:]
-            # print self.Phi.vector().array()
-        ###
 
         Phi = self.get_Phi()
 
@@ -180,21 +163,20 @@ class TwoFormulationsPoroProblem(HyperelasticityProblem):
 
     def set_Phi0_and_Phi(self):
 
-        if self.config_porosity == 'ref':
+        if self.config_porosity == 'reference':
             self.Phi0 = self.porosity_given
-            self.Phi0pos = dolfin.conditional(dolfin.gt(self.Phi0,0), self.Phi0, 0)
-            self.Phi0bin = dolfin.conditional(dolfin.gt(self.Phi0,0), 1, 0)
+            self.Phi0pos = dolfin.conditional(dolfin.gt(self.Phi0, 0), self.Phi0, 0)
+            self.Phi0bin = dolfin.conditional(dolfin.gt(self.Phi0, 0),         1, 0)
             if self.type_porosity == 'mixed':
-                self.Phi  = self.subsols["Phi"].subfunc
-                self.Phipos  = dolfin.conditional(dolfin.gt(self.Phi,0), self.Phi, 0)
-                self.Phibin = dolfin.conditional(dolfin.gt(self.Phi,0), 1, 0)
+                self.Phi = self.subsols["Phi"].subfunc
+                self.Phipos = dolfin.conditional(dolfin.gt(self.Phi, 0), self.Phi, 0)
+                self.Phibin = dolfin.conditional(dolfin.gt(self.Phi, 0),        1, 0)
             elif self.type_porosity == 'internal':
                 self.set_internal_variables_internal()
                 self.inelastic_behaviors_internal += [self]
                 Phi = self.get_Phi()
-                # Phi = self.Phi
-                self.Phipos  = dolfin.conditional(dolfin.gt(Phi,0), Phi, 0)
-                self.Phibin = dolfin.conditional(dolfin.gt(Phi,0), 1, 0)
+                self.Phipos = dolfin.conditional(dolfin.gt(Phi, 0), Phi, 0)
+                self.Phibin = dolfin.conditional(dolfin.gt(Phi, 0),   1, 0)
         elif self.config_porosity == 'deformed':
             assert(0)
 
@@ -220,8 +202,6 @@ class TwoFormulationsPoroProblem(HyperelasticityProblem):
             elastic_behavior_bulk=None,
             subdomain_id=None):
 
-        self.set_kinematics()
-
         HyperelasticityProblem.set_materials(self,
             elastic_behavior=elastic_behavior,
             elastic_behavior_dev=elastic_behavior_dev,
@@ -233,24 +213,9 @@ class TwoFormulationsPoroProblem(HyperelasticityProblem):
             parameters = {'kappa':self.kappa})
         self.wpor_behavior = dmech.WporPoroElasticMaterial(
             problem = self,
-            parameters = {'eta':self.eta},
-            type = 'exp')
-
-        # self.wbulk_behavior = dmech.PorousMaterial(
-        #     material=dmech.SkeletonPoroBulkElasticMaterial(
-        #         problem = self,
-        #         parameters = {'kappa':self.kappa}),
-        #     problem=self,
-        #     porosity=self.porosity_given,
-        #     config_porosity=self.config_porosity)
-        # self.wpor_behavior = dmech.PorousMaterial(
-        #     material=dmech.WporPoroElasticMaterial(
-        #         problem = self,
-        #         parameters = {'eta':self.eta},
-        #         type = 'exp'),
-        #     problem=self,
-        #     porosity=self.porosity_given,
-        #     config_porosity=self.config_porosity)
+            parameters = {'eta':self.eta, 'n':self.n},
+            type = 'inverse')
+            # type = 'exp')
 
 
 
@@ -260,13 +225,51 @@ class TwoFormulationsPoroProblem(HyperelasticityProblem):
             surface_tensions=[],
             surface0_loadings=[],
             pressure0_loadings=[],
+            gradient_pressure0_loadings=[],
             volume0_loadings=[],
             surface_loadings=[],
             pressure_loadings=[],
             volume_loadings=[],
+            gradient_pressure_loadings=[],
             dt=None):
 
         self.Pi = sum([subdomain.Psi * self.dV(subdomain.id) for subdomain in self.subdomains])
+
+        for loading in normal_penalties:
+            self.Pi += (loading.val/2) * dolfin.inner(
+                self.subsols["U"].subfunc,
+                self.mesh_normals)**2 * loading.measure
+
+        for loading in surface_tensions:
+            FmTN = dolfin.dot(
+                dolfin.inv(self.kinematics.Ft).T,
+                self.mesh_normals)
+            T = dolfin.sqrt(dolfin.inner(
+                FmTN,
+                FmTN))
+            self.Pi += loading.val * self.kinematics.Jt * T * loading.measure
+
+        for loading in surface0_loadings:
+            self.Pi -= dolfin.inner(
+                loading.val,
+                self.subsols["U"].subfunc) * loading.measure
+
+        for loading in pressure0_loadings:
+            self.Pi -= dolfin.inner(
+               -loading.val * self.mesh_normals,
+                self.subsols["U"].subfunc) * loading.measure
+
+        for loading in gradient_pressure0_loadings:
+            self.Pi -= dolfin.inner(
+                dolfin.inner(
+                    -(dolfin.SpatialCoordinate(self.mesh) - loading.xyz_ini),
+                    loading.val) * self.mesh_normals,
+                self.subsols["U"].subfunc) * loading.measure
+
+        for loading in volume0_loadings:
+            self.Pi -= dolfin.inner(
+                loading.val,
+                self.subsols["U"].subfunc) * loading.measure
 
         self.res_form = dolfin.derivative(
             self.Pi,
@@ -278,12 +281,38 @@ class TwoFormulationsPoroProblem(HyperelasticityProblem):
                     self.subsols["U"].subfunc,
                     self.subsols["U"].dsubtest) * self.dV
 
+        for loading in surface_loadings:
+            FmTN = dolfin.dot(
+                dolfin.inv(self.kinematics.Ft).T,
+                self.mesh_normals)
+            T = dolfin.sqrt(dolfin.inner(
+                FmTN,
+                FmTN)) * loading.val
+            self.res_form -= self.kinematics.Jt * dolfin.inner(
+                T,
+                self.subsols["U"].dsubtest) * loading.measure
+
         for loading in pressure_loadings:
             T = dolfin.dot(
                -loading.val * self.mesh_normals,
                 dolfin.inv(self.kinematics.Ft))
             self.res_form -= self.kinematics.Jt * dolfin.inner(
                 T,
+                self.subsols["U"].dsubtest) * loading.measure
+
+        for loading in gradient_pressure_loadings:
+            T = dolfin.dot(
+                    dolfin.dot(
+                    -(dolfin.SpatialCoordinate(self.mesh) + self.subsols["U"].subfunc - loading.xyz_ini),
+                    loading.val) * self.mesh_normals,
+                dolfin.inv(self.kinematics.Ft))
+            self.res_form -= self.kinematics.Jt * dolfin.inner(
+                T,
+                self.subsols["U"].dsubtest) * loading.measure
+
+        for loading in volume_loadings:
+            self.res_form -= self.kinematics.Jt * dolfin.inner(
+                loading.val,
                 self.subsols["U"].dsubtest) * loading.measure
 
         if self.w_contact:
@@ -371,6 +400,26 @@ class TwoFormulationsPoroProblem(HyperelasticityProblem):
         self.add_qoi(
             name=basename,
             expr=self.Phi0bin / self.mesh_V0 * self.dV)
+
+
+
+    def add_Phipos_qois(self):
+
+        basename = "PHIpos_"
+
+        self.add_qoi(
+            name=basename,
+            expr=self.Phipos / self.mesh_V0 * self.dV)
+
+
+
+    def add_Phibin_qois(self):
+
+        basename = "PHIbin_"
+
+        self.add_qoi(
+            name=basename,
+            expr=self.Phibin / self.mesh_V0 * self.dV)
 
 
 

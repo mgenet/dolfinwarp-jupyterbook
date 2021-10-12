@@ -70,7 +70,7 @@ class PorousMaterial(ElasticMaterial):
                 Psi   = (1 - self.problem.Phi0pos) * Psi_mat
                 Sigma = (1 - self.problem.Phi0pos) * Sigma_mat
         else:
-            if self.config_porosity == 'ref':
+            if self.config_porosity == 'reference':
                 Psi   = (1-self.porosity_given) * Psi_mat
                 Sigma = (1-self.porosity_given) * Sigma_mat
             elif self.config_porosity == 'deformed':

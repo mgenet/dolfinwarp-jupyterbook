@@ -16,7 +16,6 @@ from .Material_Elastic_Bulk_CiarletGeymonat import *
 from .Material_Elastic_Dev_MooneyRivlin import *
 from .Kinematics_Spherical import *
 from .Loading import *
-from .Problem_Porosity_Wpor import *
 from .Material_Elastic_Porous import *
 from .SubSol import *
 from .TimeIntegrator import *
@@ -36,14 +35,8 @@ from .Problem_RelaxedGrowth import *
 from .Problem_Hyperelasticity import *
 from .Material_Elastic_Dev_NeoHookean import *
 from .Problem_Elasticity import *
-# from .Problem_Porosity_Wpor import *
-from .Problem_Porosity_Two_Subfunc import *
 from .Problem_Porosity_Two_Formulations import *
-# from .Problem_Porosity_Two_Subfunc_cond import *
-# from .Problem_InversePorosity_Wpor import *
-from .Problem_InversePorosity_Two_Subfunc import *
 from .Problem_InversePorosity_Two_Formulations import *
-# from .Problem_Porosity_Condition import *
 from .Material_Elastic_Dev_NeoHookean import *
 from .Material_Elastic_Dev_MooneyRivlin import *
 # from .Material_Elastic_Dev_MooneyRivlin_reduced import *
@@ -62,3 +55,4 @@ from .Problem_InverseHyperelasticity import *
 from .Problem import *
 from .compute_error import *
 from .Material_Inelastic_Growth import *
+from .Expressions_cpp import *

@@ -87,10 +87,12 @@ class InverseHyperelasticityProblem(HyperelasticityProblem):
             surface_tensions=[],
             surface0_loadings=[],
             pressure0_loadings=[],
+            gradient_pressure0_loadings=[],
             volume0_loadings=[],
             surface_loadings=[],
             pressure_loadings=[],
             volume_loadings=[],
+            gradient_pressure_loadings=[],
             dt=None):
 
         # self.res_form = 0.                            # MG20190417: ok??
@@ -121,6 +123,13 @@ class InverseHyperelasticityProblem(HyperelasticityProblem):
         for loading in pressure_loadings:
             self.res_form -= dolfin.inner(
                -loading.val * self.mesh_normals,
+                self.subsols["U"].dsubtest) * loading.measure
+
+        for loading in gradient_pressure_loadings:
+            self.res_form -= dolfin.inner(
+                dolfin.inner(
+                    -(dolfin.SpatialCoordinate(self.mesh) - loading.xyz_ini),
+                    loading.val) * self.mesh_normals,
                 self.subsols["U"].dsubtest) * loading.measure
 
         for loading in volume_loadings:

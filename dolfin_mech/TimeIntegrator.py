@@ -158,6 +158,10 @@ class TimeIntegrator():
             pressure0_loadings += self.problem.pressure0_loadings
             pressure0_loadings += step.pressure0_loadings
 
+            gradient_pressure0_loadings  = []
+            gradient_pressure0_loadings += self.problem.gradient_pressure0_loadings
+            gradient_pressure0_loadings += step.gradient_pressure0_loadings
+
             volume0_loadings  = []
             volume0_loadings += self.problem.volume0_loadings
             volume0_loadings += step.volume0_loadings
@@ -169,6 +173,10 @@ class TimeIntegrator():
             pressure_loadings  = []
             pressure_loadings += self.problem.pressure_loadings
             pressure_loadings += step.pressure_loadings
+
+            gradient_pressure_loadings  = []
+            gradient_pressure_loadings += self.problem.gradient_pressure_loadings
+            gradient_pressure_loadings += step.gradient_pressure_loadings
 
             volume_loadings  = []
             volume_loadings += self.problem.volume_loadings
@@ -200,9 +208,11 @@ class TimeIntegrator():
                     surface_tensions=surface_tensions,
                     surface0_loadings=surface0_loadings,
                     pressure0_loadings=pressure0_loadings,
+                    gradient_pressure0_loadings=gradient_pressure0_loadings,
                     volume0_loadings=volume0_loadings,
                     surface_loadings=surface_loadings,
                     pressure_loadings=pressure_loadings,
+                    gradient_pressure_loadings=gradient_pressure_loadings,
                     volume_loadings=volume_loadings,
                     dt=dt)
 
@@ -230,6 +240,9 @@ class TimeIntegrator():
                 for loading in step.pressure0_loadings:
                     loading.set_value_at_t_step(t_step)
 
+                for loading in step.gradient_pressure0_loadings:
+                    loading.set_value_at_t_step(t_step)
+
                 for loading in step.volume0_loadings:
                     loading.set_value_at_t_step(t_step)
 
@@ -237,6 +250,9 @@ class TimeIntegrator():
                     loading.set_value_at_t_step(t_step)
 
                 for loading in step.pressure_loadings:
+                    loading.set_value_at_t_step(t_step)
+
+                for loading in step.gradient_pressure_loadings:
                     loading.set_value_at_t_step(t_step)
 
                 for loading in step.volume_loadings:
