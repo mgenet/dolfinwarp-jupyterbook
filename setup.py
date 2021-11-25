@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="dolfin_mech",
-    version="2020.12.23.post",
+    version="2021.10.21",
     author="Martin Genet",
     author_email="martin.genet@polytechnique.edu",
     description=open("README.md", "r").readlines()[1][:-1],
@@ -18,3 +18,8 @@ setuptools.setup(
     ],
     install_requires=["numpy", "myPythonLibrary"],
 )
+
+# python -m keyring set https://upload.pypi.org/legacy/ martin.genet
+
+# python setup.py sdist bdist_wheel
+# python -m twine upload dist/*
