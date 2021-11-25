@@ -343,6 +343,7 @@ class TwoFormulationsPoroProblem(HyperelasticityProblem):
                 self.jac_form += self.wbulk_behavior.get_jac_term(self.Phi0, self.get_Phi(), w_Phi=1)
 
 
+
     def add_Phi0_qois(self):
 
         basename = "PHI0_"

@@ -34,7 +34,7 @@ class KirchhoffElasticMaterial(ElasticMaterial):
             self.mu    = self.E/2/(1+self.nu)
         else:
             assert (0), \
-                "No parameter found: \"+str(parameters)+\". Need to provide lambda & mu or E & nu. Aborting."
+                "No parameter found: ("+str(parameters)+"). Need to provide lambda & mu or E & nu. Aborting."
 
 
 

@@ -38,7 +38,7 @@ class MooneyRivlinDevElasticMaterial(DevElasticMaterial):
             self.C2 = mu/2
         else:
             assert (0), \
-                "No parameter found: \"+str(parameters)+\". Need to provide C2 or mu or E & nu. Aborting."
+                "No parameter found ("+str(parameters)+"). Need to provide C2 or c2 or mu or E & nu. Aborting."
 
 
 

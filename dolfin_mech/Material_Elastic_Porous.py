@@ -46,14 +46,14 @@ class PorousMaterial(ElasticMaterial):
         #     assert 'Phi0pos' in self.problem.__dict__
         #     assert 'coef_1_minus_phi0' not in self.problem.__dict__
 
-        if 'coef_1_minus_phi0' in self.problem.__dict__:
+        if ('coef_1_minus_phi0' in self.problem.__dict__):
             Psi   = self.problem.coef_1_minus_phi0 * Psi_mat
             Sigma = self.problem.coef_1_minus_phi0 * Sigma_mat
-        elif 'Phi0pos' in self.problem.__dict__:
+        elif ('Phi0pos' in self.problem.__dict__):
             # Psi   = (1 - self.problem.Phi0pos) * Psi_mat
             # Sigma = (1 - self.problem.Phi0pos) * Sigma_mat
             if isinstance(self.problem, dmech.InverseHyperelasticityProblem):
-                if self.problem.w_contact == 1:
+                if (self.problem.w_contact == 1):
                     Psi   = (1 - self.problem.Phi0pos) * Psi_mat
                     Sigma = (1 - self.problem.Phi0pos) * Sigma_mat
                 else:
@@ -70,11 +70,11 @@ class PorousMaterial(ElasticMaterial):
                 Psi   = (1 - self.problem.Phi0pos) * Psi_mat
                 Sigma = (1 - self.problem.Phi0pos) * Sigma_mat
         else:
-            if self.config_porosity == 'reference':
+            if (self.config_porosity == 'reference'):
                 Psi   = (1-self.porosity_given) * Psi_mat
                 Sigma = (1-self.porosity_given) * Sigma_mat
-            elif self.config_porosity == 'deformed':
-                assert C is not None
+            elif (self.config_porosity == 'deformed'):
+                assert (C is not None)
                 J = dolfin.sqrt(dolfin.det(C))
                 Psi   = (1-self.porosity_given) * J * Psi_mat
                 Sigma = (1-self.porosity_given) * J * Sigma_mat

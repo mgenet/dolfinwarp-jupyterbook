@@ -38,7 +38,7 @@ class NeoHookeanDevElasticMaterial(DevElasticMaterial):
             self.C1 = mu/2
         else:
             assert (0), \
-                "No parameter found: \"+str(parameters)+\". Need to provide C1 or mu or E & nu. Aborting."
+                "No parameter found: ("+str(parameters)+"). Need to provide C1 or c1 or mu or E & nu. Aborting."
 
 
 

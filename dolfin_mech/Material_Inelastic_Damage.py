@@ -123,7 +123,7 @@ class DamageInelasticMaterial(InelasticMaterial):
         jac_form = dolfin.inner(
             dolfin.diff(
                 self.problem.sigma,
-                  ),
+                dolfin.variable(self.d)),
             dolfin.derivative(
                 self.problem.kinematics.epsilon,
                 self.problem.subsols["u"].subfunc,

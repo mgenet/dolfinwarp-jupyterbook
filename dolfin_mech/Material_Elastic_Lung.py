@@ -25,14 +25,14 @@ class LungElasticMaterial(ElasticMaterial):
             parameters,
             version):
 
-        if version == 1:
+        if   (version == 1):
             assert set(["alpha", "gamma", "mu"]).issubset(set(parameters.keys()))
             self.bulk = dmech.PneumoBulkElasticMaterial(parameters)
             self.dev  = dmech.NeoHookeanDevElasticMaterial(parameters)
-        elif version == 2:
+        elif (version == 2):
             assert set(["alpha", "gamma", "c1", "c2"]).issubset(set(parameters.keys()))
             self.bulk = dmech.PneumoBulkElasticMaterial(parameters)
-            self.dev  = dmech.MooneyRivlinDevElasticMaterial(parameters)
+            self.dev  = dmech.NeoHookeanMooneyRivlinDevElasticMaterial(parameters)
 
 
 
