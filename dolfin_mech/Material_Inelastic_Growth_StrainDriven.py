@@ -2,13 +2,11 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2020                                       ###
+### Created by Martin Genet, 2018-2022                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
 ################################################################################
-
-# from builtins import *
 
 import dolfin
 import numpy
@@ -33,7 +31,7 @@ class StrainDrivenGrowthInelasticMaterial(GrowthInelasticMaterial):
             self.Ee_thr = parameters["Ee_thr"]
             self.taug = parameters["taug"]
         else:
-            assert (0), \
+            assert (0),\
                 "No parameter found: \"+str(parameters)+\". Need to provide thetag_max & Ee_thr & taug. Aborting."
 
 

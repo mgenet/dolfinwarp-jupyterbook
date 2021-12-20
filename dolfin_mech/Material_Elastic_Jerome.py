@@ -2,13 +2,11 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2020                                       ###
+### Created by Martin Genet, 2018-2022                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
 ################################################################################
-
-# from builtins import *
 
 import dolfin
 
@@ -29,7 +27,7 @@ class JeromeElasticMaterial(ElasticMaterial):
             self.Kappa2 = dolfin.Constant(parameters["Kappa2"])
             self.Bulk   = dolfin.Constant(parameters["Bulk"])
         else:
-            assert (0), \
+            assert (0),\
                 "No parameter found: \"+str(parameters)+\". Need to provide Kappa1 & Kappa2 & Bulk. Aborting."
 
 

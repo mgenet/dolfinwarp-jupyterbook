@@ -2,18 +2,16 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2020                                       ###
+### Created by Martin Genet, 2018-2022                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
 ###                                                                          ###
-### And Cécile Patte, 2019-2020                                              ###
+### And Cécile Patte, 2019-2022                                              ###
 ###                                                                          ###
 ### INRIA, Palaiseau, France                                                 ###
 ###                                                                          ###
 ################################################################################
-
-# from builtins import *
 
 import dolfin
 
@@ -33,7 +31,7 @@ class PneumoBulkElasticMaterial(BulkElasticMaterial):
             self.alpha = dolfin.Constant(parameters["alpha"])
             self.gamma = dolfin.Constant(parameters["gamma"])
         else:
-            assert (0), \
+            assert (0),\
                 "No parameter found: \"+str(parameters)+\". Need to provide alpha & gamma. Aborting."
 
 

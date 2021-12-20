@@ -8,8 +8,6 @@
 ###                                                                          ###
 ################################################################################
 
-# from builtins import *
-
 import dolfin
 import numpy
 
@@ -261,7 +259,7 @@ class TwoFormulationsInversePoroProblem(InverseHyperelasticityProblem):
             gradient_pressure_loadings=[],
             dt=None):
 
-        self.res_form = 0
+        self.res_form = 0.
 
         if self.inertia is not None:
             self.res_form += self.inertia / dt * dolfin.inner(

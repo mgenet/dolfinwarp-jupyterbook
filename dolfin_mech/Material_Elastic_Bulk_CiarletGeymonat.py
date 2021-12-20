@@ -2,13 +2,11 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2020                                       ###
+### Created by Martin Genet, 2018-2022                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
 ################################################################################
-
-# from builtins import *
 
 import dolfin
 
@@ -31,7 +29,7 @@ class CiarletGeymonatBulkElasticMaterial(BulkElasticMaterial):
             nu = dolfin.Constant(parameters["nu"])
             self.lmbda = E*nu/(1+nu)/(1-2*nu) # MG20180516: in 2d, plane strain
         else:
-            assert (0), \
+            assert (0),\
                 "No parameter found: \"+str(parameters)+\". Need to provide lambda or E & nu. Aborting."
 
 

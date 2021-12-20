@@ -2,7 +2,12 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2020                                       ###
+### Created by Martin Genet, 2018-2022                                       ###
+###                                                                          ###
+### École Polytechnique, Palaiseau, France                                   ###
+###                                                                          ###
+###                                                                          ###
+### And Colin Laville, 2021-2022                                             ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
@@ -20,22 +25,21 @@ def get_ExprMeshFunction_cpp_pybind():
 class MeshExpr : public dolfin::Expression
 {
 public:
+    // Create scalar expression
+    MeshExpr() : dolfin::Expression() {}
 
-// Create scalar expression
-MeshExpr() : dolfin::Expression() {}
+    // Function for evaluating expression on each cell
+    void eval(
+        Eigen::Ref<Eigen::VectorXd> values,
+        Eigen::Ref<const Eigen::VectorXd> x,
+        const ufc::cell& cell) const override
+    {
+        const uint cell_index = cell.index;
+        values[0] = (*f)[cell_index];
+    }
 
-// Function for evaluating expression on each cell
-void eval(
-Eigen::Ref<Eigen::VectorXd> values,
-Eigen::Ref<const Eigen::VectorXd> x,
-const ufc::cell& cell) const override
-{
-const uint cell_index = cell.index;
-values[0] = (*f)[cell_index];
-}
-
-// The data stored in mesh functions
-std::shared_ptr<dolfin::MeshFunction<double>> f;
+    // The data stored in mesh functions
+    std::shared_ptr<dolfin::MeshFunction<double>> f;
 };
 
 PYBIND11_MODULE(SIGNATURE, m)

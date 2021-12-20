@@ -2,13 +2,11 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2020                                       ###
+### Created by Martin Genet, 2018-2022                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
 ################################################################################
-
-# from builtins import *
 
 import dolfin
 import sys
@@ -28,6 +26,7 @@ class TimeIntegrator():
             print_out=True,
             print_sta=True,
             write_qois=True,
+            write_qois_limited_precision=False,
             write_sol=True,
             write_vtus=False,
             write_xmls=False):
@@ -75,7 +74,8 @@ class TimeIntegrator():
 
             self.qoi_printer = mypy.DataPrinter(
                 names=["t"]+[qoi.name for qoi in self.problem.qois],
-                filename=self.write_qois_filebasename+".dat")
+                filename=self.write_qois_filebasename+".dat",
+                limited_precision=write_qois_limited_precision)
 
             self.problem.update_qois()
             self.qoi_printer.write_line([0.]+[qoi.value for qoi in self.problem.qois])
@@ -99,12 +99,12 @@ class TimeIntegrator():
             if (self.write_vtus):
                 dmech.write_VTU_file(
                     filebasename=self.write_sol_filebasename,
-                    function=self.problem.subsols["U"].subfunc,
+                    function=self.problem.get_displacement_subsol().subfunc,
                     time=0)
 
             self.write_xmls = bool(write_xmls)
             if (self.write_xmls):
-                dolfin.File(self.write_sol_filebasename+"_"+str(0).zfill(3)+".xml") << self.problem.subsols["U"].subfunc
+                dolfin.File(self.write_sol_filebasename+"_"+str(0).zfill(3)+".xml") << self.problem.get_displacement_subsol().subfunc
 
 
 
@@ -123,73 +123,23 @@ class TimeIntegrator():
 
     def integrate(self):
 
-        k_step = 0
         k_t_tot = 0
         n_iter_tot = 0
         self.printer.inc()
-        for step in self.problem.steps:
-            k_step += 1
+        for k_step in range(1,len(self.problem.steps)+1):
             self.printer.print_var("k_step",k_step,-1)
 
-            t = step.t_ini
-            dt = step.dt_ini
+            self.step = self.problem.steps[k_step-1]
+
+            t = self.step.t_ini
+            dt = self.step.dt_ini
+
+            self.problem.set_variational_formulation(
+                k_step=k_step-1)
 
             self.solver.constraints  = []
             self.solver.constraints += self.problem.constraints
-            self.solver.constraints += step.constraints
-
-            normal_penalties  = []
-            normal_penalties += self.problem.normal_penalties
-            normal_penalties += step.normal_penalties
-
-            directional_penalties  = []
-            directional_penalties += self.problem.directional_penalties
-            directional_penalties += step.directional_penalties
-
-            surface_tensions  = []
-            surface_tensions += self.problem.surface_tensions
-            surface_tensions += step.surface_tensions
-
-            surface0_loadings  = []
-            surface0_loadings += self.problem.surface0_loadings
-            surface0_loadings += step.surface0_loadings
-
-            pressure0_loadings  = []
-            pressure0_loadings += self.problem.pressure0_loadings
-            pressure0_loadings += step.pressure0_loadings
-
-            gradient_pressure0_loadings  = []
-            gradient_pressure0_loadings += self.problem.gradient_pressure0_loadings
-            gradient_pressure0_loadings += step.gradient_pressure0_loadings
-
-            volume0_loadings  = []
-            volume0_loadings += self.problem.volume0_loadings
-            volume0_loadings += step.volume0_loadings
-
-            surface_loadings  = []
-            surface_loadings += self.problem.surface_loadings
-            surface_loadings += step.surface_loadings
-
-            pressure_loadings  = []
-            pressure_loadings += self.problem.pressure_loadings
-            pressure_loadings += step.pressure_loadings
-
-            gradient_pressure_loadings  = []
-            gradient_pressure_loadings += self.problem.gradient_pressure_loadings
-            gradient_pressure_loadings += step.gradient_pressure_loadings
-
-            volume_loadings  = []
-            volume_loadings += self.problem.volume_loadings
-            volume_loadings += step.volume_loadings
-
-            # self.problem.set_variational_formulation(
-            #     surface_tensions=surface_tensions,
-            #     surface0_loadings=surface0_loadings,
-            #     pressure0_loadings=pressure0_loadings,
-            #     volume0_loadings=volume0_loadings,
-            #     surface_loadings=surface_loadings,
-            #     pressure_loadings=pressure_loadings,
-            #     volume_loadings=volume_loadings)
+            self.solver.constraints += self.step.constraints
 
             k_t = 0
             self.printer.inc()
@@ -198,69 +148,28 @@ class TimeIntegrator():
                 k_t_tot += 1
                 self.printer.print_var("k_t",k_t,-1)
 
-                if (t+dt > step.t_fin):
-                    dt = step.t_fin - t
+                if (t+dt > self.step.t_fin):
+                    dt = self.step.t_fin - t
                 self.printer.print_var("dt",dt)
 
-                self.problem.set_variational_formulation(
-                    normal_penalties=normal_penalties,
-                    directional_penalties=directional_penalties,
-                    surface_tensions=surface_tensions,
-                    surface0_loadings=surface0_loadings,
-                    pressure0_loadings=pressure0_loadings,
-                    gradient_pressure0_loadings=gradient_pressure0_loadings,
-                    volume0_loadings=volume0_loadings,
-                    surface_loadings=surface_loadings,
-                    pressure_loadings=pressure_loadings,
-                    gradient_pressure_loadings=gradient_pressure_loadings,
-                    volume_loadings=volume_loadings,
-                    dt=dt)
+                # self.problem.set_variational_formulation(
+                #     k_step=k_step-1,
+                #     dt=dt)
 
                 t += dt
                 self.printer.print_var("t",t)
 
-                t_step = (t - step.t_ini)/(step.t_fin - step.t_ini)
+                t_step = (t - self.step.t_ini)/(self.step.t_fin - self.step.t_ini)
                 self.printer.print_var("t_step",t_step)
 
-                for constraint in step.constraints:
+                for operator in self.step.operators:
+                    operator.set_value_at_t_step(t_step)
+
+                for constraint in self.step.constraints:
                     constraint.set_value_at_t_step(t_step)
 
-                for loading in step.normal_penalties:
-                    loading.set_value_at_t_step(t_step)
-
-                for loading in step.directional_penalties:
-                    loading.set_value_at_t_step(t_step)
-
-                for loading in step.surface_tensions:
-                    loading.set_value_at_t_step(t_step)
-
-                for loading in step.surface0_loadings:
-                    loading.set_value_at_t_step(t_step)
-
-                for loading in step.pressure0_loadings:
-                    loading.set_value_at_t_step(t_step)
-
-                for loading in step.gradient_pressure0_loadings:
-                    loading.set_value_at_t_step(t_step)
-
-                for loading in step.volume0_loadings:
-                    loading.set_value_at_t_step(t_step)
-
-                for loading in step.surface_loadings:
-                    loading.set_value_at_t_step(t_step)
-
-                for loading in step.pressure_loadings:
-                    loading.set_value_at_t_step(t_step)
-
-                for loading in step.gradient_pressure_loadings:
-                    loading.set_value_at_t_step(t_step)
-
-                for loading in step.volume_loadings:
-                    loading.set_value_at_t_step(t_step)
-
                 for inelastic_behavior in self.problem.inelastic_behaviors_internal:
-                    inelastic_behavior.update_internal_variables_at_t(
-                        t)
+                    inelastic_behavior.update_internal_variables_at_t(t)
 
                 self.problem.sol_old_func.vector()[:] = self.problem.sol_func.vector()[:]
                 if (len(self.problem.subsols) > 1):
@@ -281,28 +190,28 @@ class TimeIntegrator():
                         if (self.write_vtus):
                             dmech.write_VTU_file(
                                 filebasename=self.write_sol_filebasename,
-                                function=self.problem.subsols["U"].subfunc,
+                                function=self.problem.get_displacement_subsol().subfunc,
                                 time=k_t_tot)
 
                         if (self.write_xmls):
-                            dolfin.File(self.write_sol_filebasename+"_"+str(k_t_tot).zfill(3)+".xml") << self.problem.subsols["U"].subfunc
+                            dolfin.File(self.write_sol_filebasename+"_"+str(k_t_tot).zfill(3)+".xml") << self.problem.get_displacement_subsol().subfunc
 
                     if (self.write_qois):
                         self.problem.update_qois()
                         self.qoi_printer.write_line([t]+[qoi.value for qoi in self.problem.qois])
 
-                    if dolfin.near(t, step.t_fin, eps=1e-9):
+                    if dolfin.near(t, self.step.t_fin, eps=1e-9):
                         self.success = True
                         break
                     else:
                         if (n_iter <= self.n_iter_for_accel):
                             dt *= self.accel_coeff
-                            if (dt > step.dt_max):
-                                dt = step.dt_max
+                            if (dt > self.step.dt_max):
+                                dt = self.step.dt_max
                         elif (n_iter >= self.n_iter_for_decel):
                             dt /= self.decel_coeff
-                            if (dt < step.dt_min):
-                                dt = step.dt_min
+                            if (dt < self.step.dt_min):
+                                dt = self.step.dt_min
                 else:
                     self.problem.sol_func.vector()[:] = self.problem.sol_old_func.vector()[:]
                     if (len(self.problem.subsols) > 1):
@@ -313,7 +222,7 @@ class TimeIntegrator():
                     for inelastic_behavior in self.problem.inelastic_behaviors_internal:
                         inelastic_behavior.restore_old_value()
 
-                    for constraint in step.constraints:
+                    for constraint in self.step.constraints:
                         constraint.restore_old_value()
 
                     k_t -= 1
@@ -321,7 +230,7 @@ class TimeIntegrator():
                     t -= dt
 
                     dt /= self.decel_coeff
-                    if (dt < step.dt_min):
+                    if (dt < self.step.dt_min):
                         self.printer.print_str("Warning! Time integrator failed to move forward!")
                         self.success = False
                         break

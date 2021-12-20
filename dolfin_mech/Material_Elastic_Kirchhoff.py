@@ -2,13 +2,11 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2020                                       ###
+### Created by Martin Genet, 2018-2022                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
 ################################################################################
-
-# from builtins import *
 
 import dolfin
 
@@ -33,7 +31,7 @@ class KirchhoffElasticMaterial(ElasticMaterial):
             self.lmbda = self.E*self.nu/(1+self.nu)/(1-2*self.nu) # MG20180516: in 2d, plane strain
             self.mu    = self.E/2/(1+self.nu)
         else:
-            assert (0), \
+            assert (0),\
                 "No parameter found: ("+str(parameters)+"). Need to provide lambda & mu or E & nu. Aborting."
 
 

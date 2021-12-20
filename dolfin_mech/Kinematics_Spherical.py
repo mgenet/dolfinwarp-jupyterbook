@@ -2,23 +2,20 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2020                                       ###
+### Created by Martin Genet, 2018-2022                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
 ################################################################################
 
-# from builtins import *
-
 import dolfin
 import numpy
 
 import dolfin_mech as dmech
-from .Kinematics import Kinematics
 
 ################################################################################
 
-class SphericalKinematics(Kinematics):
+class SphericalKinematics():
 
 
 

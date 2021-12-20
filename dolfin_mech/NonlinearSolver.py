@@ -2,7 +2,7 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2020                                       ###
+### Created by Martin Genet, 2018-2022                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
@@ -219,8 +219,8 @@ class NonlinearSolver():
             self.res_old_norm = self.res_norm
 
         # linear system: Assembly
-        if (len(self.problem.directional_penalties)): # MG20190513: Cannot use point integral within assemble_system
-            self.printer.print_str("Assembly…",newline=False)
+        if any([(operator.measure.integral_type() == "vertex") for operator in self.problem.operators]): # MG20190513: Cannot use point integral within assemble_system
+            self.printer.print_str("Assembly (without vertex integrals)…",newline=False)
             timer = time.time()
             dolfin.assemble_system(
                 self.problem.jac_form,
@@ -236,33 +236,30 @@ class NonlinearSolver():
             # self.printer.print_var("res_vec",self.res_vec.get_local())
             # self.printer.print_var("jac_mat",self.jac_mat.array())
 
-            self.printer.print_str("Assembly (directional penalties)…",newline=False)
-            timer = time.time()
-            Pi = sum([(loading.val/2) * dolfin.inner(self.problem.subsols["U"].subfunc, loading.N)**2 * loading.measure for loading in self.problem.directional_penalties])
-            res_form = dolfin.derivative(
-                Pi,
-                self.problem.sol_func,
-                self.problem.dsol_test)
-            jac_form = dolfin.derivative(
-                res_form,
-                self.problem.sol_func,
-                self.problem.dsol_tria)
-            dolfin.assemble(
-               -res_form,
-                tensor=self.res_vec,
-                add_values=True,
-                finalize_tensor=True,
-                form_compiler_parameters=self.problem.form_compiler_parameters)
-            dolfin.assemble(
-                jac_form,
-                tensor=self.jac_mat,
-                add_values=True,
-                finalize_tensor=True,
-                form_compiler_parameters=self.problem.form_compiler_parameters)
-            timer = time.time() - timer
-            self.printer.print_str(" "+str(timer)+" s",tab=False)
-            # self.printer.print_var("res_vec",self.res_vec.get_local())
-            # self.printer.print_var("jac_mat",self.jac_mat.array())
+            for operator in self.problem.operators:
+                if (operator.measure.integral_type() == "vertex"):
+                    self.printer.print_str("Assembly (vertex integrals)…",newline=False)
+                    timer = time.time()
+                    dolfin.assemble( # MG20190513: However, vertex integrals only work if solution only has dofs on vertices…
+                       -operator.res_form,
+                        tensor=self.res_vec,
+                        add_values=True,
+                        finalize_tensor=True,
+                        form_compiler_parameters=self.problem.form_compiler_parameters)
+                    operator.jac_form = dolfin.derivative(
+                        operator.res_form,
+                        self.problem.sol_func,
+                        self.problem.dsol_tria)
+                    dolfin.assemble(
+                        operator.jac_form,
+                        tensor=self.jac_mat,
+                        add_values=True,
+                        finalize_tensor=True,
+                        form_compiler_parameters=self.problem.form_compiler_parameters)
+                    timer = time.time() - timer
+                    self.printer.print_str(" "+str(timer)+" s",tab=False)
+                    # self.printer.print_var("res_vec",self.res_vec.get_local())
+                    # self.printer.print_var("jac_mat",self.jac_mat.array())
         else:
             self.printer.print_str("Assembly…",newline=False)
             timer = time.time()

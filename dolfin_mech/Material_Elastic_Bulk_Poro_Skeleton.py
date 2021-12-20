@@ -2,18 +2,16 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2020                                       ###
+### Created by Martin Genet, 2018-2022                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
 ###                                                                          ###
-### And Cécile Patte, 2019-2020                                              ###
+### And Cécile Patte, 2019-2022                                              ###
 ###                                                                          ###
 ### INRIA, Palaiseau, France                                                 ###
 ###                                                                          ###
 ################################################################################
-
-# from builtins import *
 
 import dolfin
 
@@ -62,15 +60,15 @@ class SkeletonPoroBulkElasticMaterial(BulkElasticMaterial):
             if isinstance(self.problem, dmech.InverseHyperelasticityProblem):
                 res_form = dolfin.inner(
                     dWbulkdJs * self.problem.kinematics.I,
-                    dolfin.sym(dolfin.grad(self.problem.subsols["U"].dsubtest))) * self.problem.dV
+                    dolfin.sym(dolfin.grad(self.problem.get_displacement_subsol().dsubtest))) * self.problem.dV
 
             elif isinstance(self.problem, dmech.HyperelasticityProblem):
                 res_form = dolfin.inner(
                     dWbulkdJs * self.problem.kinematics.Je * self.problem.kinematics.Ce_inv,
                     dolfin.derivative(
                             self.problem.kinematics.Et,
-                            self.problem.subsols["U"].subfunc,
-                            self.problem.subsols["U"].dsubtest)) * self.problem.dV
+                            self.problem.get_displacement_subsol().subfunc,
+                            self.problem.get_displacement_subsol().dsubtest)) * self.problem.dV
 
         elif w_Phi0 is not None:
             res_form = dolfin.inner(
@@ -112,8 +110,8 @@ class SkeletonPoroBulkElasticMaterial(BulkElasticMaterial):
                     self.problem.Phi),
                 dolfin.derivative(
                     self.problem.kinematics.Et,
-                    self.problem.subsols["U"].subfunc,
-                    self.problem.subsols["U"].dsubtest)) * dolfin.inner(
+                    self.problem.get_displacement_subsol().subfunc,
+                    self.problem.get_displacement_subsol().dsubtest)) * dolfin.inner(
                 dolfin.diff(
                     self.problem.get_Phi(),
                     dolfin.variable(self.problem.kinematics.Jt)) * dolfin.diff(
@@ -121,8 +119,8 @@ class SkeletonPoroBulkElasticMaterial(BulkElasticMaterial):
                     dolfin.variable(self.problem.kinematics.Ft)),
                 dolfin.derivative(
                     self.problem.kinematics.Ft,
-                    self.problem.subsols["U"].subfunc,
-                    self.problem.subsols["U"].dsubtria)) * self.problem.dV
+                    self.problem.get_displacement_subsol().subfunc,
+                    self.problem.get_displacement_subsol().dsubtria)) * self.problem.dV
 
         elif w_Phi0 is not None:
 
@@ -134,8 +132,8 @@ class SkeletonPoroBulkElasticMaterial(BulkElasticMaterial):
                     self.problem.Phi0),
                 dolfin.derivative(
                     self.problem.kinematics.Et,
-                    self.problem.subsols["U"].subfunc,
-                    self.problem.subsols["U"].dsubtest)) * dolfin.inner(
+                    self.problem.get_displacement_subsol().subfunc,
+                    self.problem.get_displacement_subsol().dsubtest)) * dolfin.inner(
                 dolfin.diff(
                     self.problem.get_Phi0(),
                     dolfin.variable(self.problem.kinematics.Jt)) * dolfin.diff(
@@ -143,7 +141,7 @@ class SkeletonPoroBulkElasticMaterial(BulkElasticMaterial):
                     dolfin.variable(self.problem.kinematics.Ft)),
                 dolfin.derivative(
                     self.problem.kinematics.Ft,
-                    self.problem.subsols["U"].subfunc,
-                    self.problem.subsols["U"].dsubtria)) * self.problem.dV
+                    self.problem.get_displacement_subsol().subfunc,
+                    self.problem.get_displacement_subsol().dsubtria)) * self.problem.dV
 
         return jac_form

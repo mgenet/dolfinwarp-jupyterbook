@@ -2,13 +2,11 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2020                                       ###
+### Created by Martin Genet, 2018-2022                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
 ################################################################################
-
-# from builtins import *
 
 import dolfin
 import numpy
@@ -28,7 +26,7 @@ class RelaxationInelasticMaterial(InelasticMaterial):
         if ("taur" in parameters):
             self.taur = parameters["taur"]
         else:
-            assert (0), \
+            assert (0),\
                 "No parameter found: \"+str(parameters)+\". Need to provide taur. Aborting."   
 
 

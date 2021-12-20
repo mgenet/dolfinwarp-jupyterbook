@@ -2,13 +2,11 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2020                                       ###
+### Created by Martin Genet, 2018-2022                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
 ################################################################################
-
-# from builtins import *
 
 import dolfin
 import numpy
@@ -31,7 +29,7 @@ class TimeDrivenGrowthInelasticMaterial(GrowthInelasticMaterial):
         if ("taug" in parameters):
             self.taug = parameters["taug"]
         else:
-            assert (0), \
+            assert (0),\
                 "No parameter found: \"+str(parameters)+\". Need to provide taug. Aborting."        
 
 

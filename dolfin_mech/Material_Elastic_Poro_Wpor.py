@@ -13,8 +13,6 @@
 ###                                                                          ###
 ################################################################################
 
-# from builtins import *
-
 import dolfin
 
 import dolfin_mech as dmech

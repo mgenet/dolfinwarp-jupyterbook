@@ -2,13 +2,11 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2020                                       ###
+### Created by Martin Genet, 2018-2022                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
 ################################################################################
-
-# from builtins import *
 
 import dolfin
 
@@ -37,7 +35,7 @@ class NeoHookeanDevElasticMaterial(DevElasticMaterial):
             mu = E/2/(1+nu)
             self.C1 = mu/2
         else:
-            assert (0), \
+            assert (0),\
                 "No parameter found: ("+str(parameters)+"). Need to provide C1 or c1 or mu or E & nu. Aborting."
 
 
