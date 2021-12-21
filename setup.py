@@ -1,8 +1,13 @@
+import datetime
+import os
 import setuptools
+
+# version = os.environ['CI_COMMIT_TAG']
+version = datetime.date.today().strftime("%Y.%m.%d")
 
 setuptools.setup(
     name="dolfin_mech",
-    version="2021.10.21",
+    version=version,
     author="Martin Genet",
     author_email="martin.genet@polytechnique.edu",
     description=open("README.md", "r").readlines()[1][:-1],
@@ -18,8 +23,3 @@ setuptools.setup(
     ],
     install_requires=["numpy", "myPythonLibrary"],
 )
-
-# python -m keyring set https://upload.pypi.org/legacy/ martin.genet
-
-# python setup.py sdist bdist_wheel
-# python -m twine upload dist/*

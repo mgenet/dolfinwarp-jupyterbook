@@ -363,4 +363,4 @@ if (__name__ == "__main__"):
                             res_basename=res_folder+"/"+res_basename,
                             verbose=0)
 
-                        test.filecmp(res_basename)
+                        test.test(res_basename)
