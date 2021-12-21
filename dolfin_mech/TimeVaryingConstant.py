@@ -34,7 +34,7 @@ class TimeVaryingConstant():
          and (val_fin is not None):
             pass
         else:
-            assert (0), "Need to provide val or val_ini & val_fin. Aborting."
+            assert (0), "Must provide val or val_ini & val_fin. Aborting."
 
         assert (type(val_ini) in (int, float, list, numpy.ndarray))
         if (type(val_ini) in (int, float)):
@@ -58,7 +58,10 @@ class TimeVaryingConstant():
     def set_value_sca(self,
             val):
 
-        self.val.assign(dolfin.Constant(val[0]))
+        if   (type(val) in (int, float)):
+            self.val.assign(dolfin.Constant(val))
+        elif (type(val) in (list, numpy.ndarray)):
+            self.val.assign(dolfin.Constant(val[0]))
 
 
 

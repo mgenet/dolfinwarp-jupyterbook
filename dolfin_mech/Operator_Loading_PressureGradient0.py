@@ -38,29 +38,21 @@ class PressureGradient0LoadingOperator(Operator):
         self.measure = measure
 
         self.tv_X0 = dmech.TimeVaryingConstant(
-            val=X0,
-            val_ini=X0_ini,
-            val_fin=X0_fin)
+            val=X0, val_ini=X0_ini, val_fin=X0_fin)
         X0 = self.tv_X0.val
         self.tv_N0 = dmech.TimeVaryingConstant(
-            val=N0,
-            val_ini=N0_ini,
-            val_fin=N0_fin)
+            val=N0, val_ini=N0_ini, val_fin=N0_fin)
         N0 = self.tv_N0.val
         self.tv_P0 = dmech.TimeVaryingConstant(
-            val=P0,
-            val_ini=P0_ini,
-            val_fin=P0_fin)
+            val=P0, val_ini=P0_ini, val_fin=P0_fin)
         P0 = self.tv_P0.val
         self.tv_DP = dmech.TimeVaryingConstant(
-            val=DP,
-            val_ini=DP_ini,
-            val_fin=DP_fin)
+            val=DP, val_ini=DP_ini, val_fin=DP_fin)
         DP = self.tv_DP.val
 
         P = P0 + DP * dolfin.inner(X - X0, N0)
 
-        self.res_form = -dolfin.inner(-P * N, U_test) * self.measure
+        self.res_form = - dolfin.inner(-P * N, U_test) * self.measure
 
 
 

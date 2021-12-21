@@ -164,6 +164,7 @@ class TimeIntegrator():
 
                 for operator in self.step.operators:
                     operator.set_value_at_t_step(t_step)
+                    operator.set_dt(dt)
 
                 for constraint in self.step.constraints:
                     constraint.set_value_at_t_step(t_step)

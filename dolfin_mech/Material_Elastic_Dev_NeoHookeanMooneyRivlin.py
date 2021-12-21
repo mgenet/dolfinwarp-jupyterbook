@@ -22,16 +22,9 @@ class NeoHookeanMooneyRivlinDevElasticMaterial(DevElasticMaterial):
     def __init__(self,
             parameters):
 
-        if ("mu" in parameters):
-            mu = parameters["mu"]
-            parameters["C1"] = mu/4
-            parameters["C2"] = mu/4
-        elif ("E" in parameters) and ("nu" in parameters):
-            E  = parameters["E"]
-            nu = parameters["nu"]
-            mu = E/2/(1+nu)
-            parameters["C1"] = mu/4
-            parameters["C2"] = mu/4
+        C1,C2 = self.get_C1_and_C2_from_parameters(parameters)
+        parameters["C1"] = C1
+        parameters["C2"] = C2
 
         self.nh = dmech.NeoHookeanDevElasticMaterial(parameters)
         self.mr = dmech.MooneyRivlinDevElasticMaterial(parameters)

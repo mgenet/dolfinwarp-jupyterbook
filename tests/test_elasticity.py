@@ -11,12 +11,10 @@
 #################################################################### imports ###
 
 import dolfin
-import filecmp
-import os
-import shutil
 import sys
 
-import dolfin_mech as dmech
+import myPythonLibrary as mypy
+import dolfin_mech     as dmech
 
 ################################################################################
 
@@ -26,7 +24,8 @@ def test_elasticity(
     incomp,
     decoup,
     load, # disp, volu, surf, pres, pgra, tens
-    res_basename):
+    res_basename,
+    verbose=0):
 
     ################################################################### Mesh ###
 
@@ -95,13 +94,11 @@ def test_elasticity(
 
     if (incomp):
         hooke_dev = dmech.HookeDevElasticMaterial(
-            parameters=material_parameters,
-            PS=PS)
+            parameters=material_parameters)
     else:
         if (decoup):
             hooke_dev = dmech.HookeDevElasticMaterial(
-                parameters=material_parameters,
-                PS=PS)
+                parameters=material_parameters)
             hooke_bulk = dmech.HookeBulkElasticMaterial(
                 dim=dim,
                 parameters=material_parameters,
@@ -114,12 +111,16 @@ def test_elasticity(
 
     ################################################################ Problem ###
 
+    quadrature_degree = "default"
+    # quadrature_degree = "full"
+
     if (incomp):
         problem = dmech.ElasticityProblem(
             mesh=mesh,
             compute_normals=1,
             boundaries_mf=boundaries_mf,
             U_degree=2, # MG20211219: Incompressibility requires U_degree >= 2 ?!
+            quadrature_degree=quadrature_degree,
             w_incompressibility=1,
             elastic_behavior_dev=hooke_dev)
     else:
@@ -129,6 +130,7 @@ def test_elasticity(
                 compute_normals=1,
                 boundaries_mf=boundaries_mf,
                 U_degree=1,
+                quadrature_degree=quadrature_degree,
                 w_incompressibility=0,
                 elastic_behavior_dev=hooke_dev,
                 elastic_behavior_bulk=hooke_bulk)
@@ -138,6 +140,7 @@ def test_elasticity(
                 compute_normals=1,
                 boundaries_mf=boundaries_mf,
                 U_degree=1,
+                quadrature_degree=quadrature_degree,
                 w_incompressibility=0,
                 elastic_behavior=hooke)
 
@@ -171,13 +174,13 @@ def test_elasticity(
             val_fin=1.,
             k_step=k_step)
     elif (load == "volu"):
-        problem.add_force0_loading_operator(
+        problem.add_volume_force0_loading_operator(
             measure=problem.dV,
             F_ini=[0.]*dim,
             F_fin=[1.]+[0.]*(dim-1),
             k_step=k_step)
     elif (load == "surf"):
-        problem.add_force0_loading_operator(
+        problem.add_surface_force0_loading_operator(
             measure=problem.dS(xmax_id),
             F_ini=[0.]*dim,
             F_fin=[1.]+[0.]*(dim-1),
@@ -199,10 +202,10 @@ def test_elasticity(
             DP_fin=-0.5,
             k_step=k_step)
     elif (load == "tens"):
-        problem.add_linearized_surface_tension_operator(
+        problem.add_surface_tension0_loading_operator(
             measure=problem.dS,
-            beta_ini=0.00,
-            beta_fin=0.01,
+            gamma_ini=0.00,
+            gamma_fin=0.01,
             k_step=k_step)
 
     ################################################# Quantities of Interest ###
@@ -229,11 +232,11 @@ def test_elasticity(
             "n_iter_for_decel":16,
             "accel_coeff":2,
             "decel_coeff":2},
-        print_out=0, # res_basename
-        print_sta=0, # res_basename
+        print_out=res_basename*verbose,
+        print_sta=res_basename*verbose,
         write_qois=res_basename+"-qois",
         write_qois_limited_precision=1,
-        write_sol=0) # res_basename
+        write_sol=res_basename*verbose)
 
     success = integrator.integrate()
     assert (success),\
@@ -246,31 +249,42 @@ def test_elasticity(
 if (__name__ == "__main__"):
 
     res_folder = sys.argv[0][:-3]
-    shutil.rmtree(res_folder, ignore_errors=1)
-    os.mkdir(res_folder)
+    test = mypy.Test(
+        res_folder=res_folder,
+        perform_tests=1,
+        stop_at_failure=1,
+        clean_after_tests=1)
 
-    dim_lst = [2,3]
+    dim_lst  = []
+    dim_lst += [2]
+    dim_lst += [3]
 
     for dim in dim_lst:
 
+        PS_lst  = []
         if (dim == 2):
-            PS_lst = [0,1]
+            PS_lst += [0]
+            PS_lst += [1]
         elif (dim == 3):
-            PS_lst = [0]
+            PS_lst += [0]
 
         for PS in PS_lst:
 
+            incomp_lst  = []
             if (PS == 0):
-                incomp_lst = [0,1]
+                incomp_lst += [0]
+                incomp_lst += [1]
             elif (PS == 1):
-                incomp_lst = [0]
+                incomp_lst += [0]
 
             for incomp in incomp_lst:
 
+                decoup_lst  = []
                 if (incomp):
-                    decoup_lst = [1]
+                    decoup_lst += [1]
                 else:
-                    decoup_lst = [0,1]
+                    decoup_lst += [0]
+                    decoup_lst += [1]
 
                 for decoup in decoup_lst:
 
@@ -294,7 +308,7 @@ if (__name__ == "__main__"):
                         res_basename += "-dim="+str(dim)
                         if (dim == 2): res_basename += "-PS"*PS + "-PE"*(1-PS)
                         res_basename += "-incomp="+str(incomp)
-                        if not (incomp): res_basename += "-decoup"*decoup
+                        if not (incomp): res_basename += "-decoup="+str(decoup)
                         res_basename += "-load="+str(load)
 
                         test_elasticity(
@@ -303,11 +317,7 @@ if (__name__ == "__main__"):
                             incomp=incomp,
                             decoup=decoup,
                             load=load,
-                            res_basename=res_folder+"/"+res_basename)
+                            res_basename=res_folder+"/"+res_basename,
+                            verbose=0)
 
-                        assert (filecmp.cmp(
-                            res_folder       +"/"+res_basename+"-qois.dat",
-                            res_folder+"-ref"+"/"+res_basename+"-qois.dat")),\
-                                "Result does not correspond to reference. Aborting."
-
-    shutil.rmtree(res_folder, ignore_errors=1)
+                        test.filecmp(res_basename)

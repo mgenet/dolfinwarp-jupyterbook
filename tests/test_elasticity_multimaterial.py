@@ -11,12 +11,10 @@
 #################################################################### imports ###
 
 import dolfin
-import filecmp
-import os
-import shutil
 import sys
 
-import dolfin_mech as dmech
+import myPythonLibrary as mypy
+import dolfin_mech     as dmech
 
 ################################################################################
 
@@ -25,7 +23,8 @@ def test_elasticity_multimaterial(
     PS,
     incomp,
     load, # disp, volu, surf, pres
-    res_basename):
+    res_basename,
+    verbose=0):
 
     ################################################################### Mesh ###
 
@@ -113,11 +112,9 @@ def test_elasticity_multimaterial(
 
     if (incomp):
         mat1 = dmech.HookeDevElasticMaterial(
-            parameters=mat1_params,
-            PS=PS)
+            parameters=mat1_params)
         mat2 = dmech.HookeDevElasticMaterial(
-            parameters=mat2_params,
-            PS=PS)
+            parameters=mat2_params)
     else:
         mat1 = dmech.HookeElasticMaterial(
             parameters=mat1_params,
@@ -137,6 +134,7 @@ def test_elasticity_multimaterial(
             compute_normals=1,
             boundaries_mf=boundaries_mf,
             U_degree=2, # MG20211219: Incompressibility requires U_degree >= 2 ?!
+            quadrature_degree="default",
             w_incompressibility=1,
             elastic_behavior_dev=[(mat1_id, mat1), (mat2_id, mat2)])
     else:
@@ -146,6 +144,7 @@ def test_elasticity_multimaterial(
             compute_normals=1,
             boundaries_mf=boundaries_mf,
             U_degree=1,
+            quadrature_degree="default",
             w_incompressibility=0,
             elastic_behavior=[(mat1_id, mat1), (mat2_id, mat2)])
 
@@ -179,13 +178,13 @@ def test_elasticity_multimaterial(
             val_fin=1.,
             k_step=k_step)
     elif (load == "volu"):
-        problem.add_force0_loading_operator(
+        problem.add_volume_force0_loading_operator(
             measure=problem.dV,
             F_ini=[0.]*dim,
             F_fin=[1.]+[0.]*(dim-1),
             k_step=k_step)
     elif (load == "surf"):
-        problem.add_force0_loading_operator(
+        problem.add_surface_force0_loading_operator(
             measure=problem.dS(xmax_id),
             F_ini=[0.]*dim,
             F_fin=[1.]+[0.]*(dim-1),
@@ -221,11 +220,11 @@ def test_elasticity_multimaterial(
             "n_iter_for_decel":16,
             "accel_coeff":2,
             "decel_coeff":2},
-        print_out=0, # res_basename
-        print_sta=0, # res_basename
+        print_out=res_basename*verbose,
+        print_sta=res_basename*verbose,
         write_qois=res_basename+"-qois",
         write_qois_limited_precision=1,
-        write_sol=0) # res_basename
+        write_sol=res_basename*verbose)
 
     success = integrator.integrate()
     assert (success),\
@@ -238,13 +237,20 @@ def test_elasticity_multimaterial(
 if (__name__ == "__main__"):
 
     res_folder = sys.argv[0][:-3]
-    shutil.rmtree(res_folder, ignore_errors=1)
-    os.mkdir(res_folder)
+    test = mypy.Test(
+        res_folder=res_folder,
+        perform_tests=1,
+        stop_at_failure=1,
+        clean_after_tests=1)
 
-    dim_lst = [2,3]
+    dim_lst  = []
+    dim_lst += [2]
+    dim_lst += [3]
     for dim in dim_lst:
 
-        incomp_lst = [0,1]
+        incomp_lst  = []
+        incomp_lst += [0]
+        incomp_lst += [1]
         for incomp in incomp_lst:
 
             print("dim =",dim)
@@ -259,11 +265,7 @@ if (__name__ == "__main__"):
                 PS=0,
                 incomp=incomp,
                 load="disp",
-                res_basename=res_folder+"/"+res_basename)
+                res_basename=res_folder+"/"+res_basename,
+                verbose=0)
 
-            assert (filecmp.cmp(
-                res_folder       +"/"+res_basename+"-qois.dat",
-                res_folder+"-ref"+"/"+res_basename+"-qois.dat")),\
-                    "Result does not correspond to reference. Aborting."
-
-    shutil.rmtree(res_folder, ignore_errors=1)
+            test.filecmp(res_basename)

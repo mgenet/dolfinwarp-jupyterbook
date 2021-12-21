@@ -32,7 +32,7 @@ class PneumoBulkElasticMaterial(BulkElasticMaterial):
             self.gamma = dolfin.Constant(parameters["gamma"])
         else:
             assert (0),\
-                "No parameter found: \"+str(parameters)+\". Need to provide alpha & gamma. Aborting."
+                "No parameter found: \"+str(parameters)+\". Must provide alpha & gamma. Aborting."
 
 
 
@@ -40,20 +40,12 @@ class PneumoBulkElasticMaterial(BulkElasticMaterial):
             U=None,
             C=None):
 
-        assert (U is not None) or (C is not None), "Must provide U or C. Aborting."
-        if (U is not None):
-            dim = U.ufl_shape[0]
-            I = dolfin.Identity(dim)
-            F = I + dolfin.grad(U)
-            JF = dolfin.det(F)
-            C = F.T * F
-        elif (C is not None):
-            JF = dolfin.sqrt(dolfin.det(C)) # MG20200207: Watch out! This is well defined for inverted elements!
+        C  = self.get_C_from_U_or_C(U, C)
+        JF = dolfin.sqrt(dolfin.det(C)) # MG20200207: Watch out! This is well defined for inverted elements!
 
-        IC    = dolfin.tr(C)
+        Psi = (self.alpha) * (dolfin.exp(self.gamma*(JF**2 - 1 - 2*dolfin.ln(JF))) - 1)
+
         C_inv = dolfin.inv(C)
-
-        Psi   = (self.alpha) * (dolfin.exp(self.gamma*(JF**2 - 1 - 2*dolfin.ln(JF))) - 1)
         Sigma = (self.alpha) *  dolfin.exp(self.gamma*(JF**2 - 1 - 2*dolfin.ln(JF))) * (2*self.gamma) * (JF**2 - 1) * C_inv
 
         return Psi, Sigma

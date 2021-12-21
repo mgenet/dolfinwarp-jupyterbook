@@ -31,31 +31,18 @@ class DirectionalDisplacmentPenaltyOperator(Operator):
         self.measure = measure
 
         self.tv_N = dmech.TimeVaryingConstant(
-            val=N,
-            val_ini=N_ini,
-            val_fin=N_fin)
+            val=N, val_ini=N_ini, val_fin=N_fin)
         N = self.tv_N.val
 
         self.tv_pen = dmech.TimeVaryingConstant(
-            val=pen,
-            val_ini=pen_ini,
-            val_fin=pen_fin)
+            val=pen, val_ini=pen_ini, val_fin=pen_fin)
         pen = self.tv_pen.val
 
-        Pi = (pen/2) * dolfin.inner(U,N)**2 * self.measure
+        Pi = (pen/2) * dolfin.inner(U, N)**2 * self.measure
         self.res_form = dolfin.derivative(Pi, U, U_test)
 
         # self.res_form = pen * dolfin.inner(U     , N)\
         #                     * dolfin.inner(U_test, N) * self.measure
-
-
-
-    def set_value(self,
-            N,
-            pen):
-
-        self.tv_N.set_value(N)
-        self.tv_pen.set_value(pen)
 
 
 

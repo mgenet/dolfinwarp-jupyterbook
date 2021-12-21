@@ -46,13 +46,6 @@ class Loading():
 
 
 
-    def set_value(self,
-            val):
-
-        self.tv_val.set_value(val)
-
-
-
     def set_value_at_t_step(self,
             t_step):
 

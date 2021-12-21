@@ -21,13 +21,13 @@ class ElasticityProblem(Problem):
 
 
     def __init__(self,
+            w_incompressibility=False,
             mesh=None,
             compute_normals=False,
             domains_mf=None,
             boundaries_mf=None,
             points_mf=None,
             U_degree=None,
-            w_incompressibility=False,
             p_degree=None,
             quadrature_degree=None,
             foi_degree=0,
@@ -56,8 +56,8 @@ class ElasticityProblem(Problem):
             self.set_solution_function_space()
             self.set_solution_functions()
 
-            # self.set_quadrature_degree(
-            #     quadrature_degree=quadrature_degree)
+            self.set_quadrature_degree(
+                quadrature_degree=quadrature_degree)
 
             self.set_foi_finite_elements_DG(
                 degree=foi_degree)
@@ -149,11 +149,18 @@ class ElasticityProblem(Problem):
     def set_quadrature_degree(self,
             quadrature_degree=None):
 
-        if (quadrature_degree is None):
+        if (quadrature_degree is None) or (type(quadrature_degree) == int):
+            pass
+        elif (quadrature_degree == "full"):
+            quadrature_degree = None
+        elif (quadrature_degree == "default"):
             if   (self.mesh.ufl_cell().cellname() in ("triangle", "tetrahedron")):
-                quadrature_degree = max(1, 2*(self.U_degree-1))
+                quadrature_degree = max(2, 2*(self.U_degree-1)) # MG20211221: This does not allow to reproduce full integration results exactly, but it is quite close…
             elif (self.mesh.ufl_cell().cellname() in ("quadrilateral", "hexahedron")):
-                quadrature_degree = max(1, 2*(self.dim*self.U_degree-1))
+                quadrature_degree = max(2, 2*(self.dim*self.U_degree-1))
+        else:
+            assert (0),\
+                "Must provide an int, \"full\", \"default\" or None. Aborting."
 
         Problem.set_quadrature_degree(self,
             quadrature_degree=quadrature_degree)

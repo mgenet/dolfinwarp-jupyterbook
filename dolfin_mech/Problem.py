@@ -454,12 +454,57 @@ class Problem():
 
 
 
-    def add_force0_loading_operator(self,
+    def add_volume_force0_loading_operator(self,
             k_step=None,
             **kwargs):
 
-        operator = dmech.Force0LoadingOperator(
+        operator = dmech.VolumeForce0LoadingOperator(
             U_test=self.get_displacement_subsol().dsubtest,
+            **kwargs)
+        self.add_operator(
+            operator=operator,
+            k_step=k_step)
+        return operator
+
+
+
+    def add_volume_force_loading_operator(self,
+            k_step=None,
+            **kwargs):
+
+        operator = dmech.VolumeForceLoadingOperator(
+            U_test=self.get_displacement_subsol().dsubtest,
+            kinematics=self.kinematics,
+            **kwargs)
+        self.add_operator(
+            operator=operator,
+            k_step=k_step)
+        return operator
+
+
+
+    def add_surface_force0_loading_operator(self,
+            k_step=None,
+            **kwargs):
+
+        operator = dmech.SurfaceForce0LoadingOperator(
+            U_test=self.get_displacement_subsol().dsubtest,
+            **kwargs)
+        self.add_operator(
+            operator=operator,
+            k_step=k_step)
+        return operator
+
+
+
+    def add_surface_force_loading_operator(self,
+            k_step=None,
+            **kwargs):
+
+        operator = dmech.SurfaceForceLoadingOperator(
+            U_test=self.get_displacement_subsol().dsubtest,
+            kinematics=self.kinematics,
+            N=self.mesh_normals,
             **kwargs)
         self.add_operator(
             operator=operator,
@@ -474,6 +519,22 @@ class Problem():
 
         operator = dmech.Pressure0LoadingOperator(
             U_test=self.get_displacement_subsol().dsubtest,
+            N=self.mesh_normals,
+            **kwargs)
+        self.add_operator(
+            operator=operator,
+            k_step=k_step)
+        return operator
+
+
+
+    def add_pressure_loading_operator(self,
+            k_step=None,
+            **kwargs):
+
+        operator = dmech.PressureLoadingOperator(
+            U_test=self.get_displacement_subsol().dsubtest,
+            kinematics=self.kinematics,
             N=self.mesh_normals,
             **kwargs)
         self.add_operator(
@@ -499,11 +560,16 @@ class Problem():
 
 
 
-    def add_force_loading_operator(self,
+    def add_pressure_gradient_loading_operator(self,
             k_step=None,
             **kwargs):
 
-        operator = dmech.ForceLoadingOperator(
+        operator = dmech.PressureGradientLoadingOperator(
+            X=dolfin.SpatialCoordinate(self.mesh),
+            U=self.get_displacement_subsol().subfunc,
+            U_test=self.get_displacement_subsol().dsubtest,
+            kinematics=self.kinematics,
+            N=self.mesh_normals,
             **kwargs)
         self.add_operator(
             operator=operator,
@@ -512,24 +578,11 @@ class Problem():
 
 
 
-    def add_pressure_loading_operator(self,
+    def add_surface_tension0_loading_operator(self,
             k_step=None,
             **kwargs):
 
-        operator = dmech.PressureLoadingOperator(
-            **kwargs)
-        self.add_operator(
-            operator=operator,
-            k_step=k_step)
-        return operator
-
-
-
-    def add_linearized_surface_tension_operator(self,
-            k_step=None,
-            **kwargs):
-
-        operator = dmech.LinearizedSurfaceTensionOperator(
+        operator = dmech.SurfaceTension0LoadingOperator(
             u=self.get_displacement_subsol().subfunc,
             u_test=self.get_displacement_subsol().dsubtest,
             kinematics=self.kinematics,
@@ -542,11 +595,28 @@ class Problem():
 
 
 
-    def add_normal_displacement_penalty_operator(self,
+    def add_surface_tension_loading_operator(self,
             k_step=None,
             **kwargs):
 
-        operator = dmech.NormalDisplacmentPenaltyOperator(
+        operator = dmech.SurfaceTensionLoadingOperator(
+            U=self.get_displacement_subsol().subfunc,
+            U_test=self.get_displacement_subsol().dsubtest,
+            kinematics=self.kinematics,
+            N=self.mesh_normals,
+            **kwargs)
+        self.add_operator(
+            operator=operator,
+            k_step=k_step)
+        return operator
+
+
+
+    def add_normal_displacement0_penalty_operator(self,
+            k_step=None,
+            **kwargs):
+
+        operator = dmech.NormalDisplacment0PenaltyOperator(
             U=self.get_displacement_subsol().subfunc,
             U_test=self.get_displacement_subsol().dsubtest,
             N=self.mesh_normals,
@@ -563,6 +633,21 @@ class Problem():
             **kwargs):
 
         operator = dmech.DirectionalDisplacmentPenaltyOperator(
+            U=self.get_displacement_subsol().subfunc,
+            U_test=self.get_displacement_subsol().dsubtest,
+            **kwargs)
+        self.add_operator(
+            operator=operator,
+            k_step=k_step)
+        return operator
+
+
+
+    def add_inertia_operator(self,
+            k_step=None,
+            **kwargs):
+
+        operator = dmech.InertiaOperator(
             U=self.get_displacement_subsol().subfunc,
             U_test=self.get_displacement_subsol().dsubtest,
             **kwargs)

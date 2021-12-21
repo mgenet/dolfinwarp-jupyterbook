@@ -42,10 +42,12 @@ class FOI():
                 self.func_tria = dolfin.TrialFunction(self.fs)
                 self.form_compiler_parameters = form_compiler_parameters
 
-                self.a_expr = dolfin.inner(self.func_tria,
-                                           self.func_test) * dolfin.dx(metadata=self.form_compiler_parameters)
-                self.b_expr = dolfin.inner(self.expr,
-                                           self.func_test) * dolfin.dx(metadata=self.form_compiler_parameters)
+                self.a_expr = dolfin.inner(
+                    self.func_tria,
+                    self.func_test) * dolfin.dx(metadata=self.form_compiler_parameters)
+                self.b_expr = dolfin.inner(
+                    self.expr,
+                    self.func_test) * dolfin.dx(metadata=self.form_compiler_parameters)
                 self.local_solver = dolfin.LocalSolver(
                     self.a_expr,
                     self.b_expr)

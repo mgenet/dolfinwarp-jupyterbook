@@ -28,19 +28,10 @@ class Pressure0LoadingOperator(Operator):
         self.measure = measure
 
         self.tv_P = dmech.TimeVaryingConstant(
-            val=P,
-            val_ini=P_ini,
-            val_fin=P_fin)
+            val=P, val_ini=P_ini, val_fin=P_fin)
         P = self.tv_P.val
 
-        self.res_form = -dolfin.inner(-P * N, U_test) * self.measure
-
-
-
-    def set_value(self,
-            P):
-
-        self.tv_P.set_value(P)
+        self.res_form = - dolfin.inner(-P * N, U_test) * self.measure
 
 
 

@@ -26,35 +26,28 @@ class InverseKinematics():
 
         self.I = dolfin.Identity(dim)
 
-        self.ft     = self.I + dolfin.grad(U    )
-        self.ft_old = self.I + dolfin.grad(U_old)
+        self.f     = self.I + dolfin.grad(U    )
+        self.f_old = self.I + dolfin.grad(U_old)
 
-        self.Ft     = dolfin.inv(self.ft    )
-        self.Ft_old = dolfin.inv(self.ft_old)
+        self.F     = dolfin.inv(self.f    )
+        self.F_old = dolfin.inv(self.f_old)
 
-        self.Jt     = dolfin.det(self.Ft    )
-        self.Jt_old = dolfin.det(self.Ft_old)
+        self.J     = dolfin.det(self.F    )
+        self.J_old = dolfin.det(self.F_old)
 
-        self.Ct     = self.Ft.T     * self.Ft
-        self.Ct_old = self.Ft_old.T * self.Ft_old
+        self.C     = self.F.T     * self.F
+        self.C_old = self.F_old.T * self.F_old
 
-        self.Et     = (self.Ct     - self.I)/2
-        self.Et_old = (self.Ct_old - self.I)/2
+        self.C_inv = dolfin.inv(self.C)
 
-        self.Fe     = self.Ft
-        self.Fe_old = self.Ft_old
+        self.IC  = dolfin.tr(self.C)
+        self.IIC = (dolfin.tr(self.C)*dolfin.tr(self.C) - dolfin.tr(self.C*self.C))/2
 
-        self.Je     = dolfin.det(self.Fe    )
-        self.Je_old = dolfin.det(self.Fe_old)
+        self.E     = (self.C     - self.I)/2
+        self.E_old = (self.C_old - self.I)/2
 
-        self.Ce     = self.Fe.T     * self.Fe
-        self.Ce_old = self.Fe_old.T * self.Fe_old
-        self.Ce_inv = dolfin.inv(self.Ce)
-        self.ICe    = dolfin.tr(self.Ce)
-
-        self.Ee     = (self.Ce     - self.I)/2
-        self.Ee_old = (self.Ce_old - self.I)/2
-
-        self.Fe_bar  = self.Je**(-1./3) * self.Fe
-        self.Ce_bar  = self.Fe_bar.T * self.Fe_bar
-        self.ICe_bar = dolfin.tr(self.Ce_bar)
+        self.F_bar   = self.J**(-1./3) * self.F
+        self.C_bar   = self.F_bar.T * self.F_bar
+        self.IC_bar  = dolfin.tr(self.C_bar)
+        self.IIC_bar = (dolfin.tr(self.C_bar)*dolfin.tr(self.C_bar) - dolfin.tr(self.C_bar*self.C_bar))/2
+        self.E_bar   = (self.C_bar - self.I)/2

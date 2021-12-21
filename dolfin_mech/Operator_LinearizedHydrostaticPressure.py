@@ -25,10 +25,8 @@ class LinearizedHydrostaticPressureOperator(Operator):
             measure):
 
         epsilon_test = dolfin.derivative(
-            kinematics.epsilon,
-            u,
-            u_test)
+            kinematics.epsilon, u, u_test)
 
         self.p = p
         self.measure = measure
-        self.res_form = -p * dolfin.tr(epsilon_test) * self.measure
+        self.res_form = -self.p * dolfin.tr(epsilon_test) * self.measure
