@@ -306,3 +306,37 @@ class Material():
             assert (0),\
                 "Must provide U, epsilon or epsilon_dev. Aborting."
         return dolfin.variable(epsilon_dev)
+
+################################################################################
+
+def material(
+        model,
+        parameters):
+
+    if (model == "hooke"):
+        material = dmech.HookeElasticMaterial(
+            parameters=parameters)
+    elif (model in ("kirchhoff", "SVK")):
+        material = dmech.KirchhoffElasticMaterial(
+            parameters=parameters)
+    elif (model in ("neohookean", "NH")):
+        material = dmech.NeoHookeanDevElasticMaterial(
+            parameters=parameters)
+    elif (model in ("mooneyrivlin", "MR")):
+        material = dmech.MooneyRivlinDevElasticMaterial(
+            parameters=parameters)
+    elif (model in ("neohookeanmooneyrivlin", "NHMR")):
+        material = dmech.NeoHookeanMooneyRivlinDevElasticMaterial(
+            parameters=parameters)
+    elif (model in ("ciarletgeymonat", "CG")):
+        material = dmech.CiarletGeymonatBulkElasticMaterial(
+            parameters=parameters)
+    elif (model in ("ciarletgeymonatneohookean", "CGNH")):
+        material = dmech.CiarletGeymonatNeoHookeanElasticMaterial(
+            parameters=parameters)
+    elif (model in ("ciarletgeymonatneohookeanmooneyrivlin", "CGNHMR")):
+        material = dmech.CiarletGeymonatNeoHookeanMooneyRivlinElasticMaterial(
+            parameters=parameters)
+    else:
+        assert(0), "Material model (\""+model+"\") not recognized. Aborting."
+    return material
