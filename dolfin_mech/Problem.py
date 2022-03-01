@@ -281,14 +281,17 @@ class Problem():
 
         for subsol in self.subsols.values():
             if (subsol.init_val is not None):
-                init_val = [str(val) for val in numpy.concatenate([subsol.init_val.flatten()])]
-                if (len(init_val) == 1):
-                    init_val = init_val[0]
+                if (subsol.fe is dolfin.FiniteElement):
+                    init_val_str = str(subsol.init_val)
+                else:
+                    subsol.init_val = numpy.asarray(subsol.init_val)
+                    assert (subsol.init_val.shape == subsol.fe.value_shape())
+                    init_val_str = subsol.init_val.astype(str).tolist()
                 subsol.func.interpolate(dolfin.Expression(
-                    init_val,
+                    init_val_str,
                     element=subsol.fe))
                 subsol.func_old.interpolate(dolfin.Expression(
-                    init_val,
+                    init_val_str,
                     element=subsol.fe))
             elif (subsol.init_field is not None):
                 subsol.func.vector()[:] = subsol.init_field.array()[:]
