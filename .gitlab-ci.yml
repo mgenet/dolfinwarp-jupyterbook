@@ -8,11 +8,14 @@ tests:
     - Operators # MG20211221: for now tests are only valid in Operators branch
   except:
     - CylindricalModel # MG20211221: this branch is outdated
+  tags:
+    - ci.inria.fr
+    - small
   # image: quay.io/fenicsproject/stable:latest # MG20211221: somehow this does not work
   # image: python $ MG20211221: this seems to be debian not ubuntu, which is necessary for ppa install
   image: ubuntu:20.04
   script:
-    - uname -a
+    # - uname -a
     # - conda env list # MG20211221: conda not available in python image
     - apt update; apt install -y software-properties-common; add-apt-repository -y ppa:fenics-packages/fenics; apt update; apt install -y fenics
     # - apt update; apt install -y git; git checkout Operators # MG20211221: Branch is already checked out
@@ -24,6 +27,9 @@ pypi:
   stage: deploy
   only:
     - tags
+  tags:
+    - ci.inria.fr
+    - small
   image: python
   variables:
     TWINE_USERNAME: $PYPI_USER
