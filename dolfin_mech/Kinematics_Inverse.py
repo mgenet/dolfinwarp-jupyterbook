@@ -32,6 +32,9 @@ class InverseKinematics():
         self.ft     = self.I + dolfin.grad(U    )
         self.ft_old = self.I + dolfin.grad(U_old)
 
+        self.jt     = dolfin.det(self.ft    )
+        self.jt_old = dolfin.det(self.ft_old)
+
         self.Ft     = dolfin.inv(self.ft    )
         self.Ft_old = dolfin.inv(self.ft_old)
 
