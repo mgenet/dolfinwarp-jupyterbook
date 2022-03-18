@@ -35,10 +35,10 @@ class TimeIntegrator():
 
         self.solver = solver
 
-        self.n_iter_for_accel = parameters["n_iter_for_accel"] if ("n_iter_for_accel" in parameters) else  4
-        self.n_iter_for_decel = parameters["n_iter_for_decel"] if ("n_iter_for_decel" in parameters) else 16
-        self.accel_coeff      = parameters["accel_coeff"]      if ("accel_coeff"      in parameters) else  2
-        self.decel_coeff      = parameters["decel_coeff"]      if ("decel_coeff"      in parameters) else  2
+        self.n_iter_for_accel = parameters.get("n_iter_for_accel",  4)
+        self.n_iter_for_decel = parameters.get("n_iter_for_decel", 16)
+        self.accel_coeff      = parameters.get("accel_coeff"     ,  2)
+        self.decel_coeff      = parameters.get("decel_coeff"     ,  2)
 
         if (type(print_out) is str):
             if (print_out=="stdout"):

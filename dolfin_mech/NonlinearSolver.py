@@ -44,7 +44,7 @@ class NonlinearSolver():
         self.default_linear_solver_type = "petsc"
         #self.default_linear_solver_type = "dolfin"
 
-        self.linear_solver_type = parameters["linear_solver_type"] if ("linear_solver_type" in parameters) else self.default_linear_solver_type
+        self.linear_solver_type = parameters.get("linear_solver_type", self.default_linear_solver_type)
 
         if (self.linear_solver_type == "petsc"):
 
@@ -55,7 +55,7 @@ class NonlinearSolver():
 
             self.default_linear_solver_name = "mumps"
 
-            self.linear_solver_name = parameters["linear_solver_name"] if ("linear_solver_name" in parameters) else self.default_linear_solver_name
+            self.linear_solver_name = parameters.get("linear_solver_name", self.default_linear_solver_name)
 
             if (self.linear_solver_name == "mumps"):
                 if (int(dolfin.__version__.split('.')[0]) >= 2018):
@@ -85,7 +85,7 @@ class NonlinearSolver():
             # self.default_linear_solver_name = "superlu"
             # self.default_linear_solver_name = "umfpack"
 
-            self.linear_solver_name = parameters["linear_solver_name"] if ("linear_solver_name" in parameters) else self.default_linear_solver_name
+            self.linear_solver_name = parameters.get("linear_solver_name", self.default_linear_solver_name)
 
             self.linear_solver = dolfin.LUSolver(
                 self.jac_mat,
@@ -98,15 +98,15 @@ class NonlinearSolver():
 
         if (relax_type == "constant"):
             self.compute_relax = self.compute_relax_constant
-            self.relax_val = relax_parameters["relax"] if ("relax" in relax_parameters) else 1.
+            self.relax_val = relax_parameters.get("relax", 1.)
         elif (relax_type == "aitken"):
             self.compute_relax = self.compute_relax_aitken
         elif (relax_type == "gss"):
             self.compute_relax = self.compute_relax_gss
-            self.relax_n_iter_max = relax_parameters["relax_n_iter_max"] if ("relax_n_iter_max" in relax_parameters) else 9
+            self.relax_n_iter_max = relax_parameters.get("relax_n_iter_max", 9)
 
-        self.sol_tol = parameters["sol_tol"]       if ("sol_tol"    in parameters) else [1e-6]*len(self.problem.subsols)
-        self.n_iter_max = parameters["n_iter_max"] if ("n_iter_max" in parameters) else 32
+        self.sol_tol    = parameters.get("sol_tol"   , [1e-6]*len(self.problem.subsols))
+        self.n_iter_max = parameters.get("n_iter_max", 32)
 
         if (type(print_out) is str):
             if (print_out=="stdout"):
