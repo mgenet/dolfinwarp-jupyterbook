@@ -32,8 +32,7 @@ class HyperelasticityProblem(Problem):
             quadrature_degree=None,
             foi_degree=0,
             elastic_behavior=None,
-            elastic_behavior_dev=None,
-            elastic_behavior_bulk=None):
+            elastic_behaviors=None):
 
         Problem.__init__(self)
 
@@ -65,10 +64,11 @@ class HyperelasticityProblem(Problem):
 
             self.set_kinematics()
 
+            if (elastic_behavior is not None):
+                elastic_behaviors = [elastic_behavior]
+
             self.add_elasticity_operators(
-                elastic_behavior=elastic_behavior,
-                elastic_behavior_dev=elastic_behavior_dev,
-                elastic_behavior_bulk=elastic_behavior_bulk)
+                elastic_behaviors=elastic_behaviors)
 
 
 
@@ -170,7 +170,6 @@ class HyperelasticityProblem(Problem):
     def set_kinematics(self):
 
         self.kinematics = dmech.Kinematics(
-            dim=self.dim,
             U=self.get_displacement_subsol().subfunc,
             U_old=self.get_displacement_subsol().func_old,
             Q_expr=self.Q_expr)
@@ -184,20 +183,27 @@ class HyperelasticityProblem(Problem):
 
 
 
-    def add_elasticity_operator(self,
-            elastic_behavior,
+    def get_subdomain_measure(self,
             subdomain_id=None):
 
         if (subdomain_id is None):
-            measure = self.dV
+            return self.dV
         else:
-            measure = self.dV(subdomain_id)
+            return self.dV(subdomain_id)
+
+
+
+    def add_elasticity_operator(self,
+            material_model,
+            material_parameters,
+            subdomain_id=None):
+
         operator = dmech.HyperElasticityOperator(
-            U=self.get_displacement_subsol().subfunc,
-            U_test=self.get_displacement_subsol().dsubtest,
             kinematics=self.kinematics,
-            elastic_behavior=elastic_behavior,
-            measure=measure)
+            U_test=self.get_displacement_subsol().dsubtest,
+            material_model=material_model,
+            material_parameters=material_parameters,
+            measure=self.get_subdomain_measure(subdomain_id))
         return self.add_operator(operator)
 
 
@@ -205,16 +211,11 @@ class HyperelasticityProblem(Problem):
     def add_hydrostatic_pressure_operator(self,
             subdomain_id=None):
 
-        if (subdomain_id is None):
-            measure = self.dV
-        else:
-            measure = self.dV(subdomain_id)
         operator = dmech.HyperHydrostaticPressureOperator(
-            U=self.get_displacement_subsol().subfunc,
-            U_test=self.get_displacement_subsol().dsubtest,
             kinematics=self.kinematics,
+            U_test=self.get_displacement_subsol().dsubtest,
             P=self.get_pressure_subsol().subfunc,
-            measure=measure)
+            measure=self.get_subdomain_measure(subdomain_id))
         return self.add_operator(operator)
 
 
@@ -222,88 +223,29 @@ class HyperelasticityProblem(Problem):
     def add_incompressibility_operator(self,
             subdomain_id=None):
 
-        if (subdomain_id is None):
-            measure = self.dV
-        else:
-            measure = self.dV(subdomain_id)
         operator = dmech.HyperIncompressibilityOperator(
             kinematics=self.kinematics,
             P_test=self.get_pressure_subsol().dsubtest,
-            measure=measure)
+            measure=self.get_subdomain_measure(subdomain_id))
         return self.add_operator(operator)
 
 
 
     def add_elasticity_operators(self,
-            elastic_behavior=None,
-            elastic_behavior_dev=None,
-            elastic_behavior_bulk=None):
+            elastic_behaviors):
 
+        for elastic_behavior in elastic_behaviors:
+            operator = self.add_elasticity_operator(
+                material_model=elastic_behavior["model"],
+                material_parameters=elastic_behavior["parameters"],
+                subdomain_id=elastic_behavior.get("subdomain_id", None))
+            suffix = "_"+elastic_behavior["suffix"] if "suffix" in elastic_behavior else ""
+            self.add_foi(expr=operator.material.Sigma, fs=self.mfoi_fs, name="Sigma"+suffix)
+            self.add_foi(expr=operator.material.sigma, fs=self.mfoi_fs, name="sigma"+suffix)
         if (self.w_incompressibility):
-            assert (elastic_behavior      is     None)
-            assert (elastic_behavior_dev  is not None)
-            assert (elastic_behavior_bulk is     None)
+            self.add_hydrostatic_pressure_operator()
+            self.add_incompressibility_operator()
 
-            if isinstance(elastic_behavior_dev, dmech.Material):
-                operator = self.add_elasticity_operator(
-                    elastic_behavior=elastic_behavior_dev)
-                self.add_foi(expr=operator.Sigma, fs=self.mfoi_fs, name="Sigma_dev")
-                self.add_foi(expr=operator.sigma, fs=self.mfoi_fs, name="sigma_dev")
-                operator = self.add_hydrostatic_pressure_operator()
-                operator = self.add_incompressibility_operator()
-            elif type(elastic_behavior_dev) in (tuple,list):
-                for (id,behavior) in elastic_behavior_dev:
-                    operator = self.add_elasticity_operator(
-                        elastic_behavior=behavior,
-                        subdomain_id=id)
-                    self.add_foi(expr=operator.Sigma, fs=self.mfoi_fs, name="Sigma_dev")
-                    self.add_foi(expr=operator.sigma, fs=self.mfoi_fs, name="sigma_dev")
-                    operator = self.add_hydrostatic_pressure_operator()
-                    operator = self.add_incompressibility_operator()
-        else:
-            if (elastic_behavior is not None):
-                if isinstance(elastic_behavior, dmech.Material):
-                    operator = self.add_elasticity_operator(
-                        elastic_behavior=elastic_behavior)
-                    self.add_foi(expr=operator.Sigma, fs=self.mfoi_fs, name="Sigma")
-                    self.add_foi(expr=operator.sigma, fs=self.mfoi_fs, name="sigma")
-                elif type(elastic_behavior) in (tuple,list):
-                    for (id,behavior) in elastic_behavior:
-                        operator = self.add_elasticity_operator(
-                            elastic_behavior=behavior,
-                            subdomain_id=id)
-                        self.add_foi(expr=operator.Sigma, fs=self.mfoi_fs, name="Sigma")
-                        self.add_foi(expr=operator.sigma, fs=self.mfoi_fs, name="sigma")
-            elif ((elastic_behavior_dev  is not None)
-              and (elastic_behavior_bulk is not None)):
-                if  isinstance(elastic_behavior_dev , dmech.Material)\
-                and isinstance(elastic_behavior_bulk, dmech.Material):
-                    operator = self.add_elasticity_operator(
-                        elastic_behavior=elastic_behavior_dev)
-                    self.add_foi(expr=operator.Sigma, fs=self.mfoi_fs, name="Sigma_dev")
-                    self.add_foi(expr=operator.sigma, fs=self.mfoi_fs, name="sigma_dev")
-                    operator = self.add_elasticity_operator(
-                        elastic_behavior=elastic_behavior_bulk)
-                    self.add_foi(expr=operator.Sigma, fs=self.mfoi_fs, name="Sigma_bulk")
-                    self.add_foi(expr=operator.sigma, fs=self.mfoi_fs, name="sigma_bulk")
-                elif type(elastic_behavior_dev)  in (tuple,list)\
-                 and type(elastic_behavior_bulk) in (tuple,list):
-                    for (id_dev, behavior_dev, id_bulk, behavior_bulk) in zip(elastic_behavior_dev, elastic_behavior_bulk):
-                        assert (id_dev == id_bulk)
-                        operator = self.add_elasticity_operator(
-                            elastic_behavior=behavior_dev,
-                            subdomain_id=id_dev)
-                        self.add_foi(expr=operator.Sigma, fs=self.mfoi_fs, name="Sigma_dev")
-                        self.add_foi(expr=operator.sigma, fs=self.mfoi_fs, name="sigma_dev")
-                        operator = self.add_elasticity_operator(
-                            elastic_behavior=behavior_bulk,
-                            subdomain_id=id_bulk)
-                        self.add_foi(expr=operator.Sigma, fs=self.mfoi_fs, name="Sigma_bulk")
-                        self.add_foi(expr=operator.sigma, fs=self.mfoi_fs, name="sigma_bulk")
-            else:
-                assert (0),\
-                    "Must provide elastic_behavior or elastic_behavior_dev & elastic_behavior_bulk. Aborting."
-        
         if (self.Q_expr is not None):
             assert (0), "ToDo. Aborting."
             # operator.sigma_loc = dolfin.dot(dolfin.dot(self.Q_expr, operator.sigma), self.Q_expr.T)
@@ -344,11 +286,11 @@ class HyperelasticityProblem(Problem):
     def add_global_volume_ratio_qois(self):
 
         basename = "J"
-        J = self.kinematics.J
+        volume_ratio = self.kinematics.J
 
         self.add_qoi(
             name=basename,
-            expr=J / self.mesh_V0 * self.dV)
+            expr=volume_ratio * self.dV)
 
 
 
@@ -367,26 +309,26 @@ class HyperelasticityProblem(Problem):
 
         self.add_qoi(
             name=basename+"XX",
-            expr=sum([getattr(operator, stress)[0,0]*operator.measure for operator in self.operators if hasattr(operator, stress)]))
+            expr=sum([getattr(operator.material, stress)[0,0]*operator.measure for operator in self.operators if (hasattr(operator, "material") and hasattr(operator.material, stress))]))
         if (self.dim >= 2):
             self.add_qoi(
                 name=basename+"YY",
-                expr=sum([getattr(operator, stress)[1,1]*operator.measure for operator in self.operators if hasattr(operator, stress)]))
+                expr=sum([getattr(operator.material, stress)[1,1]*operator.measure for operator in self.operators if (hasattr(operator, "material") and hasattr(operator.material, stress))]))
             if (self.dim >= 3):
                 self.add_qoi(
                     name=basename+"ZZ",
-                    expr=sum([getattr(operator, stress)[2,2]*operator.measure for operator in self.operators if hasattr(operator, stress)]))
+                    expr=sum([getattr(operator.material, stress)[2,2]*operator.measure for operator in self.operators if (hasattr(operator, "material") and hasattr(operator.material, stress))]))
         if (self.dim >= 2):
             self.add_qoi(
                 name=basename+"XY",
-                expr=sum([getattr(operator, stress)[0,1]*operator.measure for operator in self.operators if hasattr(operator, stress)]))
+                expr=sum([getattr(operator.material, stress)[0,1]*operator.measure for operator in self.operators if (hasattr(operator, "material") and hasattr(operator.material, stress))]))
             if (self.dim >= 3):
                 self.add_qoi(
                     name=basename+"YZ",
-                    expr=sum([getattr(operator, stress)[1,2]*operator.measure for operator in self.operators if hasattr(operator, stress)]))
+                    expr=sum([getattr(operator.material, stress)[1,2]*operator.measure for operator in self.operators if (hasattr(operator, "material") and hasattr(operator.material, stress))]))
                 self.add_qoi(
                     name=basename+"ZX",
-                    expr=sum([getattr(operator, stress)[2,0]*operator.measure for operator in self.operators if hasattr(operator, stress)]))
+                    expr=sum([getattr(operator.material, stress)[2,0]*operator.measure for operator in self.operators if (hasattr(operator, "material") and hasattr(operator.material, stress))]))
 
 
 
@@ -394,4 +336,5 @@ class HyperelasticityProblem(Problem):
 
         self.add_qoi(
             name="P",
-            expr=sum([-dolfin.tr(operator.sigma)/3*operator.measure for operator in self.operators if hasattr(operator, "sigma")])+sum([operator.P*operator.measure for operator in self.operators if hasattr(operator, "P")]))
+            expr=sum([operator.P*operator.measure for operator in self.operators if hasattr(operator, "P")]))
+            # expr=sum([-dolfin.tr(operator.material.sigma)/3*operator.measure for operator in self.operators if (hasattr(operator, "material") and hasattr(operator.material, "sigma"))])+sum([operator.P*operator.measure for operator in self.operators if hasattr(operator, "P")]))

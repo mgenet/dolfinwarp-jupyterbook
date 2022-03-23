@@ -20,9 +20,7 @@ class InverseHyperelasticityProblem(HyperelasticityProblem):
 
 
 
-    def __init__(self,
-            *args,
-            **kwargs):
+    def __init__(self, *args, **kwargs):
 
         if ("w_incompressibility" in kwargs):
             assert (bool(kwargs.w_incompressibility) == 0),\
@@ -35,7 +33,6 @@ class InverseHyperelasticityProblem(HyperelasticityProblem):
     def set_kinematics(self):
 
         self.kinematics = dmech.InverseKinematics(
-            dim=self.dim,
             U=self.subsols["U"].subfunc,
             U_old=self.subsols["U"].func_old)
 
@@ -47,18 +44,16 @@ class InverseHyperelasticityProblem(HyperelasticityProblem):
 
 
     def add_elasticity_operator(self,
-            elastic_behavior,
+            material_model,
+            material_parameters,
             subdomain_id=None):
 
-        if (subdomain_id is None):
-            measure = self.dV
-        else:
-            measure = self.dV(subdomain_id)
         operator = dmech.InverseElasticityOperator(
-            U_test=self.get_displacement_subsol().dsubtest,
             kinematics=self.kinematics,
-            elastic_behavior=elastic_behavior,
-            measure=measure)
+            U_test=self.get_displacement_subsol().dsubtest,
+            material_model=material_model,
+            material_parameters=material_parameters,
+            measure=self.get_subdomain_measure(subdomain_id))
         return self.add_operator(operator)
 
 

@@ -26,71 +26,10 @@ def test_inverse_hyperelasticity(
 
     ################################################################### Mesh ###
 
-    LX = 1.
-    LY = 1.
-    if (dim==3): LZ = 1.
-
-    l = 1.
-    NX = int(LX/l)
-    NY = int(LY/l)
-    if (dim==3): NZ = int(LZ/l)
-
-    if (dim==2):
-        mesh = dolfin.RectangleMesh(
-            dolfin.Point(0., 0., 0.),
-            dolfin.Point(LX, LY, 0.),
-            NX,
-            NY,
-            "crossed")
+    if   (dim==2):
+        mesh, boundaries_mf, xmin_id, xmax_id, ymin_id, ymax_id = dmech.init_Rivlin_cube(dim=dim)
     elif (dim==3):
-        mesh = dolfin.BoxMesh(
-            dolfin.Point(0., 0., 0.),
-            dolfin.Point(LX, LY, LZ),
-            NX,
-            NY,
-            NZ)
-
-    # xdmf_file_mesh = dolfin.XDMFFile(res_basename+"-mesh.xdmf")
-    # xdmf_file_mesh.write(mesh)
-    # xdmf_file_mesh.close()
-
-    ################################################## Subdomains & Measures ###
-
-    xmin_sd = dolfin.CompiledSubDomain("near(x[0], x0) && on_boundary", x0=0.)
-    xmax_sd = dolfin.CompiledSubDomain("near(x[0], x0) && on_boundary", x0=LX)
-    ymin_sd = dolfin.CompiledSubDomain("near(x[1], x0) && on_boundary", x0=0.)
-    ymax_sd = dolfin.CompiledSubDomain("near(x[1], x0) && on_boundary", x0=LY)
-    if (dim==3): zmin_sd = dolfin.CompiledSubDomain("near(x[2], x0) && on_boundary", x0=0.)
-    if (dim==3): zmax_sd = dolfin.CompiledSubDomain("near(x[2], x0) && on_boundary", x0=LZ)
-
-    xmin_id = 1
-    xmax_id = 2
-    ymin_id = 3
-    ymax_id = 4
-    if (dim==3): zmin_id = 5
-    if (dim==3): zmax_id = 6
-
-    boundaries_mf = dolfin.MeshFunction("size_t", mesh, mesh.topology().dim()-1) # MG20180418: size_t looks like unisgned int, but more robust wrt architecture and os
-    boundaries_mf.set_all(0)
-    xmin_sd.mark(boundaries_mf, xmin_id)
-    xmax_sd.mark(boundaries_mf, xmax_id)
-    ymin_sd.mark(boundaries_mf, ymin_id)
-    ymax_sd.mark(boundaries_mf, ymax_id)
-    if (dim==3): zmin_sd.mark(boundaries_mf, zmin_id)
-    if (dim==3): zmax_sd.mark(boundaries_mf, zmax_id)
-
-    # xdmf_file_boundaries = dolfin.XDMFFile(res_basename+"-boundaries.xdmf")
-    # xdmf_file_boundaries.write(boundaries_mf)
-    # xdmf_file_boundaries.close()
-
-    ###################################################### Material behavior ###
-
-    mat_params = {
-        "E":1.,
-        "nu":0.3}
-
-    mat_law = dmech.CiarletGeymonatNeoHookeanMooneyRivlinElasticMaterial(
-        parameters=mat_params)
+        mesh, boundaries_mf, xmin_id, xmax_id, ymin_id, ymax_id, zmin_id, zmax_id = dmech.init_Rivlin_cube(dim=dim)
 
     ################################################################ Problem ###
 
@@ -100,7 +39,7 @@ def test_inverse_hyperelasticity(
         boundaries_mf=boundaries_mf,
         U_degree=1,
         quadrature_degree="default",
-        elastic_behavior=mat_law)
+        elastic_behavior={"model":"CGNHMR", "parameters":{"E":1., "nu":0.3}})
 
     ########################################## Boundary conditions & Loading ###
 
@@ -192,7 +131,7 @@ def test_inverse_hyperelasticity(
     solver = dmech.NonlinearSolver(
         problem=problem,
         parameters={
-            "sol_tol":[1e-6]*len(problem.subsols),
+            "sol_tol":[1e-6],
             "n_iter_max":32},
         relax_type="constant",
         write_iter=0)

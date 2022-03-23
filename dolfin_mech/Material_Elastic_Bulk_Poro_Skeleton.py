@@ -30,6 +30,8 @@ class SkeletonPoroBulkElasticMaterial(BulkElasticMaterial):
 
         self.problem = problem
 
+        self.kinematics = kinematics
+
         assert ('kappa' in parameters)
         self.kappa = dolfin.Constant(parameters['kappa'])
 

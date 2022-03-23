@@ -21,6 +21,7 @@ class RelaxationInelasticMaterial(InelasticMaterial):
 
 
     def __init__(self,
+            kinematics,
             parameters):
 
         if ("taur" in parameters):

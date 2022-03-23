@@ -399,9 +399,7 @@ class Problem():
 
 
 
-    def add_foi(self,
-            *args,
-            **kwargs):
+    def add_foi(self, *args, **kwargs):
 
         foi = dmech.FOI(
             *args,
@@ -425,9 +423,7 @@ class Problem():
 
 ######################################################################## QOI ###
 
-    def add_qoi(self,
-            *args,
-            **kwargs):
+    def add_qoi(self, *args, **kwargs):
 
         qoi = dmech.QOI(
             *args,
@@ -666,9 +662,7 @@ class Problem():
             k_step=None,
             **kwargs):
 
-        constraint = dmech.Constraint(
-            *args,
-            **kwargs)
+        constraint = dmech.Constraint(*args, **kwargs)
         if (k_step is None):
             self.constraints += [constraint]
         else:

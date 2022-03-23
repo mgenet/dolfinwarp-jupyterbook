@@ -22,5 +22,7 @@ class LinearizedIncompressibilityOperator(Operator):
             p_test,
             measure):
 
-        self.measure = measure
-        self.res_form = -dolfin.tr(kinematics.epsilon) * p_test * self.measure
+        self.kinematics = kinematics
+        self.measure    = measure
+
+        self.res_form = -dolfin.tr(self.kinematics.epsilon) * p_test * self.measure

@@ -22,5 +22,7 @@ class HyperIncompressibilityOperator(Operator):
             P_test,
             measure):
 
-        self.measure = measure
-        self.res_form = - (kinematics.J - 1) * P_test * self.measure
+        self.kinematics = kinematics
+        self.measure    = measure
+
+        self.res_form = - (self.kinematics.J - 1) * P_test * self.measure

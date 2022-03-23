@@ -18,7 +18,7 @@ import dolfin_mech     as dmech
 
 ################################################################################
 
-def test_hyperelasticity_multimaterial(
+def test_normal_displacement_penalty(
     dim,
     incomp,
     res_basename,
@@ -27,83 +27,61 @@ def test_hyperelasticity_multimaterial(
     ################################################################### Mesh ###
 
     if   (dim==2):
-        mesh, boundaries_mf, xmin_id, xmax_id, ymin_id, ymax_id = dmech.init_Rivlin_cube(dim=dim, l=0.1)
+        mesh, boundaries_mf, xmin_id, xmax_id, ymin_id, ymax_id = dmech.init_Rivlin_cube(dim=dim)
     elif (dim==3):
-        mesh, boundaries_mf, xmin_id, xmax_id, ymin_id, ymax_id, zmin_id, zmax_id = dmech.init_Rivlin_cube(dim=dim, l=0.1)
-
-    mat1_sd = dolfin.CompiledSubDomain("x[0] <= x0", x0=1/2)
-    mat2_sd = dolfin.CompiledSubDomain("x[0] >= x0", x0=1/2)
-
-    mat1_id = 1
-    mat2_id = 2
-
-    domains_mf = dolfin.MeshFunction("size_t", mesh, mesh.topology().dim()) # MG20180418: size_t looks like unisgned int, but more robust wrt architecture and os
-    domains_mf.set_all(0)
-    mat1_sd.mark(domains_mf, mat1_id)
-    mat2_sd.mark(domains_mf, mat2_id)
+        mesh, boundaries_mf, xmin_id, xmax_id, ymin_id, ymax_id, zmin_id, zmax_id = dmech.init_Rivlin_cube(dim=dim)
 
     ################################################################ Problem ###
 
-    mat1_params = {
+    material_parameters = {
         "E":1.,
-        "nu":0.5*(incomp)+0.3*(1-incomp)}
-
-    mat2_params = {
-        "E":10.,
-        "nu":0.5*(incomp)+0.3*(1-incomp)}
+        "nu":0.5*(incomp)+0.3*(1-incomp),
+        "dim":dim, # MG20220322: Necessary to compute correct bulk modulus
+        "PS":0}
 
     if (incomp):
-        problem = dmech.HyperelasticityProblem(
+        problem = dmech.ElasticityProblem(
             mesh=mesh,
-            domains_mf=domains_mf,
             compute_normals=1,
             boundaries_mf=boundaries_mf,
-            U_degree=2, # MG20211219: Incompressibility requires U_degree >= 2 ?!
+            u_degree=2, # MG20211219: Incompressibility requires U_degree >= 2 ?!
             quadrature_degree="default",
             w_incompressibility=1,
-            elastic_behaviors=[
-                {"subdomain_id":mat1_id, "model":"NHMR", "parameters":mat1_params, "suffix":"1"},
-                {"subdomain_id":mat2_id, "model":"NHMR", "parameters":mat2_params, "suffix":"2"}])
+            elastic_behavior={"model":"H_dev", "parameters":material_parameters})
     else:
-        problem = dmech.HyperelasticityProblem(
+        problem = dmech.ElasticityProblem(
             mesh=mesh,
-            domains_mf=domains_mf,
             compute_normals=1,
             boundaries_mf=boundaries_mf,
-            U_degree=1,
+            u_degree=1,
             quadrature_degree="default",
             w_incompressibility=0,
-            elastic_behaviors=[
-                {"subdomain_id":mat1_id, "model":"CGNHMR", "parameters":mat1_params, "suffix":"1"},
-                {"subdomain_id":mat2_id, "model":"CGNHMR", "parameters":mat2_params, "suffix":"2"}])
+            elastic_behavior={"model":"H", "parameters":material_parameters})
+
 
     ########################################## Boundary conditions & Loading ###
 
-    # problem.add_constraint(V=problem.get_displacement_function_space(), sub_domains=boundaries_mf, sub_domain_id=xmin_id, val=[0.]*dim)
-    # problem.add_constraint(V=problem.get_displacement_function_space(), sub_domains=boundaries_mf, sub_domain_id=xmax_id, val=[0.]*dim)
-    # problem.add_constraint(V=problem.get_displacement_function_space(), sub_domains=boundaries_mf, sub_domain_id=ymin_id, val=[0.]*dim)
-    # problem.add_constraint(V=problem.get_displacement_function_space(), sub_domains=boundaries_mf, sub_domain_id=ymax_id, val=[0.]*dim)
-    # if (dim==3): problem.add_constraint(V=problem.get_displacement_function_space(), sub_domains=boundaries_mf, sub_domain_id=zmin_id, val=[0.]*dim)
-    # if (dim==3): problem.add_constraint(V=problem.get_displacement_function_space(), sub_domains=boundaries_mf, sub_domain_id=zmax_id, val=[0.]*dim)
-
-    problem.add_constraint(V=problem.get_displacement_function_space().sub(0), sub_domains=boundaries_mf, sub_domain_id=xmin_id, val=0.)
-    # problem.add_constraint(V=problem.get_displacement_function_space().sub(0), sub_domains=boundaries_mf, sub_domain_id=xmax_id, val=0.)
-    problem.add_constraint(V=problem.get_displacement_function_space().sub(1), sub_domains=boundaries_mf, sub_domain_id=ymin_id, val=0.)
-    # problem.add_constraint(V=problem.get_displacement_function_space().sub(1), sub_domains=boundaries_mf, sub_domain_id=ymax_id, val=0.)
-    if (dim==3): problem.add_constraint(V=problem.get_displacement_function_space().sub(2), sub_domains=boundaries_mf, sub_domain_id=zmin_id, val=0.)
-    # if (dim==3): problem.add_constraint(V=problem.get_displacement_function_space().sub(2), sub_domains=boundaries_mf, sub_domain_id=zmax_id, val=0.)
+    problem.add_normal_displacement0_penalty_operator(
+        measure=problem.dS(xmin_id),
+        pen=1.)
+    problem.add_normal_displacement0_penalty_operator(
+        measure=problem.dS(ymin_id),
+        pen=1.)
+    if (dim == 3): problem.add_normal_displacement0_penalty_operator(
+        measure=problem.dS(zmin_id),
+        pen=1.)
 
     k_step = problem.add_step(
         Deltat=1.,
         dt_ini=1.,
-        dt_min=0.1)
+        dt_min=1.)
 
     problem.add_constraint(
         V=problem.get_displacement_function_space().sub(0),
         sub_domains=boundaries_mf,
         sub_domain_id=xmax_id,
-        val_ini=0.0,
-        val_fin=0.5,
+        val_ini=0.,
+        val_fin=1.,
         k_step=k_step)
 
     ################################################# Quantities of Interest ###
@@ -170,7 +148,7 @@ if (__name__ == "__main__"):
             res_basename += "-dim="+str(dim)
             res_basename += "-incomp="+str(incomp)
 
-            test_hyperelasticity_multimaterial(
+            test_normal_displacement_penalty(
                 dim=dim,
                 incomp=incomp,
                 res_basename=res_folder+"/"+res_basename,

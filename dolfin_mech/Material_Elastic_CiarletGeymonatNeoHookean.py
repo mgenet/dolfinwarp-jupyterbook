@@ -20,25 +20,50 @@ class CiarletGeymonatNeoHookeanElasticMaterial(ElasticMaterial):
 
 
     def __init__(self,
-            parameters):
+            kinematics,
+            parameters,
+            decoup=False):
 
-        self.bulk = dmech.CiarletGeymonatBulkElasticMaterial(parameters)
-        self.dev  = dmech.NeoHookeanDevElasticMaterial(parameters)
+        self.kinematics = kinematics
+
+        self.bulk = dmech.CiarletGeymonatElasticMaterial(kinematics, parameters)
+        self.dev  = dmech.NeoHookeanElasticMaterial(kinematics, parameters, decoup)
+
+        self.Psi   = self.bulk.Psi   + self.dev.Psi
+        self.Sigma = self.bulk.Sigma + self.dev.Sigma
+        self.P     = self.bulk.P     + self.dev.P
+        self.sigma = self.bulk.sigma + self.dev.sigma
 
 
 
-    def get_free_energy(self,
-            *args,
-            **kwargs):
+    # def get_free_energy(self, *args, **kwargs):
 
-        Psi_bulk, Sigma_bulk = self.bulk.get_free_energy(
-            *args,
-            **kwargs)
-        Psi_dev, Sigma_dev = self.dev.get_free_energy(
-            *args,
-            **kwargs)
+    #     Psi_bulk, Sigma_bulk = self.bulk.get_free_energy(*args, **kwargs)
+    #     Psi_dev , Sigma_dev  = self.dev.get_free_energy(*args, **kwargs)
 
-        Psi   = Psi_bulk   + Psi_dev
-        Sigma = Sigma_bulk + Sigma_dev
+    #     Psi   = Psi_bulk   + Psi_dev
+    #     Sigma = Sigma_bulk + Sigma_dev
 
-        return Psi, Sigma
+    #     return Psi, Sigma
+
+
+
+    # def get_PK2_stress(self, *args, **kwargs):
+
+    #     Sigma_bulk = self.bulk.get_PK2_stress(*args, **kwargs)
+    #     Sigma_dev  = self.dev.get_PK2_stress(*args, **kwargs)
+
+    #     Sigma = Sigma_bulk + Sigma_dev
+
+    #     return Sigma
+
+
+
+    # def get_PK1_stress(self, *args, **kwargs):
+
+    #     P_bulk = self.bulk.get_PK1_stress(*args, **kwargs)
+    #     P_dev  = self.dev.get_PK1_stress(*args, **kwargs)
+
+    #     P = P_bulk + P_dev
+
+    #     return P

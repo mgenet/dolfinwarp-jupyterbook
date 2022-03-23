@@ -18,17 +18,15 @@ from .Operator import Operator
 class InverseElasticityOperator(Operator):
 
     def __init__(self,
-            U_test,
             kinematics,
-            elastic_behavior,
+            U_test,
+            material_model,
+            material_parameters,
             measure):
 
-        Psi, self.Sigma = elastic_behavior.get_free_energy(
-            C=kinematics.C)
-        self.PK1        = kinematics.F * self.Sigma
-        self.sigma      = self.PK1 * kinematics.F.T / kinematics.J
+        self.kinematics = kinematics
+        self.material   = dmech.material_factory(kinematics, material_model, material_parameters)
+        self.measure    = measure
 
         epsilon_test = dolfin.sym(dolfin.grad(U_test))
-
-        self.measure = measure
-        self.res_form = dolfin.inner(self.sigma, epsilon_test) * self.measure
+        self.res_form = dolfin.inner(self.material.sigma, epsilon_test) * self.measure

@@ -18,15 +18,14 @@ from .Operator import Operator
 class LinearizedHydrostaticPressureOperator(Operator):
 
     def __init__(self,
-            u,
-            u_test,
             kinematics,
+            u_test,
             p,
             measure):
 
-        epsilon_test = dolfin.derivative(
-            kinematics.epsilon, u, u_test)
+        self.kinematics = kinematics
+        self.p          = p
+        self.measure    = measure
 
-        self.p = p
-        self.measure = measure
+        epsilon_test = dolfin.sym(dolfin.grad(u_test))
         self.res_form = -self.p * dolfin.tr(epsilon_test) * self.measure

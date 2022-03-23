@@ -18,17 +18,18 @@ from .Operator import Operator
 class HyperHydrostaticPressureOperator(Operator):
 
     def __init__(self,
-            U,
-            U_test,
             kinematics,
+            U_test,
             P,
             measure):
 
+        self.kinematics = kinematics
+        self.P          = P
+        self.measure    = measure
+
         dJ_test = dolfin.derivative(
-            kinematics.J,
-            U,
+            self.kinematics.J,
+            self.kinematics.U,
             U_test)
 
-        self.P = P
-        self.measure = measure
         self.res_form = - self.P * dJ_test * self.measure

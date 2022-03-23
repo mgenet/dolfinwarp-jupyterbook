@@ -18,17 +18,15 @@ from .Operator import Operator
 class LinearizedElasticityOperator(Operator):
 
     def __init__(self,
-            u,
-            u_test,
             kinematics,
-            elastic_behavior,
+            u_test,
+            material_model,
+            material_parameters,
             measure):
 
-        psi, self.sigma = elastic_behavior.get_free_energy(
-            epsilon=kinematics.epsilon)
+        self.kinematics = kinematics
+        self.material   = dmech.material_factory(kinematics, material_model, material_parameters)
+        self.measure    = measure
 
-        epsilon_test = dolfin.derivative(
-            kinematics.epsilon, u, u_test)
-
-        self.measure = measure
-        self.res_form = dolfin.inner(self.sigma, epsilon_test) * self.measure
+        epsilon_test = dolfin.sym(dolfin.grad(u_test))
+        self.res_form = dolfin.inner(self.material.sigma, epsilon_test) * self.measure

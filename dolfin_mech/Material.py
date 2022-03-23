@@ -9,6 +9,7 @@
 ################################################################################
 
 import dolfin
+from pytest import param
 
 import dolfin_mech as dmech
 
@@ -19,16 +20,14 @@ class Material():
 
 
     def get_lambda_from_parameters(self,
-            parameters,
-            dim=3,
-            PS=False):
+            parameters):
 
         if ("lambda" in parameters):
             lmbda = parameters["lambda"]
         elif ("E" in parameters) and ("nu" in parameters):
             E  = parameters["E"]
             nu = parameters["nu"]
-            if (dim == 2) and (PS):
+            if parameters.get("PS", False):
                 lmbda = E*nu/(1+nu)/(1-  nu)
             else:
                 lmbda = E*nu/(1+nu)/(1-2*nu)
@@ -55,56 +54,38 @@ class Material():
 
 
 
+    def get_lambda_and_mu_from_parameters(self,
+            parameters):
+
+        lmbda = self.get_lambda_from_parameters(parameters)
+        mu    = self.get_mu_from_parameters(parameters)
+
+        return lmbda, mu
+
+
+
     def get_K_from_parameters(self,
-            parameters,
-            dim=3,
-            PS=False):
+            parameters):
 
         if ("K" in parameters):
             K = parameters["K"]
         else:
-            if ("lambda" in parameters) and ("mu" in parameters):
-                lmbda = parameters["lambda"]
-                mu    = parameters["mu"]
-            elif ("E" in parameters) and ("nu" in parameters):
-                E  = parameters["E"]
-                nu = parameters["nu"]
-                if (dim == 2) and (PS):
-                    lmbda = E*nu/(1+nu)/(1-  nu)
-                else:
-                    lmbda = E*nu/(1+nu)/(1-2*nu)
-                mu = E/2/(1+nu)
-            else:
-                assert (0),\
-                    "No parameter found: \"+str(parameters)+\". Must provide K or lambda & mu or E & nu. Aborting."
-            if   (dim == 2):
+            lmbda, mu = self.get_lambda_and_mu_from_parameters(parameters)
+            if (parameters.get("dim", 3) == 2):
                 K = (2*lmbda+2*mu)/2
-            elif (dim == 3):
-                K = (3*lmbda+2*mu)/3
             else:
-                assert (0),\
-                    "Only in 2D & 3D. Aborting."
+                K = (3*lmbda+2*mu)/3
         return dolfin.Constant(K)
 
 
 
     def get_G_from_parameters(self,
-            parameters,
-            dim=3,
-            PS=False):
+            parameters):
 
         if ("G" in parameters):
             G = parameters["G"]
         else:
-            if ("mu" in parameters):
-                mu = parameters["mu"]
-            elif ("E" in parameters) and ("nu" in parameters):
-                E  = parameters["E"]
-                nu = parameters["nu"]
-                mu = E/2/(1+nu)
-            else:
-                assert (0),\
-                    "No parameter found: \"+str(parameters)+\". Must provide G or mu or E & nu. Aborting."
+            mu = self.get_mu_from_parameters(parameters)
             G = mu
         return dolfin.Constant(G)
 
@@ -179,164 +160,183 @@ class Material():
         return dolfin.Constant(C1), dolfin.Constant(C2)
 
 
-    
-    def get_C_from_U_or_C(self,
-            U=None,
-            C=None):
-
-        if (C is not None):
-            assert (C.ufl_shape[0] == C.ufl_shape[1])
-        elif (U is not None):
-            dim = U.ufl_shape[0]
-            I = dolfin.Identity(dim)
-            F = I + dolfin.grad(U)
-            # JF = dolfin.det(F) # MG20211220: Otherwise cannot derive Psi wrt C
-            C = F.T * F
-        else:
-            assert (0),\
-                "Must provide U or C. Aborting."
-        return dolfin.variable(C)
-
-
-
-    def get_E_from_U_C_or_E(self,
-            U=None,
-            C=None,
-            E=None):
-
-        if (E is not None):
-            assert (E.ufl_shape[0] == E.ufl_shape[1])
-        elif (U is not None) or (C is not None):
-            C = self.get_C_from_U_or_C(U, C)
-            dim = C.ufl_shape[0]
-            I = dolfin.Identity(dim)
-            E = (C - I)/2
-        else:
-            assert (0),\
-                "Must provide U, C or E. Aborting."
-        return dolfin.variable(E)
-
-
-
-    def get_E_sph_from_U_C_E_or_E_sph(self,
-            U=None,
-            C=None,
-            E=None,
-            E_sph=None):
-
-        if (E_sph is not None):
-            assert (E_sph.ufl_shape[0] == E_sph.ufl_shape[1])
-        elif (U is not None) or (C is not None) or (E is not None):
-            E = self.get_E_from_U_C_or_E(U, C, E)
-            dim = E.ufl_shape[0]
-            I = dolfin.Identity(dim)
-            E_sph = dolfin.tr(E)/dim * I
-        else:
-            assert (0),\
-                "Must provide U, C, E or E_sph. Aborting."
-        return dolfin.variable(E_sph)
-
-
-
-    def get_E_dev_from_U_C_E_or_E_dev(self,
-            U=None,
-            C=None,
-            E=None,
-            E_dev=None):
-
-        if (E_dev is not None):
-            assert (E_dev.ufl_shape[0] == E_dev.ufl_shape[1])
-        elif (U is not None) or (C is not None) or (E is not None):
-            E = self.get_E_from_U_C_or_E(U, C, E)
-            E_sph = self.get_E_sph_from_U_C_E_or_E_sph(U, C, E)
-            E_dev = E - E_sph
-        else:
-            assert (0),\
-                "Must provide U, C, E or E_dev. Aborting."
-        return dolfin.variable(E_dev)
-
-
-
-    def get_epsilon_from_U_or_epsilon(self,
-            U=None,
-            epsilon=None):
-
-        if (epsilon is not None):
-            assert (epsilon.ufl_shape[0] == epsilon.ufl_shape[1])
-        elif (U is not None):
-            epsilon = dolfin.sym(dolfin.grad(U))
-        else:
-            assert (0),\
-                "Must provide U or epsilon. Aborting."
-        return dolfin.variable(epsilon)
-
-
-
-    def get_epsilon_sph_from_U_epsilon_or_epsilon_sph(self,
-            U=None,
-            epsilon=None,
-            epsilon_sph=None):
-
-        if (epsilon_sph is not None):
-            assert (epsilon_sph.ufl_shape[0] == epsilon_sph.ufl_shape[1])
-        elif (U is not None) or (epsilon is not None):
-            epsilon = self.get_epsilon_from_U_or_epsilon(U, epsilon)
-            dim = epsilon.ufl_shape[0]
-            I = dolfin.Identity(dim)
-            epsilon_sph = dolfin.tr(epsilon)/dim * I
-        else:
-            assert (0),\
-                "Must provide U, epsilon or epsilon_sph. Aborting."
-        return dolfin.variable(epsilon_sph)
-
-
-
-    def get_epsilon_dev_from_U_epsilon_or_epsilon_dev(self,
-            U=None,
-            epsilon=None,
-            epsilon_dev=None):
-
-        if (epsilon_dev is not None):
-            assert (epsilon_dev.ufl_shape[0] == epsilon_dev.ufl_shape[1])
-        elif (U is not None) or (epsilon is not None):
-            epsilon = self.get_epsilon_from_U_or_epsilon(U, epsilon)
-            epsilon_sph = self.get_epsilon_sph_from_U_epsilon_or_epsilon_sph(U, epsilon)
-            epsilon_dev = epsilon - epsilon_sph
-        else:
-            assert (0),\
-                "Must provide U, epsilon or epsilon_dev. Aborting."
-        return dolfin.variable(epsilon_dev)
 
 ################################################################################
 
-def material(
+
+
+    # def get_C_from_U_or_C(self,
+    #         U=None,
+    #         C=None):
+
+    #     if (C is not None):
+    #         assert (C.ufl_shape[0] == C.ufl_shape[1])
+    #     elif (U is not None):
+    #         dim = U.ufl_shape[0]
+    #         I = dolfin.Identity(dim)
+    #         F = I + dolfin.grad(U)
+    #         # JF = dolfin.det(F) # MG20211220: Otherwise cannot derive Psi wrt C
+    #         C = F.T * F
+    #     else:
+    #         assert (0),\
+    #             "Must provide U or C. Aborting."
+    #     return dolfin.variable(C)
+
+
+
+    # def get_E_from_U_C_or_E(self,
+    #         U=None,
+    #         C=None,
+    #         E=None):
+
+    #     if (E is not None):
+    #         assert (E.ufl_shape[0] == E.ufl_shape[1])
+    #     elif (U is not None) or (C is not None):
+    #         C = self.get_C_from_U_or_C(U, C)
+    #         dim = C.ufl_shape[0]
+    #         I = dolfin.Identity(dim)
+    #         E = (C - I)/2
+    #     else:
+    #         assert (0),\
+    #             "Must provide U, C or E. Aborting."
+    #     return dolfin.variable(E)
+
+
+
+    # def get_E_sph_from_U_C_E_or_E_sph(self,
+    #         U=None,
+    #         C=None,
+    #         E=None,
+    #         E_sph=None):
+
+    #     if (E_sph is not None):
+    #         assert (E_sph.ufl_shape[0] == E_sph.ufl_shape[1])
+    #     elif (U is not None) or (C is not None) or (E is not None):
+    #         E = self.get_E_from_U_C_or_E(U, C, E)
+    #         dim = E.ufl_shape[0]
+    #         I = dolfin.Identity(dim)
+    #         E_sph = dolfin.tr(E)/dim * I
+    #     else:
+    #         assert (0),\
+    #             "Must provide U, C, E or E_sph. Aborting."
+    #     return dolfin.variable(E_sph)
+
+
+
+    # def get_E_dev_from_U_C_E_or_E_dev(self,
+    #         U=None,
+    #         C=None,
+    #         E=None,
+    #         E_dev=None):
+
+    #     if (E_dev is not None):
+    #         assert (E_dev.ufl_shape[0] == E_dev.ufl_shape[1])
+    #     elif (U is not None) or (C is not None) or (E is not None):
+    #         E = self.get_E_from_U_C_or_E(U, C, E)
+    #         E_sph = self.get_E_sph_from_U_C_E_or_E_sph(U, C, E)
+    #         E_dev = E - E_sph
+    #     else:
+    #         assert (0),\
+    #             "Must provide U, C, E or E_dev. Aborting."
+    #     return dolfin.variable(E_dev)
+
+
+
+    # def get_epsilon_from_U_or_epsilon(self,
+    #         U=None,
+    #         epsilon=None):
+
+    #     if (epsilon is not None):
+    #         assert (epsilon.ufl_shape[0] == epsilon.ufl_shape[1])
+    #     elif (U is not None):
+    #         epsilon = dolfin.sym(dolfin.grad(U))
+    #     else:
+    #         assert (0),\
+    #             "Must provide U or epsilon. Aborting."
+    #     return dolfin.variable(epsilon)
+
+
+
+    # def get_epsilon_sph_from_U_epsilon_or_epsilon_sph(self,
+    #         U=None,
+    #         epsilon=None,
+    #         epsilon_sph=None):
+
+    #     if (epsilon_sph is not None):
+    #         assert (epsilon_sph.ufl_shape[0] == epsilon_sph.ufl_shape[1])
+    #     elif (U is not None) or (epsilon is not None):
+    #         epsilon = self.get_epsilon_from_U_or_epsilon(U, epsilon)
+    #         dim = epsilon.ufl_shape[0]
+    #         I = dolfin.Identity(dim)
+    #         epsilon_sph = dolfin.tr(epsilon)/dim * I
+    #     else:
+    #         assert (0),\
+    #             "Must provide U, epsilon or epsilon_sph. Aborting."
+    #     return dolfin.variable(epsilon_sph)
+
+
+
+    # def get_epsilon_dev_from_U_epsilon_or_epsilon_dev(self,
+    #         U=None,
+    #         epsilon=None,
+    #         epsilon_dev=None):
+
+    #     if (epsilon_dev is not None):
+    #         assert (epsilon_dev.ufl_shape[0] == epsilon_dev.ufl_shape[1])
+    #     elif (U is not None) or (epsilon is not None):
+    #         epsilon = self.get_epsilon_from_U_or_epsilon(U, epsilon)
+    #         epsilon_sph = self.get_epsilon_sph_from_U_epsilon_or_epsilon_sph(U, epsilon)
+    #         epsilon_dev = epsilon - epsilon_sph
+    #     else:
+    #         assert (0),\
+    #             "Must provide U, epsilon or epsilon_dev. Aborting."
+    #     return dolfin.variable(epsilon_dev)
+
+
+
+################################################################################
+
+
+
+def material_factory(
+        kinematics,
         model,
         parameters):
 
-    if (model == "hooke"):
-        material = dmech.HookeElasticMaterial(
-            parameters=parameters)
-    elif (model in ("kirchhoff", "SVK")):
-        material = dmech.KirchhoffElasticMaterial(
-            parameters=parameters)
+    if   (model in ("hooke", "H")):
+        material = dmech.HookeElasticMaterial(kinematics=kinematics, parameters=parameters)
+    elif (model in ("hooke_dev", "H_dev")):
+        material = dmech.HookeDevElasticMaterial(kinematics=kinematics, parameters=parameters)
+    elif (model in ("hooke_bulk", "H_bulk")):
+        material = dmech.HookeBulkElasticMaterial(kinematics=kinematics, parameters=parameters)
+    elif (model in ("saintvenantkirchhoff", "kirchhoff", "SVK")):
+        material = dmech.KirchhoffElasticMaterial(kinematics=kinematics, parameters=parameters)
+    elif (model in ("saintvenantkirchhoff_dev", "kirchhoff_dev", "SVK_dev")):
+        material = dmech.KirchhoffDevElasticMaterial(kinematics=kinematics, parameters=parameters)
+    elif (model in ("saintvenantkirchhoff_bulk", "kirchhoff_bulk", "SVK_bulk")):
+        material = dmech.KirchhoffBulkElasticMaterial(kinematics=kinematics, parameters=parameters)
     elif (model in ("neohookean", "NH")):
-        material = dmech.NeoHookeanDevElasticMaterial(
-            parameters=parameters)
+        material = dmech.NeoHookeanElasticMaterial(kinematics=kinematics, parameters=parameters)
+    elif (model in ("neohookean_bar", "NH_bar")):
+        material = dmech.NeoHookeanElasticMaterial(kinematics=kinematics, parameters=parameters, decoup=True)
     elif (model in ("mooneyrivlin", "MR")):
-        material = dmech.MooneyRivlinDevElasticMaterial(
-            parameters=parameters)
+        material = dmech.MooneyRivlinElasticMaterial(kinematics=kinematics, parameters=parameters)
+    elif (model in ("mooneyrivlin_bar", "MR_bar")):
+        material = dmech.MooneyRivlinElasticMaterial(kinematics=kinematics, parameters=parameters, decoup=True)
     elif (model in ("neohookeanmooneyrivlin", "NHMR")):
-        material = dmech.NeoHookeanMooneyRivlinDevElasticMaterial(
-            parameters=parameters)
+        material = dmech.NeoHookeanMooneyRivlinElasticMaterial(kinematics=kinematics, parameters=parameters)
+    elif (model in ("neohookeanmooneyrivlin_bar", "NHMR_bar")):
+        material = dmech.NeoHookeanMooneyRivlinElasticMaterial(kinematics=kinematics, parameters=parameters, decoup=True)
     elif (model in ("ciarletgeymonat", "CG")):
-        material = dmech.CiarletGeymonatBulkElasticMaterial(
-            parameters=parameters)
+        material = dmech.CiarletGeymonatElasticMaterial(kinematics=kinematics, parameters=parameters)
     elif (model in ("ciarletgeymonatneohookean", "CGNH")):
-        material = dmech.CiarletGeymonatNeoHookeanElasticMaterial(
-            parameters=parameters)
+        material = dmech.CiarletGeymonatNeoHookeanElasticMaterial(kinematics=kinematics, parameters=parameters)
+    elif (model in ("ciarletgeymonatneohookean_bar", "CGNH_bar")):
+        material = dmech.CiarletGeymonatNeoHookeanElasticMaterial(kinematics=kinematics, parameters=parameters, decoup=True)
     elif (model in ("ciarletgeymonatneohookeanmooneyrivlin", "CGNHMR")):
-        material = dmech.CiarletGeymonatNeoHookeanMooneyRivlinElasticMaterial(
-            parameters=parameters)
+        material = dmech.CiarletGeymonatNeoHookeanMooneyRivlinElasticMaterial(kinematics=kinematics, parameters=parameters)
+    elif (model in ("ciarletgeymonatneohookeanmooneyrivlin_bar", "CGNHMR_bar")):
+        material = dmech.CiarletGeymonatNeoHookeanMooneyRivlinElasticMaterial(kinematics=kinematics, parameters=parameters, decoup=True)
     else:
         assert(0), "Material model (\""+model+"\") not recognized. Aborting."
     return material

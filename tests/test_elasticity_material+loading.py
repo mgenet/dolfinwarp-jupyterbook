@@ -18,66 +18,50 @@ import dolfin_mech     as dmech
 
 ################################################################################
 
-def test_elasticity_multimaterial(
+def test_elasticity(
     dim,
     PS,
     incomp,
-    load, # disp, volu, surf, pres
+    load, # disp, volu, surf, pres, pgra, tens
     res_basename,
     verbose=0):
 
     ################################################################### Mesh ###
 
     if   (dim==2):
-        mesh, boundaries_mf, xmin_id, xmax_id, ymin_id, ymax_id = dmech.init_Rivlin_cube(dim=dim, l=0.1)
+        mesh, boundaries_mf, xmin_id, xmax_id, ymin_id, ymax_id = dmech.init_Rivlin_cube(dim=dim)
     elif (dim==3):
-        mesh, boundaries_mf, xmin_id, xmax_id, ymin_id, ymax_id, zmin_id, zmax_id = dmech.init_Rivlin_cube(dim=dim, l=0.1)
-
-    mat1_sd = dolfin.CompiledSubDomain("x[0] <= x0", x0=1/2)
-    mat2_sd = dolfin.CompiledSubDomain("x[0] >= x0", x0=1/2)
-
-    mat1_id = 1
-    mat2_id = 2
-
-    domains_mf = dolfin.MeshFunction("size_t", mesh, mesh.topology().dim()) # MG20180418: size_t looks like unisgned int, but more robust wrt architecture and os
-    domains_mf.set_all(0)
-    mat1_sd.mark(domains_mf, mat1_id)
-    mat2_sd.mark(domains_mf, mat2_id)
+        mesh, boundaries_mf, xmin_id, xmax_id, ymin_id, ymax_id, zmin_id, zmax_id = dmech.init_Rivlin_cube(dim=dim)
 
     ################################################################ Problem ###
 
-    mat1_params = {
-        "E":1.,
-        "nu":0.5*(incomp)+0.3*(1-incomp)}
+    quadrature_degree = "default"
+    # quadrature_degree = "full"
 
-    mat2_params = {
-        "E":10.,
-        "nu":0.5*(incomp)+0.3*(1-incomp)}
+    material_parameters = {
+        "E":1.,
+        "nu":0.5*(incomp)+0.3*(1-incomp),
+        "dim":dim, # MG20220322: Necessary to compute correct bulk modulus
+        "PS":PS}
 
     if (incomp):
         problem = dmech.ElasticityProblem(
             mesh=mesh,
-            domains_mf=domains_mf,
             compute_normals=1,
             boundaries_mf=boundaries_mf,
             u_degree=2, # MG20211219: Incompressibility requires U_degree >= 2 ?!
-            quadrature_degree="default",
+            quadrature_degree=quadrature_degree,
             w_incompressibility=1,
-            elastic_behaviors=[
-                {"subdomain_id":mat1_id, "model":"H_dev", "parameters":mat1_params, "suffix":"1"},
-                {"subdomain_id":mat2_id, "model":"H_dev", "parameters":mat2_params, "suffix":"2"}])
+            elastic_behavior={"model":"H_dev", "parameters":material_parameters})
     else:
         problem = dmech.ElasticityProblem(
             mesh=mesh,
-            domains_mf=domains_mf,
             compute_normals=1,
             boundaries_mf=boundaries_mf,
             u_degree=1,
-            quadrature_degree="default",
+            quadrature_degree=quadrature_degree,
             w_incompressibility=0,
-            elastic_behaviors=[
-                {"subdomain_id":mat1_id, "model":"H", "parameters":mat1_params, "suffix":"1"},
-                {"subdomain_id":mat2_id, "model":"H", "parameters":mat2_params, "suffix":"2"}])
+            elastic_behavior={"model":"H", "parameters":material_parameters})
 
     ########################################## Boundary conditions & Loading ###
 
@@ -126,6 +110,22 @@ def test_elasticity_multimaterial(
             P_ini=-0.,
             P_fin=-1.,
             k_step=k_step)
+    elif (load == "pgra"):
+        problem.add_pressure_gradient0_loading_operator(
+            measure=problem.dS(),
+            X0=[0.5]*dim,
+            N0=[1.]+[0.]*(dim-1),
+            P0_ini=-0.,
+            P0_fin=-1.,
+            DP_ini=-0.0,
+            DP_fin=-0.5,
+            k_step=k_step)
+    elif (load == "tens"):
+        problem.add_surface_tension0_loading_operator(
+            measure=problem.dS,
+            gamma_ini=0.00,
+            gamma_fin=0.01,
+            k_step=k_step)
 
     ################################################# Quantities of Interest ###
 
@@ -171,7 +171,7 @@ if (__name__ == "__main__"):
     test = mypy.Test(
         res_folder=res_folder,
         perform_tests=1,
-        stop_at_failure=1,
+        stop_at_failure=0,
         clean_after_tests=1)
 
     dim_lst  = []
@@ -179,24 +179,48 @@ if (__name__ == "__main__"):
     dim_lst += [3]
     for dim in dim_lst:
 
-        incomp_lst  = []
-        incomp_lst += [0]
-        incomp_lst += [1]
-        for incomp in incomp_lst:
+        PS_lst  = []
+        if (dim == 2):
+            PS_lst += [0]
+            PS_lst += [1]
+        elif (dim == 3):
+            PS_lst += [0]
+        for PS in PS_lst:
 
-            print("dim =",dim)
-            print("incomp =",incomp)
+            incomp_lst  = []
+            if (PS == 0):
+                incomp_lst += [0]
+                incomp_lst += [1]
+            elif (PS == 1):
+                incomp_lst += [0]
+            for incomp in incomp_lst:
 
-            res_basename  = sys.argv[0][:-3]
-            res_basename += "-dim="+str(dim)
-            res_basename += "-incomp="+str(incomp)
+                load_lst  = []
+                load_lst += ["disp"]
+                load_lst += ["volu"]
+                load_lst += ["surf"]
+                load_lst += ["pres"]
+                load_lst += ["pgra"]
+                load_lst += ["tens"]
+                for load in load_lst:
 
-            test_elasticity_multimaterial(
-                dim=dim,
-                PS=0,
-                incomp=incomp,
-                load="disp",
-                res_basename=res_folder+"/"+res_basename,
-                verbose=0)
+                    print("dim =",dim)
+                    if (dim == 2): print("PS =",PS)
+                    print("incomp =",incomp)
+                    print("load =",load)
 
-            test.test(res_basename)
+                    res_basename  = sys.argv[0][:-3]
+                    res_basename += "-dim="+str(dim)
+                    if (dim == 2): res_basename += "-PS"*PS + "-PE"*(1-PS)
+                    res_basename += "-incomp="+str(incomp)
+                    res_basename += "-load="+str(load)
+
+                    test_elasticity(
+                        dim=dim,
+                        PS=PS,
+                        incomp=incomp,
+                        load=load,
+                        res_basename=res_folder+"/"+res_basename,
+                        verbose=0)
+
+                    test.test(res_basename)

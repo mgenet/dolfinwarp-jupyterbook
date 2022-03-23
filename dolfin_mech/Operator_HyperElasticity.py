@@ -18,19 +18,25 @@ from .Operator import Operator
 class HyperElasticityOperator(Operator):
 
     def __init__(self,
-            U,
-            U_test,
             kinematics,
-            elastic_behavior,
-            measure):
+            U_test,
+            material_model,
+            material_parameters,
+            measure,
+            formulation="PK1"): # PK1 or PK2
 
-        Psi, self.Sigma = elastic_behavior.get_free_energy(
-            C=kinematics.C)
-        self.PK1   = kinematics.F * self.Sigma
-        self.sigma = self.PK1 * kinematics.F.T / kinematics.J
+        self.kinematics = kinematics
+        self.material   = dmech.material_factory(kinematics, material_model, material_parameters)
+        self.measure    = measure
 
-        dE_test = dolfin.derivative(
-            kinematics.E, U, U_test)
+        assert (formulation in ("PK1", "PK2")),\
+            "\"formulation\" should be \"PK1\" or \"PK2\". Aborting."
 
-        self.measure = measure
-        self.res_form = dolfin.inner(self.Sigma, dE_test) * self.measure
+        if (formulation == "PK2"):
+            dE_test = dolfin.derivative(
+                kinematics.E, kinematics.U, U_test)
+            self.res_form = dolfin.inner(self.material.Sigma, dE_test) * self.measure
+        elif (formulation == "PK1"):
+            dF_test = dolfin.derivative(
+                kinematics.F, kinematics.U, U_test)
+            self.res_form = dolfin.inner(self.material.P, dF_test) * self.measure

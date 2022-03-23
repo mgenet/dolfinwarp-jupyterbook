@@ -25,7 +25,10 @@ class PneumoBulkElasticMaterial(BulkElasticMaterial):
 
 
     def __init__(self,
+            kinematics,
             parameters):
+
+        self.kinematics = kinematics
 
         if ("alpha" in parameters) and ("gamma" in parameters):
             self.alpha = dolfin.Constant(parameters["alpha"])
@@ -49,3 +52,19 @@ class PneumoBulkElasticMaterial(BulkElasticMaterial):
         Sigma = (self.alpha) *  dolfin.exp(self.gamma*(JF**2 - 1 - 2*dolfin.ln(JF))) * (2*self.gamma) * (JF**2 - 1) * C_inv
 
         return Psi, Sigma
+
+
+
+    def get_PK2_stress(self,
+            U=None,
+            C=None):
+
+        C  = self.get_C_from_U_or_C(U, C)
+        JF = dolfin.sqrt(dolfin.det(C)) # MG20200207: Watch out! This is well defined for inverted elements!
+
+        Psi = (self.alpha) * (dolfin.exp(self.gamma*(JF**2 - 1 - 2*dolfin.ln(JF))) - 1)
+
+        C_inv = dolfin.inv(C)
+        Sigma = (self.alpha) *  dolfin.exp(self.gamma*(JF**2 - 1 - 2*dolfin.ln(JF))) * (2*self.gamma) * (JF**2 - 1) * C_inv
+
+        return Sigma
