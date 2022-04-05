@@ -9,7 +9,6 @@
 ################################################################################
 
 import dolfin
-from pytest import param
 
 import dolfin_mech as dmech
 

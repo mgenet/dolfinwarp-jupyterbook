@@ -6,6 +6,7 @@ tests:
   stage: test
   only:
     - Operators # MG20211221: for now tests are only valid in Operators branch
+    - OperatorsWithPoro
   except:
     - CylindricalModel # MG20211221: this branch is outdated
   tags:
