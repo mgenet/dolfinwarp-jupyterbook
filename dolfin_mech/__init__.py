@@ -20,7 +20,6 @@ from .Loading import *
 from .Material_Elastic_Porous import *
 from .SubSol import *
 from .TimeIntegrator import *
-from .Operator_InverseElasticity import *
 from .XDMFFile import *
 from .QOI import *
 from .Material_Elastic_CiarletGeymonatNeoHookean import *
@@ -49,7 +48,7 @@ from .Material_Elastic_Lung import *
 from .Operator_HyperElasticity import *
 from .Kinematics_Inverse import *
 from .Material_Inelastic import *
-from .Problem_InverseHyperelasticity import *
+from .Problem_Hyperelasticity_Inverse import *
 from .Operator_LinearizedIncompressibility import *
 from .Problem import *
 from .compute_error import *

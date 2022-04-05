@@ -34,9 +34,9 @@ class HyperElasticityOperator(Operator):
 
         if (formulation == "PK2"):
             dE_test = dolfin.derivative(
-                kinematics.E, kinematics.U, U_test)
+                self.kinematics.E, self.kinematics.U, U_test)
             self.res_form = dolfin.inner(self.material.Sigma, dE_test) * self.measure
         elif (formulation == "PK1"):
             dF_test = dolfin.derivative(
-                kinematics.F, kinematics.U, U_test)
+                self.kinematics.F, self.kinematics.U, U_test)
             self.res_form = dolfin.inner(self.material.P, dF_test) * self.measure

@@ -12,7 +12,7 @@ import dolfin
 import numpy
 
 import dolfin_mech as dmech
-from .Problem_InverseHyperelasticity import InverseHyperelasticityProblem
+from .Problem_Hyperelasticity_Inverse import InverseHyperelasticityProblem
 
 ################################################################################
 

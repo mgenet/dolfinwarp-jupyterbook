@@ -33,8 +33,8 @@ class InverseHyperelasticityProblem(HyperelasticityProblem):
     def set_kinematics(self):
 
         self.kinematics = dmech.InverseKinematics(
-            U=self.subsols["U"].subfunc,
-            U_old=self.subsols["U"].func_old)
+            U=self.get_displacement_subsol().subfunc,
+            U_old=self.get_displacement_subsol().func_old)
 
         self.add_foi(expr=self.kinematics.F, fs=self.mfoi_fs, name="F")
         self.add_foi(expr=self.kinematics.J, fs=self.sfoi_fs, name="J")
@@ -48,53 +48,10 @@ class InverseHyperelasticityProblem(HyperelasticityProblem):
             material_parameters,
             subdomain_id=None):
 
-        operator = dmech.InverseElasticityOperator(
+        operator = dmech.LinearizedElasticityOperator(
             kinematics=self.kinematics,
-            U_test=self.get_displacement_subsol().dsubtest,
+            u_test=self.get_displacement_subsol().dsubtest,
             material_model=material_model,
             material_parameters=material_parameters,
             measure=self.get_subdomain_measure(subdomain_id))
         return self.add_operator(operator)
-
-
-
-    # def add_global_volume_ratio_qois(self,
-    #         J_type="elastic",
-    #         configuration_type="loaded",
-    #         id_zone=None):
-    #     if (configuration_type == "loaded"):
-    #         kin = self.kinematics
-    #     elif (configuration_type == "unloaded"):
-    #         kin = self.unloaded_kinematics
-    #     if (J_type == "elastic"):
-    #         basename = "J^e_"
-    #         J = kin.Je
-    #     elif (J_type == "total"):
-    #         basename = "J^t_"
-    #         J = kin.Jt
-    #     if id_zone == None:
-    #         self.add_qoi(
-    #             name=basename,
-    #             expr=J / self.mesh_V0 * self.dV)
-    #     else:
-    #         self.add_qoi(
-    #             name=basename,
-    #             expr=J / self.mesh_V0 * self.dV(id_zone))
-
-
-
-    # def add_Phi0_qois(self):
-    #     basename = "PHI0_"
-    #     PHI0 = 1 - self.kinematics.Je * (1 - self.porosity_given)
-    #     self.add_qoi(
-    #         name=basename,
-    #         expr=PHI0 / self.mesh_V0 * self.dV)
-
-
-
-    # def add_Phi_qois(self):
-    #     basename = "PHI_"
-    #     PHI = self.porosity_given
-    #     self.add_qoi(
-    #         name=basename,
-    #         expr=PHI / self.mesh_V0 * self.dV)
