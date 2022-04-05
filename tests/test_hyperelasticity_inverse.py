@@ -18,7 +18,7 @@ import dolfin_mech     as dmech
 
 ################################################################################
 
-def test_inverse_hyperelasticity(
+def test_hyperelasticity_inverse(
     dim,
     load,
     res_basename,
@@ -185,7 +185,7 @@ if (__name__ == "__main__"):
             res_basename += "-dim="+str(dim)
             res_basename += "-load="+str(load)
 
-            test_inverse_hyperelasticity(
+            test_hyperelasticity_inverse(
                 dim=dim,
                 load=load,
                 res_basename=res_folder+"/"+res_basename,
