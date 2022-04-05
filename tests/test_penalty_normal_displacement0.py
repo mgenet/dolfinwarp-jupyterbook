@@ -63,13 +63,13 @@ def test_normal_displacement_penalty(
 
     problem.add_normal_displacement0_penalty_operator(
         measure=problem.dS(xmin_id),
-        pen=1.)
+        pen_val=1.)
     problem.add_normal_displacement0_penalty_operator(
         measure=problem.dS(ymin_id),
-        pen=1.)
+        pen_val=1.)
     if (dim == 3): problem.add_normal_displacement0_penalty_operator(
         measure=problem.dS(zmin_id),
-        pen=1.)
+        pen_val=1.)
 
     k_step = problem.add_step(
         Deltat=1.,

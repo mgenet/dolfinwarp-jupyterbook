@@ -22,14 +22,14 @@ class SurfaceForceLoadingOperator(Operator):
             kinematics,
             N,
             measure,
-            F=None,
+            F_val=None,
             F_ini=None,
             F_fin=None):
 
         self.measure = measure
 
         self.tv_F = dmech.TimeVaryingConstant(
-            val=F, val_ini=F_ini, val_fin=F_fin)
+            val=F_val, val_ini=F_ini, val_fin=F_fin)
         F = self.tv_F.val
 
         FmTN = dolfin.dot(dolfin.inv(kinematics.F).T, N)
@@ -50,14 +50,14 @@ class SurfaceForce0LoadingOperator(Operator):
     def __init__(self,
             U_test,
             measure,
-            F=None,
+            F_val=None,
             F_ini=None,
             F_fin=None):
 
         self.measure = measure
 
         self.tv_F = dmech.TimeVaryingConstant(
-            val=F, val_ini=F_ini, val_fin=F_fin)
+            val=F_val, val_ini=F_ini, val_fin=F_fin)
         F = self.tv_F.val
 
         self.res_form = - dolfin.inner(F, U_test) * self.measure

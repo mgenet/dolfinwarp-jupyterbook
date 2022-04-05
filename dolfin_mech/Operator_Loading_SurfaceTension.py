@@ -23,14 +23,14 @@ class SurfaceTensionLoadingOperator(Operator):
             kinematics,
             N,
             measure,
-            gamma=None,
+            gamma_val=None,
             gamma_ini=None,
             gamma_fin=None):
 
         self.measure = measure
 
         self.tv_gamma = dmech.TimeVaryingConstant(
-            val=gamma, val_ini=gamma_ini, val_fin=gamma_fin)
+            val=gamma_val, val_ini=gamma_ini, val_fin=gamma_fin)
         gamma = self.tv_gamma.val
 
         FmTN = dolfin.dot(dolfin.inv(kinematics.F).T, N)
@@ -55,14 +55,14 @@ class SurfaceTension0LoadingOperator(Operator):
             kinematics,
             N,
             measure,
-            gamma=None,
+            gamma_val=None,
             gamma_ini=None,
             gamma_fin=None):
 
         self.measure = measure
 
         self.tv_gamma = dmech.TimeVaryingConstant(
-            val=gamma, val_ini=gamma_ini, val_fin=gamma_fin)
+            val=gamma_val, val_ini=gamma_ini, val_fin=gamma_fin)
         gamma = self.tv_gamma.val
 
         dim = u.ufl_shape[0]

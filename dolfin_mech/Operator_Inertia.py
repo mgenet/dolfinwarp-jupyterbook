@@ -21,14 +21,14 @@ class InertiaOperator(Operator):
             U,
             U_test,
             measure,
-            rho=None,
+            rho_val=None,
             rho_ini=None,
             rho_fin=None):
 
         self.measure = measure
 
         self.tv_rho = dmech.TimeVaryingConstant(
-            val=rho, val_ini=rho_ini, val_fin=rho_fin)
+            val=rho_val, val_ini=rho_ini, val_fin=rho_fin)
         rho = self.tv_rho.val
 
         self.tv_dt = dmech.TimeVaryingConstant(0.)

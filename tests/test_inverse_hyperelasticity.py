@@ -88,7 +88,7 @@ def test_inverse_hyperelasticity(
     elif (load == "inertia"):
         problem.add_inertia_operator(
             measure=problem.dV,
-            rho=1.,
+            rho_val=1.,
             k_step=k_step)
         problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(xmin_id),

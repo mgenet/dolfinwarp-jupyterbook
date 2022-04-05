@@ -22,14 +22,14 @@ class NormalDisplacment0PenaltyOperator(Operator):
             U_test,
             N,
             measure,
-            pen=None,
+            pen_val=None,
             pen_ini=None,
             pen_fin=None):
 
         self.measure = measure
 
         self.tv_pen = dmech.TimeVaryingConstant(
-            val=pen, val_ini=pen_ini, val_fin=pen_fin)
+            val=pen_val, val_ini=pen_ini, val_fin=pen_fin)
         pen = self.tv_pen.val
 
         Pi = (pen/2) * dolfin.inner(U, N)**2 * self.measure

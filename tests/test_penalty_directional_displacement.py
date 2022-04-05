@@ -80,21 +80,21 @@ def test_directional_displacement_penalty(
 
     problem.add_directional_displacement_penalty_operator(
         measure=problem.dS(xmin_id),
-        N=[1.]+[0.]*(dim-1),
-        pen=1.)
+        N_val=[1.]+[0.]*(dim-1),
+        pen_val=1.)
     problem.add_directional_displacement_penalty_operator(
         measure=problem.dS(ymin_id),
-        N=[0.,1.]+[0.]*(dim-2),
-        pen=1.)
+        N_val=[0.,1.]+[0.]*(dim-2),
+        pen_val=1.)
     if (dim == 3): problem.add_directional_displacement_penalty_operator(
         measure=problem.dS(zmin_id),
-        N=[0.,0.,1.],
-        pen=1.)
+        N_val=[0.,0.,1.],
+        pen_val=1.)
 
     if (pointwise): problem.add_directional_displacement_penalty_operator(
         measure=problem.dP(x0_id),
-        N=[1.]+[0.]*(dim-1),
-        pen=10.)
+        N_val=[1.]+[0.]*(dim-1),
+        pen_val=10.)
 
     k_step = problem.add_step(
         Deltat=1.,

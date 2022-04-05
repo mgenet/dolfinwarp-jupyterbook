@@ -113,8 +113,8 @@ def test_elasticity(
     elif (load == "pgra"):
         problem.add_surface_pressure_gradient0_loading_operator(
             measure=problem.dS(),
-            X0=[0.5]*dim,
-            N0=[1.]+[0.]*(dim-1),
+            X0_val=[0.5]*dim,
+            N0_val=[1.]+[0.]*(dim-1),
             P0_ini=-0.,
             P0_fin=-1.,
             DP_ini=-0.0,
