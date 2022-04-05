@@ -96,19 +96,19 @@ def test_hyperelasticity(
             F_fin=[1.0]+[0.0]*(dim-1),
             k_step=k_step)
     elif (load == "pres0"):
-        problem.add_pressure0_loading_operator(
+        problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(xmax_id),
             P_ini=-0.0,
             P_fin=-0.5,
             k_step=k_step)
     elif (load == "pres"):
-        problem.add_pressure_loading_operator(
+        problem.add_surface_pressure_loading_operator(
             measure=problem.dS(xmax_id),
             P_ini=-0.0,
             P_fin=-0.5,
             k_step=k_step)
     elif (load == "pgra0"):
-        problem.add_pressure_gradient0_loading_operator(
+        problem.add_surface_pressure_gradient0_loading_operator(
             measure=problem.dS(),
             X0=[0.5]*dim,
             N0=[1.]+[0.]*(dim-1),
@@ -118,7 +118,7 @@ def test_hyperelasticity(
             DP_fin=-0.25,
             k_step=k_step)
     elif (load == "pgra"):
-        problem.add_pressure_gradient_loading_operator(
+        problem.add_surface_pressure_gradient_loading_operator(
             measure=problem.dS(),
             X0=[0.5]*dim,
             N0=[1.]+[0.]*(dim-1),

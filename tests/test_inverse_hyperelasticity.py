@@ -64,23 +64,23 @@ def test_inverse_hyperelasticity(
         dt_min=0.1)
 
     if (load == "uni"):
-        problem.add_pressure0_loading_operator(
+        problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(xmax_id),
             P_ini=-0.0,
             P_fin=-0.5,
             k_step=k_step)
     elif (load == "multi"):
-        problem.add_pressure0_loading_operator(
+        problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(xmax_id),
             P_ini=-0.0,
             P_fin=-0.5,
             k_step=k_step)
-        problem.add_pressure0_loading_operator(
+        problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(ymax_id),
             P_ini=-0.0,
             P_fin=-0.5,
             k_step=k_step)
-        if (dim==3): problem.add_pressure0_loading_operator(
+        if (dim==3): problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(zmax_id),
             P_ini=-0.0,
             P_fin=-0.5,
@@ -90,32 +90,32 @@ def test_inverse_hyperelasticity(
             measure=problem.dV,
             rho=1.,
             k_step=k_step)
-        problem.add_pressure0_loading_operator(
+        problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(xmin_id),
             P_ini=-0.0,
             P_fin=-0.5,
             k_step=k_step)
-        problem.add_pressure0_loading_operator(
+        problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(xmax_id),
             P_ini=-0.0,
             P_fin=-0.5,
             k_step=k_step)
-        problem.add_pressure0_loading_operator(
+        problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(ymin_id),
             P_ini=-0.0,
             P_fin=-0.5,
             k_step=k_step)
-        problem.add_pressure0_loading_operator(
+        problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(ymax_id),
             P_ini=-0.0,
             P_fin=-0.5,
             k_step=k_step)
-        if (dim==3): problem.add_pressure0_loading_operator(
+        if (dim==3): problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(zmin_id),
             P_ini=-0.0,
             P_fin=-0.5,
             k_step=k_step)
-        if (dim==3): problem.add_pressure0_loading_operator(
+        if (dim==3): problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(zmax_id),
             P_ini=-0.0,
             P_fin=-0.5,

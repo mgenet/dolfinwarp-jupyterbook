@@ -121,7 +121,7 @@ def test_elasticity_multimaterial(
             F_fin=[1.]+[0.]*(dim-1),
             k_step=k_step)
     elif (load == "pres"):
-        problem.add_pressure0_loading_operator(
+        problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(xmax_id),
             P_ini=-0.,
             P_fin=-1.,

@@ -512,11 +512,11 @@ class Problem():
 
 
 
-    def add_pressure0_loading_operator(self,
+    def add_surface_pressure0_loading_operator(self,
             k_step=None,
             **kwargs):
 
-        operator = dmech.Pressure0LoadingOperator(
+        operator = dmech.SurfacePressure0LoadingOperator(
             U_test=self.get_displacement_subsol().dsubtest,
             N=self.mesh_normals,
             **kwargs)
@@ -527,11 +527,11 @@ class Problem():
 
 
 
-    def add_pressure_loading_operator(self,
+    def add_surface_pressure_loading_operator(self,
             k_step=None,
             **kwargs):
 
-        operator = dmech.PressureLoadingOperator(
+        operator = dmech.SurfacePressureLoadingOperator(
             U_test=self.get_displacement_subsol().dsubtest,
             kinematics=self.kinematics,
             N=self.mesh_normals,
@@ -543,11 +543,11 @@ class Problem():
 
 
 
-    def add_pressure_gradient0_loading_operator(self,
+    def add_surface_pressure_gradient0_loading_operator(self,
             k_step=None,
             **kwargs):
 
-        operator = dmech.PressureGradient0LoadingOperator(
+        operator = dmech.SurfacePressureGradient0LoadingOperator(
             X=dolfin.SpatialCoordinate(self.mesh),
             U_test=self.get_displacement_subsol().dsubtest,
             N=self.mesh_normals,
@@ -559,11 +559,11 @@ class Problem():
 
 
 
-    def add_pressure_gradient_loading_operator(self,
+    def add_surface_pressure_gradient_loading_operator(self,
             k_step=None,
             **kwargs):
 
-        operator = dmech.PressureGradientLoadingOperator(
+        operator = dmech.SurfacePressureGradientLoadingOperator(
             X=dolfin.SpatialCoordinate(self.mesh),
             U=self.get_displacement_subsol().subfunc,
             U_test=self.get_displacement_subsol().dsubtest,
