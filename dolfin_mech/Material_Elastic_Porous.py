@@ -7,7 +7,7 @@
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
 ###                                                                          ###
-### And Cécile Patte, 2019-2022                                              ###
+### And Cécile Patte, 2019-2021                                              ###
 ###                                                                          ###
 ### INRIA, Palaiseau, France                                                 ###
 ###                                                                          ###
