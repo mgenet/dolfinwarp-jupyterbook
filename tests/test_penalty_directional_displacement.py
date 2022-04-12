@@ -16,7 +16,7 @@ import sys
 import myPythonLibrary as mypy
 import dolfin_mech     as dmech
 
-################################################################################
+############################################################## test function ###
 
 def test_directional_displacement_penalty(
     dim,
@@ -28,9 +28,9 @@ def test_directional_displacement_penalty(
     ################################################################### Mesh ###
 
     if   (dim==2):
-        mesh, boundaries_mf, xmin_id, xmax_id, ymin_id, ymax_id = dmech.init_Rivlin_cube(dim=dim)
+        mesh, boundaries_mf, xmin_id, xmax_id, ymin_id, ymax_id = dmech.RivlinCube_Mesh(dim=dim)
     elif (dim==3):
-        mesh, boundaries_mf, xmin_id, xmax_id, ymin_id, ymax_id, zmin_id, zmax_id = dmech.init_Rivlin_cube(dim=dim)
+        mesh, boundaries_mf, xmin_id, xmax_id, ymin_id, ymax_id, zmin_id, zmax_id = dmech.RivlinCube_Mesh(dim=dim)
 
     if   (dim==2):
         x0_sd = dolfin.CompiledSubDomain("near(x[0], x0) && near(x[1], y0)", x0=1/2, y0=1/2)
@@ -145,7 +145,7 @@ def test_directional_displacement_penalty(
 
     integrator.close()
 
-################################################################################
+####################################################################### test ###
 
 if (__name__ == "__main__"):
 

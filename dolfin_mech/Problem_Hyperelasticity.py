@@ -8,9 +8,6 @@
 ###                                                                          ###
 ################################################################################
 
-import dolfin
-import numpy
-
 import dolfin_mech as dmech
 from .Problem import Problem
 
@@ -64,6 +61,8 @@ class HyperelasticityProblem(Problem):
 
             self.set_kinematics()
 
+            assert (elastic_behavior is     None) or (elastic_behaviors is     None)
+            assert (elastic_behavior is not None) or (elastic_behaviors is not None)
             if (elastic_behavior is not None):
                 elastic_behaviors = [elastic_behavior]
 
@@ -253,6 +252,14 @@ class HyperelasticityProblem(Problem):
 
 
 
+    def add_deformed_volume_qoi(self):
+
+        self.add_qoi(
+            name="v",
+            expr=self.kinematics.J * self.dV)
+
+
+
     def add_global_strain_qois(self):
 
         basename = "E_"
@@ -280,17 +287,6 @@ class HyperelasticityProblem(Problem):
                 self.add_qoi(
                     name=basename+"ZX",
                     expr=strain[2,0] * self.dV)
-
-
-
-    def add_global_volume_ratio_qois(self):
-
-        basename = "J"
-        volume_ratio = self.kinematics.J
-
-        self.add_qoi(
-            name=basename,
-            expr=volume_ratio * self.dV)
 
 
 

@@ -13,7 +13,6 @@ import dolfin
 import numpy
 
 import dolfin_mech as dmech
-from dolfin_mech.Operator import Operator
 
 ################################################################################
 

@@ -8,37 +8,33 @@
 ###                                                                          ###
 ################################################################################
 
-#################################################################### imports ###
-
 import dolfin
-import sys
-
-import myPythonLibrary as mypy
-import dolfin_mech     as dmech
 
 ################################################################################
 
-def init_Rivlin_cube(
+def RivlinCube_Mesh(
         dim=3,
-        X0=0.,
-        Y0=0.,
-        Z0=0.,
-        X1=1.,
-        Y1=1.,
-        Z1=1.,
-        l=1.):
+        params={}):
+
+    X0 = params.get("X0", 0.)
+    X1 = params.get("X1", 1.)
+    Y0 = params.get("Y0", 0.)
+    Y1 = params.get("Y1", 1.)
+    if (dim==3): Z0 = params.get("Z0", 0.)
+    if (dim==3): Z1 = params.get("Z1", 1.)
+    l = params.get("l", 1.)
 
     LX = X1-X0
     LY = Y1-Y0
-    LZ = Z1-Z0
+    if (dim==3): LZ = Z1-Z0
 
     NX = int(LX/l)
     NY = int(LY/l)
-    NZ = int(LZ/l)
+    if (dim==3): NZ = int(LZ/l)
 
     if (dim==2):
         mesh = dolfin.RectangleMesh(
-            dolfin.Point(X0, Y0, Z0), dolfin.Point(Y1, Y1, Z1),
+            dolfin.Point(X0, Y0, 0.), dolfin.Point(Y1, Y1, 0.),
             NX, NY,
             "crossed")
     elif (dim==3):
@@ -46,7 +42,7 @@ def init_Rivlin_cube(
             dolfin.Point(X0, Y0, Z0), dolfin.Point(X1, Y1, Z1),
             NX, NY, NZ)
 
-    # xdmf_file_mesh = dolfin.XDMFFile(res_basename+"-mesh.xdmf")
+    # xdmf_file_mesh = dolfin.XDMFFile("mesh.xdmf")
     # xdmf_file_mesh.write(mesh)
     # xdmf_file_mesh.close()
 
@@ -75,7 +71,7 @@ def init_Rivlin_cube(
     if (dim==3): zmin_sd.mark(boundaries_mf, zmin_id)
     if (dim==3): zmax_sd.mark(boundaries_mf, zmax_id)
 
-    # xdmf_file_boundaries = dolfin.XDMFFile(res_basename+"-boundaries.xdmf")
+    # xdmf_file_boundaries = dolfin.XDMFFile("boundaries.xdmf")
     # xdmf_file_boundaries.write(boundaries_mf)
     # xdmf_file_boundaries.close()
 

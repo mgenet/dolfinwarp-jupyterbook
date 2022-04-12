@@ -54,4 +54,7 @@ from .Problem import *
 from .compute_error import *
 from .Operator_Penalty_DirectionalDisplacement import *
 from .Operator_Loading_SurfacePressureGradient import *
-from .init_Rivlin_cube import *
+from .RivlinCube_Mesh import *
+from .RivlinCube_PoroHyperelasticity import *
+from .RivlinCube_Hyperelasticity import *
+from .RivlinCube_Elasticity import *

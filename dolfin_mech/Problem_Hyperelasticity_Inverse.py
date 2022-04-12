@@ -23,7 +23,7 @@ class InverseHyperelasticityProblem(HyperelasticityProblem):
     def __init__(self, *args, **kwargs):
 
         if ("w_incompressibility" in kwargs):
-            assert (bool(kwargs.w_incompressibility) == 0),\
+            assert (bool(kwargs["w_incompressibility"]) == 0),\
                 "Incompressibility not implemented for inverse problem. Aborting."
 
         HyperelasticityProblem.__init__(self, *args, **kwargs)
