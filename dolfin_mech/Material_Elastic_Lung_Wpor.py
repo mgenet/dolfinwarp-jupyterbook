@@ -2,14 +2,19 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2019                                       ###
+### Created by Martin Genet, 2018-2022                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
 ###                                                                          ###
-### And Cécile Patte, 2019                                                   ###
+### And Cécile Patte, 2019-2021                                              ###
 ###                                                                          ###
 ### INRIA, Palaiseau, France                                                 ###
+###                                                                          ###
+###                                                                          ###
+### And Colin Laville, 2021-2022                                             ###
+###                                                                          ###
+### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
 ################################################################################
 
@@ -20,23 +25,30 @@ from .Material_Elastic import ElasticMaterial
 
 ################################################################################
 
-class WporPoroElasticMaterial(ElasticMaterial):
+class WporLungElasticMaterial(ElasticMaterial):
 
 
 
     def __init__(self,
-            problem,
+            kinematics,
             parameters,
             type):
 
-        self.problem = problem
+        self.kinematics = kinematics
 
         assert ('eta' in parameters)
         self.eta = parameters['eta']
-        self.n   = parameters['n']
+
+        assert ('n' in parameters)
+        self.n = parameters['n']
 
         assert ((type in ['inverse','exp']) or isinstance(type, int))
         self.type = type
+
+        self.Wpord = self.eta * 1
+
+        dWpordJs = self.eta * self.n * ((self.problem.Phi0 - Jf) / Jf)**(self.n-1) * self.problem.Phi0 / (Jf)**2
+        dWpordJs = dolfin.conditional(dolfin.lt(self.problem.Phi, self.problem.Phi0), dWpordJs, 0)
 
 
 

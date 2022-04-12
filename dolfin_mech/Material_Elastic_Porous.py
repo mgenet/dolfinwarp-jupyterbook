@@ -20,69 +20,37 @@ from .Material_Elastic import ElasticMaterial
 
 ################################################################################
 
-class PorousMaterial(ElasticMaterial):
+class PorousElasticMaterial(ElasticMaterial):
 
 
 
     def __init__(self,
-            material,
-            problem,
-            porosity=0,
-            config_porosity='ref'):
+            kinematics,
+            solid_material,
+            scaling="no",
+            Phis0=None):
 
-        self.material        = material
-        self.problem         = problem
-        self.porosity_given  = porosity
-        self.config_porosity = config_porosity
+        self.kinematics     = kinematics
+        self.solid_material = solid_material
 
-
-
-    def get_free_energy(self,
-            C):
-
-        Psi_mat, Sigma_mat = self.material.get_free_energy(C=C)
-
-        # if isinstance(self.problem, dmech.TwoSubfuncPoroProblem) or isinstance(self.problem, dmech.TwoSubfuncInversePoroProblem):
-        #     assert 'Phi0pos' in self.problem.__dict__
-        #     assert 'coef_1_minus_phi0' not in self.problem.__dict__
-
-        if ('coef_1_minus_phi0' in self.problem.__dict__):
-            Psi   = self.problem.coef_1_minus_phi0 * Psi_mat
-            Sigma = self.problem.coef_1_minus_phi0 * Sigma_mat
-        elif ('Phi0pos' in self.problem.__dict__):
-            # Psi   = (1 - self.problem.Phi0pos) * Psi_mat
-            # Sigma = (1 - self.problem.Phi0pos) * Sigma_mat
-            if isinstance(self.problem, dmech.InverseHyperelasticityProblem):
-                if (self.problem.w_contact == 1):
-                    Psi   = (1 - self.problem.Phi0pos) * Psi_mat
-                    Sigma = (1 - self.problem.Phi0pos) * Sigma_mat
-                else:
-                    if 'type_porosity' in self.problem.__dict__ and self.problem.type_porosity == 'internal':
-                        Psi   = (1 - self.problem.get_Phi0()) * Psi_mat
-                        Sigma = (1 - self.problem.get_Phi0()) * Sigma_mat
-                    elif 'type_porosity' in self.problem.__dict__ and self.problem.type_porosity == 'mixed':
-                        Psi   = (1 - self.problem.Phi0) * Psi_mat
-                        Sigma = (1 - self.problem.Phi0) * Sigma_mat
-                    elif 'type_porosity' not in self.problem.__dict__:
-                        Psi   = (1 - self.problem.Phi0) * Psi_mat
-                        Sigma = (1 - self.problem.Phi0) * Sigma_mat
-            elif isinstance(self.problem, dmech.HyperelasticityProblem):
-                Psi   = (1 - self.problem.Phi0pos) * Psi_mat
-                Sigma = (1 - self.problem.Phi0pos) * Sigma_mat
+        if (scaling == "no"):
+            scaling = dolfin.Constant(1)
+            # self.Psi   = self.material.Psi
+            # if (hasattr(self.material,       "Sigma")): self.Sigma       = self.material.Sigma
+            # if (hasattr(self.material,           "P")): self.P           = self.material.P
+            # if (hasattr(self.material,       "sigma")): self.sigma       = self.material.sigma
+            # if (hasattr(self.material, "dWbulkdPhis")): self.dWbulkdPhis = self.material.dWbulkdPhis
+        elif (scaling == "linear"):
+            scaling = Phis0
+            # self.Psi   = Phis0 * self.material.Psi
+            # if (hasattr(self.material,       "Sigma")): self.Sigma       = Phis0 * self.material.Sigma
+            # if (hasattr(self.material,           "P")): self.P           = Phis0 * self.material.P
+            # if (hasattr(self.material,       "sigma")): self.sigma       = Phis0 * self.material.sigma
+            # if (hasattr(self.material, "dWbulkdPhis")): self.dWbulkdPhis = Phis0 * self.material.dWbulkdPhis
         else:
-            if (self.config_porosity == 'reference'):
-                Psi   = (1-self.porosity_given) * Psi_mat
-                Sigma = (1-self.porosity_given) * Sigma_mat
-            elif (self.config_porosity == 'deformed'):
-                assert (C is not None)
-                J = dolfin.sqrt(dolfin.det(C))
-                Psi   = (1-self.porosity_given) * J * Psi_mat
-                Sigma = (1-self.porosity_given) * J * Sigma_mat
+            assert (0),\
+                "scaling must be \"no\" or \"linear\". Aborting."
 
-        return Psi, Sigma
-
-
-
-    def get_res_term(self):
-
-        return self.material.get_res_term()
+        for attr in ("Psi", "Sigma", "P", "sigma", "dWbulkdPhis"):
+            if (hasattr(self.solid_material, attr)):
+                setattr(self, attr, scaling * getattr(self.solid_material, attr))

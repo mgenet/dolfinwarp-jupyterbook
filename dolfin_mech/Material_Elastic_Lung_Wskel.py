@@ -15,6 +15,20 @@ from .Material_Elastic import ElasticMaterial
 
 ################################################################################
 
-class BulkElasticMaterial(ElasticMaterial):
+class WskelLungElasticMaterial(ElasticMaterial):
 
-    pass
+
+
+    def __init__(self,
+            kinematics,
+            parameters):
+
+        self.kinematics = kinematics
+
+        self.bulk = dmech.ExponentialCiarletGeymonat(kinematics, parameters)
+        self.dev  = dmech.NeoHookeanMooneyRivlinElasticMaterial(kinematics, parameters)
+
+        self.Psi   = self.bulk.Psi   + self.dev.Psi
+        self.Sigma = self.bulk.Sigma + self.dev.Sigma
+        self.P     = self.bulk.P     + self.dev.P
+        self.sigma = self.bulk.sigma + self.dev.sigma

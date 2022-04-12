@@ -10,7 +10,6 @@
 
 import collections
 import dolfin
-import numpy
 
 import dolfin_mech as dmech
 
@@ -157,7 +156,7 @@ class Problem():
             family="CG",
             degree=1,
             init_val=None,
-            init_field=None):
+            init_fun=None):
 
         fe = dolfin.FiniteElement(
             family=family,
@@ -168,7 +167,7 @@ class Problem():
             name=name,
             fe=fe,
             init_val=init_val,
-            init_field=init_field)
+            init_fun=init_fun)
 
 
 
@@ -278,23 +277,8 @@ class Problem():
             subsol.dfunc = dfuncs[k_subsol]
             subsol.dfunc.rename("d"+subsol.name, "d"+subsol.name)
 
-        for subsol in self.subsols.values():
-            if (subsol.init_val is not None):
-                if (subsol.fe is dolfin.FiniteElement):
-                    init_val_str = str(subsol.init_val)
-                else:
-                    subsol.init_val = numpy.asarray(subsol.init_val)
-                    assert (subsol.init_val.shape == subsol.fe.value_shape())
-                    init_val_str = subsol.init_val.astype(str).tolist()
-                subsol.func.interpolate(dolfin.Expression(
-                    init_val_str,
-                    element=subsol.fe))
-                subsol.func_old.interpolate(dolfin.Expression(
-                    init_val_str,
-                    element=subsol.fe))
-            elif (subsol.init_field is not None):
-                subsol.func.vector()[:] = subsol.init_field.array()[:]
-                subsol.func_old.vector()[:] = subsol.init_field.array()[:]
+        for (k_subsol,subsol) in enumerate(self.subsols.values()):
+            subsol.init()
         if (len(self.subsols) > 1):
             dolfin.assign(
                 self.sol_func,

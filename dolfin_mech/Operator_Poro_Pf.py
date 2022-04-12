@@ -11,33 +11,30 @@
 import dolfin
 
 import dolfin_mech as dmech
+from .Operator import Operator
 
 ################################################################################
 
-class QOI():
-
-
+class PfPoroOperator(Operator):
 
     def __init__(self,
-            name,
-            expr,
-            norm=1.,
-            form_compiler_parameters={}):
+            Phis_test,
+            measure,
+            pf_val=None,
+            pf_ini=None,
+            pf_fin=None):
 
-        self.name = name
-        self.expr = expr
-        self.norm = norm
-        self.form_compiler_parameters = form_compiler_parameters
+        self.measure = measure
+
+        self.tv_pf = dmech.TimeVaryingConstant(
+            val=pf_val, val_ini=pf_ini, val_fin=pf_fin)
+        self.pf = self.tv_pf.val
+
+        self.res_form = dolfin.inner(self.pf, Phis_test) * self.measure
 
 
 
-    def update(self):
+    def set_value_at_t_step(self,
+            t_step):
 
-        # print(self.name)
-        # print(self.expr)
-        # print(self.form_compiler_parameters)
-
-        self.value = dolfin.assemble(
-            self.expr,
-            form_compiler_parameters=self.form_compiler_parameters)
-        self.value /= self.norm
+        self.tv_pf.set_value_at_t_step(t_step)

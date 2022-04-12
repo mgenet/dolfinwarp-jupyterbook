@@ -24,13 +24,13 @@ class Step():
             dt_ini=None,
             dt_min=None,
             dt_max=None,
-            operators=None, # MG20180508: Do not use list as default value because it is static
-            constraints=None):
+            operators=None,    # MG20180508: Do not use list as default value because it is static
+            constraints=None): # MG20180508: Do not use list as default value because it is static
 
         self.t_ini = t_ini
         self.t_fin = t_fin
 
-        self.dt_ini = dt_ini if (dt_ini is not None) else t_fin - t_ini
+        self.dt_ini = dt_ini if (dt_ini is not None) else self.t_fin - self.t_ini
         self.dt_min = dt_min if (dt_min is not None) else self.dt_ini
         self.dt_max = dt_max if (dt_max is not None) else self.dt_ini
 

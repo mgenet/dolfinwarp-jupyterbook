@@ -7,7 +7,7 @@
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
 ###                                                                          ###
-### And Cécile Patte, 2019-2022                                              ###
+### And Cécile Patte, 2019-2021                                              ###
 ###                                                                          ###
 ### INRIA, Palaiseau, France                                                 ###
 ###                                                                          ###
@@ -16,11 +16,11 @@
 import dolfin
 
 import dolfin_mech as dmech
-from .Material_Elastic_Bulk import BulkElasticMaterial
+from .Material_Elastic import ElasticMaterial
 
 ################################################################################
 
-class PneumoBulkElasticMaterial(BulkElasticMaterial):
+class ExponentialCiarletGeymonat(ElasticMaterial):
 
 
 
@@ -37,34 +37,11 @@ class PneumoBulkElasticMaterial(BulkElasticMaterial):
             assert (0),\
                 "No parameter found: \"+str(parameters)+\". Must provide alpha & gamma. Aborting."
 
+        self.Psi = (self.alpha) * (dolfin.exp(self.gamma*(self.kinematics.J**2 - 1 - 2*dolfin.ln(self.kinematics.J))) - 1)
 
+        self.Sigma = (self.alpha) * dolfin.exp(self.gamma*(self.kinematics.J**2 - 1 - 2*dolfin.ln(self.kinematics.J))) * (2*self.gamma) * (self.kinematics.J**2 - 1) * self.kinematics.C_inv
 
-    def get_free_energy(self,
-            U=None,
-            C=None):
+        self.P = dolfin.diff(self.Psi, self.kinematics.F)
+        # self.P = self.kinematics.F * self.Sigma
 
-        C  = self.get_C_from_U_or_C(U, C)
-        JF = dolfin.sqrt(dolfin.det(C)) # MG20200207: Watch out! This is well defined for inverted elements!
-
-        Psi = (self.alpha) * (dolfin.exp(self.gamma*(JF**2 - 1 - 2*dolfin.ln(JF))) - 1)
-
-        C_inv = dolfin.inv(C)
-        Sigma = (self.alpha) *  dolfin.exp(self.gamma*(JF**2 - 1 - 2*dolfin.ln(JF))) * (2*self.gamma) * (JF**2 - 1) * C_inv
-
-        return Psi, Sigma
-
-
-
-    def get_PK2_stress(self,
-            U=None,
-            C=None):
-
-        C  = self.get_C_from_U_or_C(U, C)
-        JF = dolfin.sqrt(dolfin.det(C)) # MG20200207: Watch out! This is well defined for inverted elements!
-
-        Psi = (self.alpha) * (dolfin.exp(self.gamma*(JF**2 - 1 - 2*dolfin.ln(JF))) - 1)
-
-        C_inv = dolfin.inv(C)
-        Sigma = (self.alpha) *  dolfin.exp(self.gamma*(JF**2 - 1 - 2*dolfin.ln(JF))) * (2*self.gamma) * (JF**2 - 1) * C_inv
-
-        return Sigma
+        self.sigma = self.P * self.kinematics.F.T / self.kinematics.J

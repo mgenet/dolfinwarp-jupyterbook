@@ -21,7 +21,7 @@ tests:
     - apt update; apt install -y software-properties-common; add-apt-repository -y ppa:fenics-packages/fenics; apt update; apt install -y fenics
     # - apt update; apt install -y git; git checkout Operators # MG20211221: Branch is already checked out
     - apt update; apt install -y python3-pip
-    - pip install myPythonLibrary
+    - pip install pandas myPythonLibrary
     - cd tests; ln -s ../dolfin_mech; make
 
 pypi:

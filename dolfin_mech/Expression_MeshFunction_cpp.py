@@ -25,6 +25,9 @@ def get_ExprMeshFunction_cpp_pybind():
 class MeshExpr : public dolfin::Expression
 {
 public:
+    // The data stored in mesh functions
+    std::shared_ptr<dolfin::MeshFunction<double>> mf;
+
     // Create scalar expression
     MeshExpr() : dolfin::Expression() {}
 
@@ -35,11 +38,8 @@ public:
         const ufc::cell& cell) const override
     {
         const uint cell_index = cell.index;
-        values[0] = (*f)[cell_index];
+        values[0] = (*mf)[cell_index];
     }
-
-    // The data stored in mesh functions
-    std::shared_ptr<dolfin::MeshFunction<double>> f;
 };
 
 PYBIND11_MODULE(SIGNATURE, m)
@@ -47,7 +47,7 @@ PYBIND11_MODULE(SIGNATURE, m)
 pybind11::class_<MeshExpr, std::shared_ptr<MeshExpr>, dolfin::Expression>
 (m, "MeshExpr")
 .def(pybind11::init<>())
-.def_readwrite("f", &MeshExpr::f);
+.def_readwrite("mf", &MeshExpr::mf);
 }
 """
 
