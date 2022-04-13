@@ -2,7 +2,7 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2020                                       ###
+### Created by Martin Genet, 2018-2022                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
@@ -44,7 +44,7 @@ class NonlinearSolver():
         self.default_linear_solver_type = "petsc"
         #self.default_linear_solver_type = "dolfin"
 
-        self.linear_solver_type = parameters["linear_solver_type"] if ("linear_solver_type" in parameters) else self.default_linear_solver_type
+        self.linear_solver_type = parameters.get("linear_solver_type", self.default_linear_solver_type)
 
         if (self.linear_solver_type == "petsc"):
 
@@ -55,7 +55,7 @@ class NonlinearSolver():
 
             self.default_linear_solver_name = "mumps"
 
-            self.linear_solver_name = parameters["linear_solver_name"] if ("linear_solver_name" in parameters) else self.default_linear_solver_name
+            self.linear_solver_name = parameters.get("linear_solver_name", self.default_linear_solver_name)
 
             if (self.linear_solver_name == "mumps"):
                 if (int(dolfin.__version__.split('.')[0]) >= 2018):
@@ -85,7 +85,7 @@ class NonlinearSolver():
             # self.default_linear_solver_name = "superlu"
             # self.default_linear_solver_name = "umfpack"
 
-            self.linear_solver_name = parameters["linear_solver_name"] if ("linear_solver_name" in parameters) else self.default_linear_solver_name
+            self.linear_solver_name = parameters.get("linear_solver_name", self.default_linear_solver_name)
 
             self.linear_solver = dolfin.LUSolver(
                 self.jac_mat,
@@ -98,15 +98,15 @@ class NonlinearSolver():
 
         if (relax_type == "constant"):
             self.compute_relax = self.compute_relax_constant
-            self.relax_val = relax_parameters["relax"] if ("relax" in relax_parameters) else 1.
+            self.relax_val = relax_parameters.get("relax", 1.)
         elif (relax_type == "aitken"):
             self.compute_relax = self.compute_relax_aitken
         elif (relax_type == "gss"):
             self.compute_relax = self.compute_relax_gss
-            self.relax_n_iter_max = relax_parameters["relax_n_iter_max"] if ("relax_n_iter_max" in relax_parameters) else 9
+            self.relax_n_iter_max = relax_parameters.get("relax_n_iter_max", 9)
 
-        self.sol_tol = parameters["sol_tol"]       if ("sol_tol"    in parameters) else [1e-6]*len(self.problem.subsols)
-        self.n_iter_max = parameters["n_iter_max"] if ("n_iter_max" in parameters) else 32
+        self.sol_tol    = parameters.get("sol_tol"   , [1e-6]*len(self.problem.subsols))
+        self.n_iter_max = parameters.get("n_iter_max", 32)
 
         if (type(print_out) is str):
             if (print_out=="stdout"):
@@ -219,8 +219,8 @@ class NonlinearSolver():
             self.res_old_norm = self.res_norm
 
         # linear system: Assembly
-        if (len(self.problem.directional_penalties)): # MG20190513: Cannot use point integral within assemble_system
-            self.printer.print_str("Assembly…",newline=False)
+        if any([(operator.measure.integral_type() == "vertex") for operator in self.problem.operators]): # MG20190513: Cannot use point integral within assemble_system
+            self.printer.print_str("Assembly (without vertex integrals)…",newline=False)
             timer = time.time()
             dolfin.assemble_system(
                 self.problem.jac_form,
@@ -236,33 +236,30 @@ class NonlinearSolver():
             # self.printer.print_var("res_vec",self.res_vec.get_local())
             # self.printer.print_var("jac_mat",self.jac_mat.array())
 
-            self.printer.print_str("Assembly (directional penalties)…",newline=False)
-            timer = time.time()
-            Pi = sum([(loading.val/2) * dolfin.inner(self.problem.subsols["U"].subfunc, loading.N)**2 * loading.measure for loading in self.problem.directional_penalties])
-            res_form = dolfin.derivative(
-                Pi,
-                self.problem.sol_func,
-                self.problem.dsol_test)
-            jac_form = dolfin.derivative(
-                res_form,
-                self.problem.sol_func,
-                self.problem.dsol_tria)
-            dolfin.assemble(
-               -res_form,
-                tensor=self.res_vec,
-                add_values=True,
-                finalize_tensor=True,
-                form_compiler_parameters=self.problem.form_compiler_parameters)
-            dolfin.assemble(
-                jac_form,
-                tensor=self.jac_mat,
-                add_values=True,
-                finalize_tensor=True,
-                form_compiler_parameters=self.problem.form_compiler_parameters)
-            timer = time.time() - timer
-            self.printer.print_str(" "+str(timer)+" s",tab=False)
-            # self.printer.print_var("res_vec",self.res_vec.get_local())
-            # self.printer.print_var("jac_mat",self.jac_mat.array())
+            for operator in self.problem.operators:
+                if (operator.measure.integral_type() == "vertex"):
+                    self.printer.print_str("Assembly (vertex integrals)…",newline=False)
+                    timer = time.time()
+                    dolfin.assemble( # MG20190513: However, vertex integrals only work if solution only has dofs on vertices…
+                       -operator.res_form,
+                        tensor=self.res_vec,
+                        add_values=True,
+                        finalize_tensor=True,
+                        form_compiler_parameters=self.problem.form_compiler_parameters)
+                    operator.jac_form = dolfin.derivative(
+                        operator.res_form,
+                        self.problem.sol_func,
+                        self.problem.dsol_tria)
+                    dolfin.assemble(
+                        operator.jac_form,
+                        tensor=self.jac_mat,
+                        add_values=True,
+                        finalize_tensor=True,
+                        form_compiler_parameters=self.problem.form_compiler_parameters)
+                    timer = time.time() - timer
+                    self.printer.print_str(" "+str(timer)+" s",tab=False)
+                    # self.printer.print_var("res_vec",self.res_vec.get_local())
+                    # self.printer.print_var("jac_mat",self.jac_mat.array())
         else:
             self.printer.print_str("Assembly…",newline=False)
             timer = time.time()

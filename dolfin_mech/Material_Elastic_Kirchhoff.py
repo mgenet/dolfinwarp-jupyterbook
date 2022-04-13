@@ -2,13 +2,11 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2020                                       ###
+### Created by Martin Genet, 2018-2022                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
 ################################################################################
-
-# from builtins import *
 
 import dolfin
 
@@ -22,45 +20,150 @@ class KirchhoffElasticMaterial(ElasticMaterial):
 
 
     def __init__(self,
+            kinematics,
             parameters):
 
-        if ("lambda" in parameters) and ("mu" in parameters):
-            self.lmbda = dolfin.Constant(parameters["lambda"])
-            self.mu    = dolfin.Constant(parameters["mu"])
-        elif ("E" in parameters) and ("nu" in parameters):
-            self.E  = dolfin.Constant(parameters["E"])
-            self.nu = dolfin.Constant(parameters["nu"])
-            self.lmbda = self.E*self.nu/(1+self.nu)/(1-2*self.nu) # MG20180516: in 2d, plane strain
-            self.mu    = self.E/2/(1+self.nu)
-        else:
-            assert (0), \
-                "No parameter found: ("+str(parameters)+"). Need to provide lambda & mu or E & nu. Aborting."
+        self.kinematics = kinematics
+
+        self.lmbda = self.get_lambda_from_parameters(parameters)
+        self.mu    = self.get_mu_from_parameters(parameters)
+
+        self.kinematics.E = dolfin.variable(self.kinematics.E)
+
+        self.Psi = (self.lmbda/2) * dolfin.tr(self.kinematics.E)**2 + self.mu * dolfin.inner(self.kinematics.E, self.kinematics.E)
+
+        self.Sigma = dolfin.diff(self.Psi, self.kinematics.E)
+        # self.Sigma = self.lmbda * dolfin.tr(self.kinematics.E) * self.kinematics.I + 2 * self.mu * self.kinematics.E
+
+        self.P = self.kinematics.F * self.Sigma
+        
+        self.sigma = self.P * self.kinematics.F.T / self.kinematics.J
 
 
 
-    def get_free_energy(self,
-            U=None,
-            C=None,
-            E=None):
+    # def get_free_energy(self,
+    #         U=None,
+    #         C=None,
+    #         E=None):
 
-        if (E is None):
-            if (C is None):
-                dim = U.ufl_shape[0]
-                I = dolfin.Identity(dim)
-                F = I + dolfin.grad(U)
-                C = F.T * F
-            else:
-                assert (C.ufl_shape[0] == C.ufl_shape[1])
-                dim = C.ufl_shape[0]
-                I = dolfin.Identity(dim)
-            E = (C - I)/2
-        else:
-            assert (E.ufl_shape[0] == E.ufl_shape[1])
-            dim = E.ufl_shape[0]
-            I = dolfin.Identity(dim)
+    #     E = self.get_E_from_U_C_or_E(U, C, E)
 
-        Psi = (self.lmbda/2) * dolfin.tr(E)**2 + self.mu * dolfin.inner(E,E)
+    #     Psi = (self.lmbda/2) * dolfin.tr(E)**2 + self.mu * dolfin.inner(E, E)
+    #     Sigma = dolfin.diff(Psi, E)
 
-        Sigma = self.lmbda * dolfin.tr(E) * I + 2 * self.mu * E
+    #     # assert (E.ufl_shape[0] == E.ufl_shape[1])
+    #     # dim = E.ufl_shape[0]
+    #     # I = dolfin.Identity(dim)
+    #     # Sigma = self.lmbda * dolfin.tr(E) * I + 2 * self.mu * E
 
-        return Psi, Sigma
+    #     return Psi, Sigma
+
+################################################################################
+
+class KirchhoffBulkElasticMaterial(ElasticMaterial):
+
+
+
+    def __init__(self,
+            kinematics,
+            parameters):
+
+        self.kinematics = kinematics
+
+        self.K = self.get_K_from_parameters(parameters)
+
+        self.Psi   = (self.kinematics.dim*self.K/2) * dolfin.tr(self.kinematics.E_sph)**2
+        self.Sigma =  self.kinematics.dim*self.K    *           self.kinematics.E_sph
+
+        # self.P = dolfin.diff(self.Psi, self.kinematics.F)
+        self.P     = self.kinematics.F * self.Sigma
+
+        self.sigma = self.P * self.kinematics.F.T / self.kinematics.J
+
+
+
+    # def get_free_energy(self,
+    #         U=None,
+    #         C=None,
+    #         E=None,
+    #         E_sph=None):
+
+    #     E_sph = self.get_E_sph_from_U_C_E_or_E_sph(
+    #         U, C, E, E_sph)
+    #     assert (E_sph.ufl_shape[0] == E_sph.ufl_shape[1])
+    #     dim = E_sph.ufl_shape[0]
+
+    #     Psi   = (dim*self.K/2) * dolfin.tr(E_sph)**2
+    #     Sigma =  dim*self.K    *           E_sph
+
+    #     return Psi, Sigma
+
+
+
+    # def get_PK2_stress(self,
+    #         U=None,
+    #         C=None,
+    #         E=None,
+    #         E_sph=None):
+
+    #     E_sph = self.get_E_sph_from_U_C_E_or_E_sph(
+    #         U, C, E, E_sph)
+    #     assert (E_sph.ufl_shape[0] == E_sph.ufl_shape[1])
+    #     dim = E_sph.ufl_shape[0]
+
+    #     Sigma = dim * self.K * E_sph
+
+    #     return Sigma
+
+################################################################################
+
+class KirchhoffDevElasticMaterial(ElasticMaterial):
+
+
+
+    def __init__(self,
+            kinematics,
+            parameters):
+
+        self.kinematics = kinematics
+
+        self.G = self.get_G_from_parameters(parameters)
+
+        self.Psi   =   self.G * dolfin.inner(self.kinematics.E_dev, self.kinematics.E_dev)
+        self.Sigma = 2*self.G *              self.kinematics.E_dev
+
+        # self.P     = dolfin.diff(self.Psi, self.kinematics.F)
+        self.P     = self.kinematics.F * self.Sigma
+
+        self.sigma = self.P * self.kinematics.F.T / self.kinematics.J
+
+
+
+    # def get_free_energy(self,
+    #         U=None,
+    #         C=None,
+    #         E=None,
+    #         E_dev=None):
+
+    #     E_dev = self.get_E_dev_from_U_C_E_or_E_dev(
+    #         U, C, E, E_dev)
+        
+    #     Psi   =   self.G * dolfin.inner(E_dev, E_dev)
+    #     Sigma = 2*self.G *              E_dev
+
+    #     return Psi, Sigma
+
+
+
+    # def get_PK2_stress(self,
+    #         U=None,
+    #         C=None,
+    #         E=None,
+    #         E_dev=None):
+
+    #     E_dev = self.get_E_dev_from_U_C_E_or_E_dev(
+    #         U, C, E, E_dev)
+        
+    #     Sigma = 2*self.G * E_dev
+
+    #     return Sigma

@@ -2,19 +2,16 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2020                                       ###
+### Created by Martin Genet, 2018-2022                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
 ################################################################################
 
-# from builtins import *
-
 import dolfin
 import numpy
 
 import dolfin_mech as dmech
-from .Problem import Problem
 
 ################################################################################
 
@@ -23,19 +20,26 @@ class LinearizedKinematics():
 
 
     def __init__(self,
-            dim,
-            U,
-            U_old):
+            u,
+            u_old=None):
 
-        self.I = dolfin.Identity(dim)
+        self.u = u
 
-        self.epsilon     = dolfin.sym(dolfin.grad(U    ))
-        self.epsilon_old = dolfin.sym(dolfin.grad(U_old))
+        self.dim = self.u.ufl_shape[0]
+        self.I = dolfin.Identity(self.dim)
 
-        self.epsilon_sph     = dolfin.tr(self.epsilon    )/dim * self.I
-        self.epsilon_sph_old = dolfin.tr(self.epsilon_old)/dim * self.I
+        self.epsilon = dolfin.sym(dolfin.grad(self.u))
+        self.epsilon = dolfin.variable(self.epsilon)
 
-        self.epsilon_dev     = self.epsilon     - self.epsilon_sph
-        self.epsilon_dev_old = self.epsilon_old - self.epsilon_sph_old
+        self.epsilon_sph = dolfin.tr(self.epsilon)/self.dim * self.I
+        self.epsilon_dev = self.epsilon - self.epsilon_sph
 
-        self.epsilon_mid = (self.epsilon_old + self.epsilon)/2
+        if (u_old is not None):
+            self.u_old = u_old
+            
+            self.epsilon_old = dolfin.sym(dolfin.grad(self.u_old))
+
+            self.epsilon_sph_old = dolfin.tr(self.epsilon_old)/self.dim * self.I
+            self.epsilon_dev_old = self.epsilon_old - self.epsilon_sph_old
+
+            self.epsilon_mid = (self.epsilon_old + self.epsilon)/2

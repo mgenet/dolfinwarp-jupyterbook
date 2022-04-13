@@ -2,13 +2,11 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2020                                       ###
+### Created by Martin Genet, 2018-2022                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
 ################################################################################
-
-# from builtins import *
 
 import dolfin
 
@@ -36,6 +34,7 @@ class QOI():
     def update(self):
 
         # print(self.name)
+        # print(self.expr)
         # print(self.form_compiler_parameters)
 
         self.value = dolfin.assemble(

@@ -2,18 +2,14 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2020                                       ###
+### Created by Martin Genet, 2018-2022                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
 ################################################################################
 
-# from builtins import *
-
 import collections
 import dolfin
-import numpy
-import operator
 
 import dolfin_mech as dmech
 
@@ -27,24 +23,11 @@ class Problem():
 
         self.subsols = collections.OrderedDict()
 
-        self.subdomains = []
+        self.operators = []
+        self.constraints = []
 
         self.inelastic_behaviors_mixed    = []
         self.inelastic_behaviors_internal = []
-
-        self.constraints           = []
-        self.normal_penalties      = []
-        self.directional_penalties = []
-
-        self.surface_tensions            = []
-        self.surface0_loadings           = []
-        self.pressure0_loadings          = []
-        self.gradient_pressure0_loadings = []
-        self.volume0_loadings            = []
-        self.surface_loadings            = []
-        self.pressure_loadings           = []
-        self.gradient_pressure_loadings  = []
-        self.volume_loadings             = []
 
         self.steps = []
 
@@ -53,7 +36,7 @@ class Problem():
 
         self.form_compiler_parameters = {}
 
-
+####################################################################### mesh ###
 
     def set_mesh(self,
             mesh,
@@ -111,7 +94,7 @@ class Problem():
             points=None):
 
         self.dV = dolfin.Measure(
-            "dx",
+            "cell",
             domain=self.mesh,
             subdomain_data=domains)
         # if (domains is not None):
@@ -125,7 +108,7 @@ class Problem():
         #         domain=self.mesh)
 
         self.dS = dolfin.Measure(
-            "ds",
+            "exterior_facet",
             domain=self.mesh,
             subdomain_data=boundaries)
         # if (boundaries is not None):
@@ -139,7 +122,7 @@ class Problem():
         #         domain=self.mesh)
 
         self.dP = dolfin.Measure(
-            "dP",
+            "vertex",
             domain=self.mesh,
             subdomain_data=points)
         # if (points is not None):
@@ -152,7 +135,7 @@ class Problem():
         #         "dP",
         #         domain=self.mesh)
 
-
+################################################################### solution ###
 
     def add_subsol(self,
             name,
@@ -173,7 +156,7 @@ class Problem():
             family="CG",
             degree=1,
             init_val=None,
-            init_field=None):
+            init_fun=None):
 
         fe = dolfin.FiniteElement(
             family=family,
@@ -184,7 +167,7 @@ class Problem():
             name=name,
             fe=fe,
             init_val=init_val,
-            init_field=init_field)
+            init_fun=init_fun)
 
 
 
@@ -221,6 +204,13 @@ class Problem():
             name=name,
             fe=fe,
             init_val=init_val)
+
+
+
+    def get_subsol(self,
+            name):
+
+        return self.subsols[name]
 
 
 
@@ -287,43 +277,8 @@ class Problem():
             subsol.dfunc = dfuncs[k_subsol]
             subsol.dfunc.rename("d"+subsol.name, "d"+subsol.name)
 
-        # init_val = [str(val) for val in numpy.concatenate([subsol.init_val.flatten() for subsol in self.subsols.values()])]
-        # self.sol_func.interpolate(dolfin.Expression(
-        #     init_val,
-        #     element=self.sol_fe))
-        # self.sol_old_func.interpolate(dolfin.Expression(
-        #     init_val,
-        #     element=self.sol_fe))
-        # if (len(self.subsols) > 1):
-        #     dolfin.assign(
-        #         self.get_subsols_func_lst(),
-        #         self.sol_func)
-        #     dolfin.assign(
-        #         self.get_subsols_func_old_lst(),
-        #         self.sol_old_func)
-
-        for subsol in self.subsols.values():
-            if subsol.init_val is not None:
-                init_val = [str(val) for val in numpy.concatenate([subsol.init_val.flatten()])]
-                if len(init_val) == 1:
-                    init_val = init_val[0]
-                subsol.func.interpolate(dolfin.Expression(
-                    init_val,
-                    element=subsol.fe))
-                subsol.func_old.interpolate(dolfin.Expression(
-                    init_val,
-                    element=subsol.fe))
-            elif subsol.init_field is not None:
-                #doesnt work for mf
-                # dolfin.assign(
-                #     subsol.func,
-                #     subsol.init_field)
-                # dolfin.assign(
-                #     subsol.func_old,
-                #     subsol.init_field)
-                #work with mf
-                subsol.func.vector()[:] = subsol.init_field.array()[:]
-                subsol.func_old.vector()[:] = subsol.init_field.array()[:]
+        for (k_subsol,subsol) in enumerate(self.subsols.values()):
+            subsol.init()
         if (len(self.subsols) > 1):
             dolfin.assign(
                 self.sol_func,
@@ -357,7 +312,7 @@ class Problem():
 
         self.form_compiler_parameters["quadrature_degree"] = quadrature_degree
 
-
+######################################################################## FOI ###
 
     def set_foi_finite_elements_DG(self,
             degree=0): # MG20180420: DG elements are simpler to manage than quadrature elements, since quadrature elements must be compatible with the expression's degree, which is not always trivial (e.g., for J…)
@@ -427,9 +382,7 @@ class Problem():
 
 
 
-    def add_foi(self,
-            *args,
-            **kwargs):
+    def add_foi(self, *args, **kwargs):
 
         foi = dmech.FOI(
             *args,
@@ -451,11 +404,9 @@ class Problem():
 
         return [foi.func for foi in self.fois]
 
+######################################################################## QOI ###
 
-
-    def add_qoi(self,
-            *args,
-            **kwargs):
+    def add_qoi(self, *args, **kwargs):
 
         qoi = dmech.QOI(
             *args,
@@ -471,155 +422,240 @@ class Problem():
         for qoi in self.qois:
             qoi.update()
 
+################################################################## operators ###
+
+    def add_operator(self,
+            operator,
+            k_step=None):
+
+        if (k_step is None):
+            self.operators += [operator]
+        else:
+            self.steps[k_step].operators += [operator]
+        return operator
+
+
+
+    def add_volume_force0_loading_operator(self,
+            k_step=None,
+            **kwargs):
+
+        operator = dmech.VolumeForce0LoadingOperator(
+            U_test=self.get_displacement_subsol().dsubtest,
+            **kwargs)
+        self.add_operator(
+            operator=operator,
+            k_step=k_step)
+        return operator
+
+
+
+    def add_volume_force_loading_operator(self,
+            k_step=None,
+            **kwargs):
+
+        operator = dmech.VolumeForceLoadingOperator(
+            U_test=self.get_displacement_subsol().dsubtest,
+            kinematics=self.kinematics,
+            **kwargs)
+        self.add_operator(
+            operator=operator,
+            k_step=k_step)
+        return operator
+
+
+
+    def add_surface_force0_loading_operator(self,
+            k_step=None,
+            **kwargs):
+
+        operator = dmech.SurfaceForce0LoadingOperator(
+            U_test=self.get_displacement_subsol().dsubtest,
+            **kwargs)
+        self.add_operator(
+            operator=operator,
+            k_step=k_step)
+        return operator
+
+
+
+    def add_surface_force_loading_operator(self,
+            k_step=None,
+            **kwargs):
+
+        operator = dmech.SurfaceForceLoadingOperator(
+            U_test=self.get_displacement_subsol().dsubtest,
+            kinematics=self.kinematics,
+            N=self.mesh_normals,
+            **kwargs)
+        self.add_operator(
+            operator=operator,
+            k_step=k_step)
+        return operator
+
+
+
+    def add_surface_pressure0_loading_operator(self,
+            k_step=None,
+            **kwargs):
+
+        operator = dmech.SurfacePressure0LoadingOperator(
+            U_test=self.get_displacement_subsol().dsubtest,
+            N=self.mesh_normals,
+            **kwargs)
+        self.add_operator(
+            operator=operator,
+            k_step=k_step)
+        return operator
+
+
+
+    def add_surface_pressure_loading_operator(self,
+            k_step=None,
+            **kwargs):
+
+        operator = dmech.SurfacePressureLoadingOperator(
+            U_test=self.get_displacement_subsol().dsubtest,
+            kinematics=self.kinematics,
+            N=self.mesh_normals,
+            **kwargs)
+        self.add_operator(
+            operator=operator,
+            k_step=k_step)
+        return operator
+
+
+
+    def add_surface_pressure_gradient0_loading_operator(self,
+            k_step=None,
+            **kwargs):
+
+        operator = dmech.SurfacePressureGradient0LoadingOperator(
+            X=dolfin.SpatialCoordinate(self.mesh),
+            U_test=self.get_displacement_subsol().dsubtest,
+            N=self.mesh_normals,
+            **kwargs)
+        self.add_operator(
+            operator=operator,
+            k_step=k_step)
+        return operator
+
+
+
+    def add_surface_pressure_gradient_loading_operator(self,
+            k_step=None,
+            **kwargs):
+
+        operator = dmech.SurfacePressureGradientLoadingOperator(
+            X=dolfin.SpatialCoordinate(self.mesh),
+            U=self.get_displacement_subsol().subfunc,
+            U_test=self.get_displacement_subsol().dsubtest,
+            kinematics=self.kinematics,
+            N=self.mesh_normals,
+            **kwargs)
+        self.add_operator(
+            operator=operator,
+            k_step=k_step)
+        return operator
+
+
+
+    def add_surface_tension0_loading_operator(self,
+            k_step=None,
+            **kwargs):
+
+        operator = dmech.SurfaceTension0LoadingOperator(
+            u=self.get_displacement_subsol().subfunc,
+            u_test=self.get_displacement_subsol().dsubtest,
+            kinematics=self.kinematics,
+            N=self.mesh_normals,
+            **kwargs)
+        self.add_operator(
+            operator=operator,
+            k_step=k_step)
+        return operator
+
+
+
+    def add_surface_tension_loading_operator(self,
+            k_step=None,
+            **kwargs):
+
+        operator = dmech.SurfaceTensionLoadingOperator(
+            U=self.get_displacement_subsol().subfunc,
+            U_test=self.get_displacement_subsol().dsubtest,
+            kinematics=self.kinematics,
+            N=self.mesh_normals,
+            **kwargs)
+        self.add_operator(
+            operator=operator,
+            k_step=k_step)
+        return operator
+
+
+
+    def add_normal_displacement0_penalty_operator(self,
+            k_step=None,
+            **kwargs):
+
+        operator = dmech.NormalDisplacment0PenaltyOperator(
+            U=self.get_displacement_subsol().subfunc,
+            U_test=self.get_displacement_subsol().dsubtest,
+            N=self.mesh_normals,
+            **kwargs)
+        self.add_operator(
+            operator=operator,
+            k_step=k_step)
+        return operator
+
+
+
+    def add_directional_displacement_penalty_operator(self,
+            k_step=None,
+            **kwargs):
+
+        operator = dmech.DirectionalDisplacmentPenaltyOperator(
+            U=self.get_displacement_subsol().subfunc,
+            U_test=self.get_displacement_subsol().dsubtest,
+            **kwargs)
+        self.add_operator(
+            operator=operator,
+            k_step=k_step)
+        return operator
+
+
+
+    def add_inertia_operator(self,
+            k_step=None,
+            **kwargs):
+
+        operator = dmech.InertiaOperator(
+            U=self.get_displacement_subsol().subfunc,
+            U_test=self.get_displacement_subsol().dsubtest,
+            **kwargs)
+        self.add_operator(
+            operator=operator,
+            k_step=k_step)
+        return operator
+
 
 
     def add_constraint(self,
             *args,
+            k_step=None,
             **kwargs):
 
-        constraint = dmech.Constraint(
-            *args,
-            **kwargs)
-        self.constraints += [constraint]
+        constraint = dmech.Constraint(*args, **kwargs)
+        if (k_step is None):
+            self.constraints += [constraint]
+        else:
+            self.steps[k_step].constraints += [constraint]
         return constraint
 
-
-
-    def add_normal_penalty(self,
-            *args,
-            **kwargs):
-
-        loading = dmech.Loading(
-            *args,
-            **kwargs)
-        self.normal_penalties += [loading]
-        return loading
-
-
-
-    def add_directional_penalty(self,
-            *args,
-            **kwargs):
-
-        loading = dmech.Loading(
-            *args,
-            **kwargs)
-        self.directional_penalties += [loading]
-        return loading
-
-
-
-    def add_surface_tension(self,
-            *args,
-            **kwargs):
-
-        loading = dmech.Loading(
-            *args,
-            **kwargs)
-        self.surface_tensions += [loading]
-        return loading
-
-
-
-    def add_surface0_loading(self,
-            *args,
-            **kwargs):
-
-        loading = dmech.Loading(
-            *args,
-            **kwargs)
-        self.surface0_loadings += [loading]
-        return loading
-
-
-
-    def add_pressure0_loading(self,
-            *args,
-            **kwargs):
-
-        loading = dmech.Loading(
-            *args,
-            **kwargs)
-        self.pressure0_loadings += [loading]
-        return loading
-
-
-
-    def add_gradient_pressure0_loading(self,
-            *args,
-            **kwargs):
-
-        loading = dmech.Loading(
-            *args,
-            **kwargs)
-        self.gradient_pressure0_loadings += [loading]
-        return loading
-
-
-
-    def add_volume0_loading(self,
-            *args,
-            **kwargs):
-
-        loading = dmech.Loading(
-            *args,
-            **kwargs)
-        self.volume0_loadings += [loading]
-        return loading
-
-
-
-    def add_surface_loading(self,
-            *args,
-            **kwargs):
-
-        loading = dmech.Loading(
-            *args,
-            **kwargs)
-        self.surface_loadings += [loading]
-        return loading
-
-
-
-    def add_pressure_loading(self,
-            *args,
-            **kwargs):
-
-        loading = dmech.Loading(
-            *args,
-            **kwargs)
-        self.pressure_loadings += [loading]
-        return loading
-
-
-
-    def add_gradient_pressure_loading(self,
-            *args,
-            **kwargs):
-
-        loading = dmech.Loading(
-            *args,
-            **kwargs)
-        self.gradient_pressure_loadings += [loading]
-        return loading
-
-
-
-    def add_volume_loading(self,
-            *args,
-            **kwargs):
-
-        loading = dmech.Loading(
-            *args,
-            **kwargs)
-        self.volume_loadings += [loading]
-        return loading
-
-
+###################################################################### steps ###
 
     def add_step(self,
             Deltat=1.,
-            *args,
             **kwargs):
 
         if len(self.steps) == 0:
@@ -631,7 +667,20 @@ class Problem():
         step = dmech.Step(
             t_ini=t_ini,
             t_fin=t_fin,
-            *args,
             **kwargs)
         self.steps += [step]
-        return step
+        return len(self.steps)-1
+
+###################################################################### forms ###
+
+    def set_variational_formulation(self,
+            k_step=None):
+
+        self.res_form = sum([operator.res_form for operator in self.operators if (operator.measure.integral_type() != "vertex")]) # MG20190513: Cannot use point integral within assemble_system
+        if (k_step is not None):
+            self.res_form += sum([operator.res_form for operator in self.steps[k_step].operators if (operator.measure.integral_type() != "vertex")]) # MG20190513: Cannot use point integral within assemble_system
+
+        self.jac_form = dolfin.derivative(
+            self.res_form,
+            self.sol_func,
+            self.dsol_tria)

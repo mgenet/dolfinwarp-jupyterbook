@@ -2,13 +2,11 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2020                                       ###
+### Created by Martin Genet, 2018-2022                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
 ################################################################################
-
-# from builtins import *
 
 import dolfin
 import numpy
@@ -25,21 +23,39 @@ class SubSol():
             name,
             fe,
             init_val=None,
-            init_field=None):
+            init_fun=None):
 
         self.name = name
         self.fe = fe
 
-        assert (init_val is None) or (init_field is None)
-        if (init_val is None and init_field is None):
-            # print("value_shape = "+str(fe.value_shape()))
+        if   (init_val is     None) and (init_fun is     None):
             self.init_val = numpy.zeros(fe.value_shape())
-            self.init_field = None
-        elif (init_val is not None):
-            # print("size = "+str(numpy.size(init)))
-            self.init_val = init_val
-            self.init_field = None
-        elif (init_field is not None):
-            self.init_field = init_field
-            self.init_val = None
-        # print("init_val = "+str(self.init_val))
+            self.init = self.init_with_val
+        elif (init_val is not None) and (init_fun is     None):
+            assert (numpy.shape(init_val) == self.fe.value_shape())
+            self.init_val = numpy.asarray(init_val)
+            self.init = self.init_with_val
+        elif (init_val is     None) and (init_fun is not None):
+            self.init_fun = init_fun
+            self.init = self.init_with_field
+        else:
+            assert (0), "Can only provide init_val or init_fun. Aborting."
+
+
+
+    def init_with_val(self):
+        init_val_str = self.init_val.astype(str).tolist()
+        # print (self.func.vector().get_local())
+        self.func.interpolate(dolfin.Expression(
+            init_val_str,
+            element=self.fe))
+        # print (self.func.vector().get_local())
+        self.func_old.interpolate(dolfin.Expression(
+            init_val_str,
+            element=self.fe))
+
+
+
+    def init_with_field(self):
+        self.func.vector()[:]     = self.init_fun.vector().get_local()
+        self.func_old.vector()[:] = self.init_fun.vector().get_local()

@@ -2,13 +2,11 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2020                                       ###
+### Created by Martin Genet, 2018-2022                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
 ################################################################################
-
-# from builtins import *
 
 import dolfin
 
@@ -45,13 +43,6 @@ class Loading():
 
         if (xyz_ini is not None):
             self.xyz_ini = dolfin.Constant(xyz_ini)
-
-
-
-    def set_value(self,
-            val):
-
-        self.tv_val.set_value(val)
 
 
 

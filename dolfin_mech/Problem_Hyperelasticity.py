@@ -2,16 +2,11 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2020                                       ###
+### Created by Martin Genet, 2018-2022                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
 ################################################################################
-
-# from builtins import *
-
-import dolfin
-import numpy
 
 import dolfin_mech as dmech
 from .Problem import Problem
@@ -23,72 +18,123 @@ class HyperelasticityProblem(Problem):
 
 
     def __init__(self,
-            w_incompressibility=False):
+            w_incompressibility=False,
+            mesh=None,
+            compute_normals=False,
+            domains_mf=None,
+            boundaries_mf=None,
+            points_mf=None,
+            displacement_degree=None,
+            pressure_degree=None,
+            quadrature_degree=None,
+            foi_degree=0,
+            elastic_behavior=None,
+            elastic_behaviors=None):
 
         Problem.__init__(self)
 
         self.w_incompressibility = w_incompressibility
-        self.inertia = None
+
+        if (mesh is not None):
+            self.set_mesh(
+                mesh=mesh,
+                compute_normals=compute_normals)
+
+            self.set_measures(
+                domains=domains_mf,
+                boundaries=boundaries_mf,
+                points=points_mf)
+
+            self.set_subsols(
+                displacement_degree=displacement_degree,
+                pressure_degree=pressure_degree)
+            self.set_solution_finite_element()
+            self.set_solution_function_space()
+            self.set_solution_functions()
+
+            self.set_quadrature_degree(
+                quadrature_degree=quadrature_degree)
+
+            self.set_foi_finite_elements_DG(
+                degree=foi_degree)
+            self.set_foi_function_spaces()
+
+            self.set_kinematics()
+
+            assert (elastic_behavior is     None) or (elastic_behaviors is     None)
+            assert (elastic_behavior is not None) or (elastic_behaviors is not None)
+            if (elastic_behavior is not None):
+                elastic_behaviors = [elastic_behavior]
+
+            self.add_elasticity_operators(
+                elastic_behaviors=elastic_behaviors)
+
+
+
+    def get_displacement_name(self):
+        return "U"
 
 
 
     def add_displacement_subsol(self,
             degree):
 
+        self.displacement_degree = degree
         self.add_vector_subsol(
-            name="U",
+            name=self.get_displacement_name(),
             family="CG",
-            degree=degree)
+            degree=self.displacement_degree)
+
+
+
+    def get_displacement_subsol(self):
+
+        return self.get_subsol(self.get_displacement_name())
+
+
+
+    def get_pressure_name(self):
+        return "P"
 
 
 
     def add_pressure_subsol(self,
             degree):
 
+        self.pressure_degree = degree
         if (degree == 0):
             self.add_scalar_subsol(
-                name="P",
+                name=self.get_pressure_name(),
                 family="DG",
                 degree=0)
         else:
             self.add_scalar_subsol(
-                name="P",
+                name=self.get_pressure_name(),
                 family="CG",
-                degree=degree)
+                degree=self.pressure_degree)
+
+
+
+    def get_pressure_subsol(self):
+
+        assert (self.w_incompressibility),\
+            "There is no pressure subsol. Aborting."
+        return self.get_subsol(self.get_pressure_name())
 
 
 
     def set_subsols(self,
-            U_degree=1):
+            displacement_degree=1,
+            pressure_degree=None):
 
         self.add_displacement_subsol(
-            degree=U_degree)
+            degree=displacement_degree)
 
         if (self.w_incompressibility):
+            if (pressure_degree is None):
+                pressure_degree = displacement_degree-1
             self.add_pressure_subsol(
-                degree=U_degree-1)
-
-
-
-    def set_solution_degree(self,
-            U_degree=1): # MG20190513: Should have different name, right?
-
-        self.set_subsols(
-            U_degree=U_degree)
-        self.set_solution_finite_element()
-        self.set_solution_function_space()
-        self.set_solution_functions()
-
-        if (self.mesh.ufl_cell().cellname() in ("triangle", "tetrahedron")):
-            quadrature_degree = max(1, 2*(U_degree-1))
-        elif (self.mesh.ufl_cell().cellname() in ("quadrilateral", "hexahedron")):
-            quadrature_degree = max(1, 2*(self.dim*U_degree-1))
-        self.set_quadrature_degree(
-            quadrature_degree=quadrature_degree)
-
-        self.set_foi_finite_elements_DG(
-            degree=0)
-        self.set_foi_function_spaces()
+                degree=pressure_degree)
 
 
 
@@ -97,226 +143,137 @@ class HyperelasticityProblem(Problem):
         if (len(self.subsols) == 1):
             return self.sol_fs
         else:
-            return self.get_subsol_function_space(name="U")
+            return self.get_subsol_function_space(name=self.get_displacement_name())
 
 
 
     def get_pressure_function_space(self):
 
-        assert (len(self.subsols) > 1)
-        return self.get_subsol_function_space(name="P")
+        assert (self.w_incompressibility),\
+            "There is no pressure function space. Aborting."
+        return self.get_subsol_function_space(name=self.get_pressure_name())
+
+
+
+    def set_quadrature_degree(self,
+            quadrature_degree=None):
+
+        if (quadrature_degree is None) or (type(quadrature_degree) == int):
+            pass
+        elif (quadrature_degree == "full"):
+            quadrature_degree = None
+        elif (quadrature_degree == "default"):
+            if   (self.mesh.ufl_cell().cellname() in ("triangle", "tetrahedron")):
+                quadrature_degree = max(2, 4*(self.displacement_degree-1)) # MG20211221: This does not allow to reproduce full integration results exactly, but it is quite close…
+            elif (self.mesh.ufl_cell().cellname() in ("quadrilateral", "hexahedron")):
+                quadrature_degree = max(2, 4*(self.dim*self.displacement_degree-1))
+        else:
+            assert (0),\
+                "Must provide an int, \"full\", \"default\" or None. Aborting."
+
+        Problem.set_quadrature_degree(self,
+            quadrature_degree=quadrature_degree)
 
 
 
     def set_kinematics(self):
 
         self.kinematics = dmech.Kinematics(
-            dim=self.dim,
-            U=self.subsols["U"].subfunc,
-            U_old=self.subsols["U"].func_old,
+            U=self.get_displacement_subsol().subfunc,
+            U_old=self.get_displacement_subsol().func_old,
             Q_expr=self.Q_expr)
 
-        self.add_foi(expr=self.kinematics.Fe, fs=self.mfoi_fs, name="F")
-        self.add_foi(expr=self.kinematics.Je, fs=self.sfoi_fs, name="J")
-        self.add_foi(expr=self.kinematics.Ce, fs=self.mfoi_fs, name="C")
-        self.add_foi(expr=self.kinematics.Ee, fs=self.mfoi_fs, name="E")
+        self.add_foi(expr=self.kinematics.F, fs=self.mfoi_fs, name="F")
+        self.add_foi(expr=self.kinematics.J, fs=self.sfoi_fs, name="J")
+        self.add_foi(expr=self.kinematics.C, fs=self.mfoi_fs, name="C")
+        self.add_foi(expr=self.kinematics.E, fs=self.mfoi_fs, name="E")
         if (self.Q_expr is not None):
-            self.add_foi(expr=self.kinematics.Ee_loc, fs=self.mfoi_fs, name="Ee_loc")
+            self.add_foi(expr=self.kinematics.E_loc, fs=self.mfoi_fs, name="E_loc")
 
 
 
-    def set_materials(self,
-            elastic_behavior=None,
-            elastic_behavior_dev=None,
-            elastic_behavior_bulk=None,
+    def get_subdomain_measure(self,
             subdomain_id=None):
 
-        self.set_kinematics()
-
-        if (self.w_incompressibility):
-            assert (elastic_behavior      is     None)
-            assert (elastic_behavior_dev  is not None)
-            assert (elastic_behavior_bulk is     None)
+        if (subdomain_id is None):
+            return self.dV
         else:
-            assert  ((elastic_behavior      is not None)
-                or  ((elastic_behavior_dev  is not None)
-                and  (elastic_behavior_bulk is not None)))
+            return self.dV(subdomain_id)
 
-        subdomain = dmech.SubDomain(
-            problem=self,
-            elastic_behavior=elastic_behavior,
-            elastic_behavior_dev=elastic_behavior_dev,
-            elastic_behavior_bulk=elastic_behavior_bulk,
-            id=subdomain_id)
-        self.subdomains += [subdomain]
 
-        self.add_foi(expr=subdomain.Sigma, fs=self.mfoi_fs, name="Sigma")
-        # self.add_foi(expr=subdomain.PK1  , fs=self.mfoi_fs, name="PK1"  )
-        self.add_foi(expr=subdomain.sigma, fs=self.mfoi_fs, name="sigma")
+
+    def add_elasticity_operator(self,
+            material_model,
+            material_parameters,
+            subdomain_id=None):
+
+        operator = dmech.HyperElasticityOperator(
+            kinematics=self.kinematics,
+            U_test=self.get_displacement_subsol().dsubtest,
+            material_model=material_model,
+            material_parameters=material_parameters,
+            measure=self.get_subdomain_measure(subdomain_id))
+        return self.add_operator(operator)
+
+
+
+    def add_hydrostatic_pressure_operator(self,
+            subdomain_id=None):
+
+        operator = dmech.HyperHydrostaticPressureOperator(
+            kinematics=self.kinematics,
+            U_test=self.get_displacement_subsol().dsubtest,
+            P=self.get_pressure_subsol().subfunc,
+            measure=self.get_subdomain_measure(subdomain_id))
+        return self.add_operator(operator)
+
+
+
+    def add_incompressibility_operator(self,
+            subdomain_id=None):
+
+        operator = dmech.HyperIncompressibilityOperator(
+            kinematics=self.kinematics,
+            P_test=self.get_pressure_subsol().dsubtest,
+            measure=self.get_subdomain_measure(subdomain_id))
+        return self.add_operator(operator)
+
+
+
+    def add_elasticity_operators(self,
+            elastic_behaviors):
+
+        for elastic_behavior in elastic_behaviors:
+            operator = self.add_elasticity_operator(
+                material_model=elastic_behavior["model"],
+                material_parameters=elastic_behavior["parameters"],
+                subdomain_id=elastic_behavior.get("subdomain_id", None))
+            suffix = "_"+elastic_behavior["suffix"] if "suffix" in elastic_behavior else ""
+            self.add_foi(expr=operator.material.Sigma, fs=self.mfoi_fs, name="Sigma"+suffix)
+            self.add_foi(expr=operator.material.sigma, fs=self.mfoi_fs, name="sigma"+suffix)
+        if (self.w_incompressibility):
+            self.add_hydrostatic_pressure_operator()
+            self.add_incompressibility_operator()
 
         if (self.Q_expr is not None):
-            subdomain.sigma_loc = dolfin.dot(dolfin.dot(self.Q_expr, subdomain.sigma), self.Q_expr.T)
-            self.add_foi(expr=subdomain.sigma_loc, fs=self.mfoi_fs, name="sigma_loc")
+            assert (0), "ToDo. Aborting."
+            # operator.sigma_loc = dolfin.dot(dolfin.dot(self.Q_expr, operator.sigma), self.Q_expr.T)
+            # self.add_foi(expr=operator.sigma_loc, fs=self.mfoi_fs, name="sigma_loc")
 
 
 
-    def set_variational_formulation(self,
-            normal_penalties=[],
-            directional_penalties=[],
-            surface_tensions=[],
-            surface0_loadings=[],
-            pressure0_loadings=[],
-            gradient_pressure0_loadings=[],
-            volume0_loadings=[],
-            surface_loadings=[],
-            pressure_loadings=[],
-            volume_loadings=[],
-            gradient_pressure_loadings=[],
-            dt=None):
+    def add_deformed_volume_qoi(self):
 
-        self.Pi = sum([subdomain.Psi * self.dV(subdomain.id) for subdomain in self.subdomains])
-
-        for loading in normal_penalties:
-            self.Pi += (loading.val/2) * dolfin.inner(
-                self.subsols["U"].subfunc,
-                self.mesh_normals)**2 * loading.measure
-
-        # for loading in directional_penalties: # MG20190513: Cannot use point integral within assemble_system
-        #     self.Pi += (loading.val/2) * dolfin.inner(
-        #         self.subsols["U"].subfunc,
-        #         loading.N)**2 * loading.measure
-
-        for loading in surface_tensions:
-            FmTN = dolfin.dot(
-                dolfin.inv(self.kinematics.Ft).T,
-                self.mesh_normals)
-            T = dolfin.sqrt(dolfin.inner(
-                FmTN,
-                FmTN))
-            self.Pi += loading.val * self.kinematics.Jt * T * loading.measure
-
-        for loading in surface0_loadings:
-            self.Pi -= dolfin.inner(
-                loading.val,
-                self.subsols["U"].subfunc) * loading.measure
-
-        for loading in pressure0_loadings:
-            self.Pi -= dolfin.inner(
-               -loading.val * self.mesh_normals,
-                self.subsols["U"].subfunc) * loading.measure
-
-        for loading in gradient_pressure0_loadings:
-            self.Pi -= dolfin.inner(
-                dolfin.inner(
-                    -(dolfin.SpatialCoordinate(self.mesh) - loading.xyz_ini),
-                    loading.val) * self.mesh_normals,
-                self.subsols["U"].subfunc) * loading.measure
-
-        for loading in volume0_loadings:
-            self.Pi -= dolfin.inner(
-                loading.val,
-                self.subsols["U"].subfunc) * loading.measure
-
-        self.res_form = dolfin.derivative(
-            self.Pi,
-            self.sol_func,
-            self.dsol_test)
-
-        if self.inertia is not None:
-            self.res_form += self.inertia / dt * dolfin.inner(
-                    self.subsols["U"].subfunc,
-                    self.subsols["U"].dsubtest) * self.dV
-
-        # self.res_form += dolfin.inner(
-        #     self.Sigma,
-        #     dolfin.derivative(
-        #         self.kinematics.Et,
-        #         self.subsols["U"].subfunc,
-        #         self.subsols["U"].dsubtest)) * self.dV
-        #
-        # if (self.w_incompressibility):
-        #     self.res_form += dolfin.inner(
-        #         self.kinematics.Je-1,
-        #         self.subsols["P"].dsubtest) * self.dV
-
-        # for loading in normal_penalties:
-        #     self.res_form += loading.val * dolfin.inner(
-        #         self.subsols["U"].subfunc,
-        #         self.mesh_normals) * dolfin.inner(
-        #         self.subsols["U"].dsubtest,
-        #         self.mesh_normals) * loading.measure
-
-        # for loading in surface0_loadings:
-        #     self.res_form -= dolfin.inner(
-        #         loading.val,
-        #         self.subsols["U"].dsubtest) * loading.measure
-        #
-        # for loading in pressure0_loadings:
-        #     self.res_form -= dolfin.inner(
-        #        -loading.val * self.mesh_normals,
-        #         self.subsols["U"].dsubtest) * loading.measure
-        #
-        # for loading in volume0_loadings:
-        #     self.res_form -= dolfin.inner(
-        #         loading.val,
-        #         self.subsols["U"].dsubtest) * loading.measure
-
-        for loading in surface_loadings:
-            FmTN = dolfin.dot(
-                dolfin.inv(self.kinematics.Ft).T,
-                self.mesh_normals)
-            T = dolfin.sqrt(dolfin.inner(
-                FmTN,
-                FmTN)) * loading.val
-            self.res_form -= self.kinematics.Jt * dolfin.inner(
-                T,
-                self.subsols["U"].dsubtest) * loading.measure
-
-        for loading in pressure_loadings:
-            T = dolfin.dot(
-               -loading.val * self.mesh_normals,
-                dolfin.inv(self.kinematics.Ft))
-            self.res_form -= self.kinematics.Jt * dolfin.inner(
-                T,
-                self.subsols["U"].dsubtest) * loading.measure
-
-        for loading in gradient_pressure_loadings:
-            T = dolfin.dot(
-                    dolfin.dot(
-                    -(dolfin.SpatialCoordinate(self.mesh) + self.subsols["U"].subfunc - loading.xyz_ini),
-                    loading.val) * self.mesh_normals,
-                dolfin.inv(self.kinematics.Ft))
-            self.res_form -= self.kinematics.Jt * dolfin.inner(
-                T,
-                self.subsols["U"].dsubtest) * loading.measure
-
-        for loading in volume_loadings:
-            self.res_form -= self.kinematics.Jt * dolfin.inner(
-                loading.val,
-                self.subsols["U"].dsubtest) * loading.measure
-
-        self.jac_form = dolfin.derivative(
-            self.res_form,
-            self.sol_func,
-            self.dsol_tria)
+        self.add_qoi(
+            name="v",
+            expr=self.kinematics.J * self.dV)
 
 
 
-    def add_global_strain_qois(self,
-            strain_type="elastic",
-            configuration_type="loaded"):
+    def add_global_strain_qois(self):
 
-        if (configuration_type == "loaded"):
-            kin = self.kinematics
-        elif (configuration_type == "unloaded"):
-            kin = self.unloaded_kinematics
-
-        if (strain_type == "elastic"):
-            basename = "E^e_"
-            strain = kin.Ee
-        elif (strain_type == "total"):
-            basename = "E^t_"
-            strain = kin.Et
+        basename = "E_"
+        strain = self.kinematics.E
 
         self.add_qoi(
             name=basename+"XX",
@@ -343,82 +300,47 @@ class HyperelasticityProblem(Problem):
 
 
 
-    def add_global_volume_ratio_qois(self,
-            J_type="elastic",
-            configuration_type="loaded"):
-
-        if (configuration_type == "loaded"):
-            kin = self.kinematics
-        elif (configuration_type == "unloaded"):
-            kin = self.unloaded_kinematics
-
-        if (J_type == "elastic"):
-            basename = "J^e_"
-            J = kin.Je
-        elif (J_type == "total"):
-            basename = "J^t_"
-            J = kin.Jt
-
-        self.add_qoi(
-            name=basename,
-            expr=J / self.mesh_V0 * self.dV)
-
-
-
     def add_global_stress_qois(self,
             stress_type="cauchy"):
 
-        n_subdomains = len(self.subdomains)
-        for subdomain in self.subdomains:
-            if (stress_type in ("Cauchy", "cauchy", "sigma")):
-                basename = "s_"
-                stress = subdomain.sigma
-            elif (stress_type in ("Piola", "piola", "PK2", "Sigma")):
-                basename = "S_"
-                stress = subdomain.Sigma
-            elif (stress_type in ("Boussinesq", "boussinesq", "PK1", "P")):
-                basename = "P_"
-                stress = subdomain.PK1
+        if (stress_type in ("Cauchy", "cauchy", "sigma")):
+            basename = "s_"
+            stress = "sigma"
+        elif (stress_type in ("Piola", "piola", "PK2", "Sigma")):
+            basename = "S_"
+            stress = "Sigma"
+        elif (stress_type in ("Boussinesq", "boussinesq", "PK1", "P")):
+            basename = "P_"
+            stress = "P"
 
-            if (n_subdomains > 1):
-                basename += str(subdomain.id)+"_"
-
+        self.add_qoi(
+            name=basename+"XX",
+            expr=sum([getattr(operator.material, stress)[0,0]*operator.measure for operator in self.operators if (hasattr(operator, "material") and hasattr(operator.material, stress))]))
+        if (self.dim >= 2):
             self.add_qoi(
-                name=basename+"XX",
-                expr=stress[0,0] * self.dV)
-            if (self.dim >= 2):
+                name=basename+"YY",
+                expr=sum([getattr(operator.material, stress)[1,1]*operator.measure for operator in self.operators if (hasattr(operator, "material") and hasattr(operator.material, stress))]))
+            if (self.dim >= 3):
                 self.add_qoi(
-                    name=basename+"YY",
-                    expr=stress[1,1] * self.dV)
-                if (self.dim >= 3):
-                    self.add_qoi(
-                        name=basename+"ZZ",
-                        expr=stress[2,2] * self.dV)
-            if (self.dim >= 2):
-                self.add_qoi(
-                    name=basename+"XY",
-                    expr=stress[0,1] * self.dV)
-                if (self.dim >= 3):
-                    self.add_qoi(
-                        name=basename+"YZ",
-                        expr=stress[1,2] * self.dV)
-                    self.add_qoi(
-                        name=basename+"ZX",
-                        expr=stress[2,0] * self.dV)
-
-
-
-    def add_global_pressure_qois(self):
-
-        n_subdomains = len(self.subdomains)
-        for subdomain in self.subdomains:
-
-            basename = "p_"
-            if (n_subdomains > 1):
-                basename += str(subdomain.id)+"_"
-
-            p = -1./3. * dolfin.tr(subdomain.sigma)
-
+                    name=basename+"ZZ",
+                    expr=sum([getattr(operator.material, stress)[2,2]*operator.measure for operator in self.operators if (hasattr(operator, "material") and hasattr(operator.material, stress))]))
+        if (self.dim >= 2):
             self.add_qoi(
-                name=basename,
-                expr=p * self.dV)
+                name=basename+"XY",
+                expr=sum([getattr(operator.material, stress)[0,1]*operator.measure for operator in self.operators if (hasattr(operator, "material") and hasattr(operator.material, stress))]))
+            if (self.dim >= 3):
+                self.add_qoi(
+                    name=basename+"YZ",
+                    expr=sum([getattr(operator.material, stress)[1,2]*operator.measure for operator in self.operators if (hasattr(operator, "material") and hasattr(operator.material, stress))]))
+                self.add_qoi(
+                    name=basename+"ZX",
+                    expr=sum([getattr(operator.material, stress)[2,0]*operator.measure for operator in self.operators if (hasattr(operator, "material") and hasattr(operator.material, stress))]))
+
+
+
+    def add_global_pressure_qoi(self):
+
+        self.add_qoi(
+            name="P",
+            expr=sum([operator.P*operator.measure for operator in self.operators if hasattr(operator, "P")]))
+            # expr=sum([-dolfin.tr(operator.material.sigma)/3*operator.measure for operator in self.operators if (hasattr(operator, "material") and hasattr(operator.material, "sigma"))])+sum([operator.P*operator.measure for operator in self.operators if hasattr(operator, "P")]))

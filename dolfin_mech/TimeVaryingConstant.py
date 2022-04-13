@@ -2,13 +2,11 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2018-2020                                       ###
+### Created by Martin Genet, 2018-2022                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
 ################################################################################
-
-# from builtins import *
 
 import dolfin
 import numpy
@@ -22,8 +20,21 @@ class TimeVaryingConstant():
 
 
     def __init__(self,
-            val_ini,
-            val_fin):
+            val=None,
+            val_ini=None,
+            val_fin=None):
+
+        if  (val     is not None)\
+        and (val_ini is     None)\
+        and (val_fin is     None):
+            val_ini = val
+            val_fin = val
+        elif (val     is     None)\
+         and (val_ini is not None)\
+         and (val_fin is not None):
+            pass
+        else:
+            assert (0), "Must provide val or val_ini & val_fin. Aborting."
 
         assert (type(val_ini) in (int, float, list, numpy.ndarray))
         if (type(val_ini) in (int, float)):
@@ -47,7 +58,10 @@ class TimeVaryingConstant():
     def set_value_sca(self,
             val):
 
-        self.val.assign(dolfin.Constant(val[0]))
+        if   (type(val) in (int, float)):
+            self.val.assign(dolfin.Constant(val))
+        elif (type(val) in (list, numpy.ndarray)):
+            self.val.assign(dolfin.Constant(val[0]))
 
 
 
