@@ -324,10 +324,10 @@ class TwoFormulationsPoroProblem(HyperelasticityProblem):
                 self.res_form += self.wbulk_behavior.get_res_term(self.Phi0, self.get_Phi(), w_U=1)
 
         if self.type_porosity == 'mixed':
-            p0_loading_val = pressure0_loadings[0].val
-            self.res_form += dolfin.inner(
-                    p0_loading_val,
-                    self.subsols["Phi"].dsubtest) * self.dV
+            # p0_loading_val = pressure0_loadings[0].val
+            # self.res_form += dolfin.inner(
+            #         p0_loading_val,
+            #         self.subsols["Phi"].dsubtest) * self.dV
             self.res_form += self.wbulk_behavior.get_res_term(self.Phi0, self.Phi, w_Phi=1)
             self.res_form += self.wpor_behavior.get_res_term(w_Phi=1)
 
