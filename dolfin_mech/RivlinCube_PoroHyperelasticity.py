@@ -18,7 +18,7 @@ import dolfin_mech as dmech
 
 def RivlinCube_PoroHyperelasticity(
         dim=3,
-        direct_or_inverse="direct",
+        inverse=0,
         cube_params={},
         porosity_params={},
         mat_params={},
@@ -93,24 +93,24 @@ def RivlinCube_PoroHyperelasticity(
 
     ################################################################ Problem ###
 
-    if (direct_or_inverse == "direct"):
-        problem = dmech.PoroHyperelasticityProblem(
-            mesh=mesh,
-            compute_normals=1,
-            boundaries_mf=boundaries_mf,
-            U_degree=1,
-            Phis0_val=porosity_val,
-            Phis0_fun=porosity_fun,
-            skel_behavior=mat_params,
-            bulk_behavior=mat_params)
-    elif (direct_or_inverse == "inverse"):
+    if (inverse):
         problem = dmech.InversePoroHyperelasticityProblem(
             mesh=mesh,
             compute_normals=1,
             boundaries_mf=boundaries_mf,
-            u_degree=1,
-            phis_val=porosity_val,
-            phis_fun=porosity_fun,
+            displacement_degree=1,
+            porosity_init_val=porosity_val,
+            porosity_init_fun=porosity_fun,
+            skel_behavior=mat_params,
+            bulk_behavior=mat_params)
+    else:
+        problem = dmech.PoroHyperelasticityProblem(
+            mesh=mesh,
+            compute_normals=1,
+            boundaries_mf=boundaries_mf,
+            displacement_degree=1,
+            porosity_init_val=porosity_val,
+            porosity_init_fun=porosity_fun,
             skel_behavior=mat_params,
             bulk_behavior=mat_params)
 
@@ -124,14 +124,14 @@ def RivlinCube_PoroHyperelasticity(
     Deltat = step_params.get("Deltat", 1.)
     dt_ini = step_params.get("dt_ini", 1.)
     dt_min = step_params.get("dt_min", 1.)
-
+    dt_max = step_params.get("dt_max", 1.)
     k_step = problem.add_step(
         Deltat=Deltat,
         dt_ini=dt_ini,
-        dt_min=dt_min)
+        dt_min=dt_min,
+        dt_max=dt_max)
 
     load_type = load_params.get("type", "internal")
-
     if (load_type == "internal"):
         pf = load_params.get("pf", +0.5)
         problem.add_pf_operator(
@@ -157,6 +157,28 @@ def RivlinCube_PoroHyperelasticity(
             P_fin=P,
             k_step=k_step)
         if (dim==3): problem.add_surface_pressure_loading_operator(
+            measure=problem.dS(zmax_id),
+            P_ini=0,
+            P_fin=P,
+            k_step=k_step)
+    elif (load_type == "external0"):
+        problem.add_pf_operator(
+            measure=problem.dV,
+            pf_ini=0.,
+            pf_fin=0.,
+            k_step=k_step)
+        P = load_params.get("P", -0.5)
+        problem.add_surface_pressure0_loading_operator(
+            measure=problem.dS(xmax_id),
+            P_ini=0,
+            P_fin=P,
+            k_step=k_step)
+        problem.add_surface_pressure0_loading_operator(
+            measure=problem.dS(ymax_id),
+            P_ini=0,
+            P_fin=P,
+            k_step=k_step)
+        if (dim==3): problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(zmax_id),
             P_ini=0,
             P_fin=P,
@@ -226,6 +248,11 @@ def RivlinCube_PoroHyperelasticity(
             qois_data.plot(x="t", y=all_stresses, ax=qois_axes, ylabel="Cauchy stress")
             qois_fig.savefig(res_basename+"-stresses-"+comp+".pdf")
 
-        qois_fig, qois_axes = mpl.subplots()
-        qois_data.plot(x="pf", y=["Phis", "Phif"], ax=qois_axes, ylim=[0,1], ylabel="porosity")
-        qois_fig.savefig(res_basename+"-porosity_type.pdf")
+        if (inverse):
+            qois_fig, qois_axes = mpl.subplots()
+            qois_data.plot(x="pf", y=["phis0", "phif0"], ax=qois_axes, ylim=[0,1], ylabel="porosity")
+            qois_fig.savefig(res_basename+"-porosity.pdf")
+        else:
+            qois_fig, qois_axes = mpl.subplots()
+            qois_data.plot(x="pf", y=["Phis", "Phif"], ax=qois_axes, ylim=[0,1], ylabel="porosity")
+            qois_fig.savefig(res_basename+"-porosity.pdf")

@@ -42,6 +42,7 @@ from .Expression_MeshFunction_cpp import *
 from .Operator import *
 from .Material import *
 from .Problem_Hyperelasticity_Poro import *
+from .Problem_Hyperelasticity_Poro_Inverse import *
 from .Material_Elastic_Lung_Wskel import *
 from .Operator_HyperElasticity import *
 from .Operator_Poro_Wskel import *

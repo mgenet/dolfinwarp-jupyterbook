@@ -26,11 +26,11 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
             boundaries_mf=None,
             points_mf=None,
             displacement_degree=1,
-            Phis_degree=None,
+            porosity_degree=None,
             quadrature_degree=None,
             foi_degree=0,
-            Phis0_val=None,
-            Phis0_fun=None,
+            porosity_init_val=None,
+            porosity_init_fun=None,
             skel_behavior=None,
             skel_behaviors=[],
             bulk_behavior=None,
@@ -52,9 +52,9 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
 
             self.set_subsols(
                 displacement_degree=displacement_degree,
-                porosity_degree=Phis_degree,
-                porosity_init_val=Phis0_val,
-                porosity_init_fun=Phis0_fun)
+                porosity_degree=porosity_degree,
+                porosity_init_val=porosity_init_val,
+                porosity_init_fun=porosity_init_fun)
             self.set_solution_finite_element()
             self.set_solution_function_space()
             self.set_solution_functions()
@@ -68,23 +68,10 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
 
             self.set_kinematics()
 
-            assert (Phis0_val is None) or (Phis0_fun is None)
-            if   (Phis0_val   is not None):
-                self.Phis0 = dolfin.Constant(Phis0_val)
-            elif (Phis0_fun is not None):
-                self.Phis0 = Phis0_fun
-            self.add_foi(
-                expr=self.kinematics.J-self.get_porosity_subsol().subfunc,
-                fs=self.get_porosity_function_space().collapse(),
-                name="Phif")
-            self.add_foi(
-                expr=self.get_porosity_subsol().subfunc/self.kinematics.J,
-                fs=self.get_porosity_function_space().collapse(),
-                name="phis")
-            self.add_foi(
-                expr=1.-self.get_porosity_subsol().subfunc/self.kinematics.J,
-                fs=self.get_porosity_function_space().collapse(),
-                name="phif")
+            assert (porosity_init_val is None) or (porosity_init_fun is None)
+            self.init_known_porosity(
+                porosity_init_val=porosity_init_val,
+                porosity_init_fun=porosity_init_fun)
 
             assert (skel_behavior is     None) or (len(skel_behaviors)==0),\
                 "Cannot provide both skel_behavior & skel_behaviors. Aborting."
@@ -110,6 +97,11 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
 
 
 
+    def get_porosity_name(self):
+        return "Phis"
+
+
+
     def add_porosity_subsol(self,
             degree,
             init_val=None,
@@ -117,14 +109,14 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
 
         if (degree == 0):
             self.add_scalar_subsol(
-                name="Phis",
+                name=self.get_porosity_name(),
                 family="DG",
                 degree=0,
                 init_val=init_val,
                 init_fun=init_fun)
         else:
             self.add_scalar_subsol(
-                name="Phis",
+                name=self.get_porosity_name(),
                 family="CG",
                 degree=degree,
                 init_val=init_val,
@@ -134,7 +126,7 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
 
     def get_porosity_subsol(self):
 
-        return self.get_subsol("Phis")
+        return self.get_subsol(self.get_porosity_name())
 
 
 
@@ -158,7 +150,38 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
 
     def get_porosity_function_space(self):
 
-        return self.get_subsol_function_space(name="Phis")
+        return self.get_subsol_function_space(name=self.get_porosity_name())
+
+
+
+    def init_known_porosity(self,
+            porosity_init_val,
+            porosity_init_fun):
+
+        if   (porosity_init_val   is not None):
+            self.Phis0 = dolfin.Constant(porosity_init_val)
+        elif (porosity_init_fun is not None):
+            self.Phis0 = porosity_init_fun
+        self.add_foi(
+            expr=self.Phis0,
+            fs=self.get_porosity_function_space().collapse(),
+            name="Phis0")
+        self.add_foi(
+            expr=1 - self.Phis0,
+            fs=self.get_porosity_function_space().collapse(),
+            name="Phif0")
+        self.add_foi(
+            expr=self.kinematics.J - self.get_porosity_subsol().subfunc,
+            fs=self.get_porosity_function_space().collapse(),
+            name="Phif")
+        self.add_foi(
+            expr=self.get_porosity_subsol().subfunc/self.kinematics.J,
+            fs=self.get_porosity_function_space().collapse(),
+            name="phis")
+        self.add_foi(
+            expr=1.-self.get_porosity_subsol().subfunc/self.kinematics.J,
+            fs=self.get_porosity_function_space().collapse(),
+            name="phif")
 
 
 
@@ -268,7 +291,7 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
     def add_global_porosity_qois(self):
 
         self.add_qoi(
-            name="Phis",
+            name=self.get_porosity_name(),
             expr=self.get_porosity_subsol().subfunc * self.dV)
 
         self.add_qoi(

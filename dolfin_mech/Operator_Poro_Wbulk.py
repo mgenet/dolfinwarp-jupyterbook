@@ -47,3 +47,35 @@ class WbulkPoroOperator(Operator):
             dE_test) * self.measure
 
         self.res_form += self.material.dWbulkdPhis * Phis_test * self.measure
+
+################################################################################
+
+class InverseWbulkPoroOperator(Operator):
+
+    def __init__(self,
+            kinematics,
+            phis0,
+            phis,
+            u_test,
+            phis0_test,
+            material_parameters,
+            material_scaling,
+            measure):
+
+        self.kinematics = kinematics
+        self.solid_material = dmech.WbulkLungElasticMaterial(
+            kinematics=kinematics,
+            Phis=self.kinematics.J * phis,
+            Phis0=self.kinematics.J * phis0,
+            parameters=material_parameters)
+        self.material = dmech.PorousElasticMaterial(
+            kinematics=kinematics,
+            solid_material=self.solid_material,
+            scaling=material_scaling,
+            Phis0=self.kinematics.J * phis0)
+        self.measure = measure
+
+        epsilon_test = dolfin.sym(dolfin.grad(u_test))
+        self.res_form = self.material.dWbulkdPhis * dolfin.tr(epsilon_test) * self.measure
+
+        self.res_form += self.material.dWbulkdPhis * phis0_test * self.measure
