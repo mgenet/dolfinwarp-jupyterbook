@@ -4,10 +4,11 @@ stages:
 
 tests:
   stage: test
-  only:
-    - Operators # MG20211221: for now tests are only valid in Operators branch
-    - OperatorsWithPoro
+  # only:
+    # - Operators # MG20211221: for now tests are only valid in Operators branch
+    # - OperatorsWithPoro # MG20211221: for now tests are only valid in Operators branch
   except:
+    - PreOperators # MG20220413: this branch is outdated
     - CylindricalModel # MG20211221: this branch is outdated
   tags:
     - ci.inria.fr
