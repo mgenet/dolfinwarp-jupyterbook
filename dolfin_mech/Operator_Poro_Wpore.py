@@ -15,11 +15,10 @@ from .Operator import Operator
 
 ################################################################################
 
-class WbulkPoroOperator(Operator):
+class WporePoroOperator(Operator):
 
     def __init__(self,
             kinematics,
-            U_test,
             Phis0,
             Phis,
             Phis_test,
@@ -28,9 +27,9 @@ class WbulkPoroOperator(Operator):
             measure):
 
         self.kinematics = kinematics
-        self.solid_material = dmech.WbulkLungElasticMaterial(
-            Phis=Phis,
-            Phis0=Phis0,
+        self.solid_material = dmech.WporeLungElasticMaterial(
+            Phif=self.kinematics.J - Phis,
+            Phif0=Phis0,
             parameters=material_parameters)
         self.material = dmech.PorousElasticMaterial(
             solid_material=self.solid_material,
@@ -38,21 +37,14 @@ class WbulkPoroOperator(Operator):
             Phis0=Phis0)
         self.measure = measure
 
-        dE_test = dolfin.derivative(
-            self.kinematics.E, self.kinematics.U, U_test)
-        self.res_form = dolfin.inner(
-            self.material.dWbulkdPhis * self.kinematics.J * self.kinematics.C_inv,
-            dE_test) * self.measure
-
-        self.res_form += self.material.dWbulkdPhis * Phis_test * self.measure
+        self.res_form = - self.material.dWporedPhif * Phis_test * self.measure
 
 ################################################################################
 
-class InverseWbulkPoroOperator(Operator):
+class InverseWporePoroOperator(Operator):
 
     def __init__(self,
             kinematics,
-            u_test,
             phis,
             phis0,
             phis0_test,
@@ -61,9 +53,9 @@ class InverseWbulkPoroOperator(Operator):
             measure):
 
         self.kinematics = kinematics
-        self.solid_material = dmech.WbulkLungElasticMaterial(
-            Phis=self.kinematics.J * phis,
-            Phis0=self.kinematics.J * phis0,
+        self.solid_material = dmech.WporeLungElasticMaterial(
+            Phif=self.kinematics.J * (1 - phis),
+            Phif0=1 - self.kinematics.J * phis0,
             parameters=material_parameters)
         self.material = dmech.PorousElasticMaterial(
             solid_material=self.solid_material,
@@ -71,7 +63,4 @@ class InverseWbulkPoroOperator(Operator):
             Phis0=self.kinematics.J * phis0)
         self.measure = measure
 
-        epsilon_test = dolfin.sym(dolfin.grad(u_test))
-        self.res_form = self.material.dWbulkdPhis * dolfin.tr(epsilon_test) * self.measure
-
-        self.res_form += self.material.dWbulkdPhis * phis0_test * self.measure
+        self.res_form = - self.material.dWporedPhif * phis0_test * self.measure

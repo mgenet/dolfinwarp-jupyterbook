@@ -102,7 +102,8 @@ def RivlinCube_PoroHyperelasticity(
             porosity_init_val=porosity_val,
             porosity_init_fun=porosity_fun,
             skel_behavior=mat_params,
-            bulk_behavior=mat_params)
+            bulk_behavior=mat_params,
+            pore_behavior=mat_params)
     else:
         problem = dmech.PoroHyperelasticityProblem(
             mesh=mesh,
@@ -112,7 +113,8 @@ def RivlinCube_PoroHyperelasticity(
             porosity_init_val=porosity_val,
             porosity_init_fun=porosity_fun,
             skel_behavior=mat_params,
-            bulk_behavior=mat_params)
+            bulk_behavior=mat_params,
+            pore_behavior=mat_params)
 
     ########################################## Boundary conditions & Loading ###
 
@@ -237,7 +239,7 @@ def RivlinCube_PoroHyperelasticity(
         all_strains += ["E_XY"]
         if (dim == 3): all_strains += ["E_YZ", "E_ZX"]
         qois_data.plot(x="t", y=all_strains, ax=qois_axes, ylabel="Green-Lagrange strain")
-        qois_fig.savefig(res_basename+"-strains.pdf")
+        qois_fig.savefig(res_basename+"-strains-vs-time.pdf")
 
         for comp in ["skel", "bulk", "tot"]:
             qois_fig, qois_axes = mpl.subplots()
@@ -246,13 +248,17 @@ def RivlinCube_PoroHyperelasticity(
             all_stresses += ["s_"+comp+"_XY"]
             if (dim == 3): all_stresses += ["s_"+comp+"_YZ", "s_"+comp+"_ZX"]
             qois_data.plot(x="t", y=all_stresses, ax=qois_axes, ylabel="Cauchy stress")
-            qois_fig.savefig(res_basename+"-stresses-"+comp+".pdf")
+            qois_fig.savefig(res_basename+"-stresses-"+comp+"-vs-time.pdf")
 
+        qois_fig, qois_axes = mpl.subplots()
+        all_porosities = []
         if (inverse):
-            qois_fig, qois_axes = mpl.subplots()
-            qois_data.plot(x="pf", y=["phis0", "phif0"], ax=qois_axes, ylim=[0,1], ylabel="porosity")
-            qois_fig.savefig(res_basename+"-porosity.pdf")
+            all_porosities += ["phis0", "phif0", "Phis0", "Phif0"]
         else:
-            qois_fig, qois_axes = mpl.subplots()
-            qois_data.plot(x="pf", y=["Phis", "Phif"], ax=qois_axes, ylim=[0,1], ylabel="porosity")
-            qois_fig.savefig(res_basename+"-porosity.pdf")
+            all_porosities += ["Phis", "Phif", "phis", "phif"]
+        qois_data.plot(x="t", y=all_porosities, ax=qois_axes, ylim=[0,1], ylabel="porosity")
+        qois_fig.savefig(res_basename+"-porosities-vs-time.pdf")
+
+        qois_fig, qois_axes = mpl.subplots()
+        qois_data.plot(x="pf", y=all_porosities, ax=qois_axes, ylim=[0,1], ylabel="porosity")
+        qois_fig.savefig(res_basename+"-porosities-vs-pressure.pdf")

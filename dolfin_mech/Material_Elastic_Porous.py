@@ -25,12 +25,10 @@ class PorousElasticMaterial(ElasticMaterial):
 
 
     def __init__(self,
-            kinematics,
             solid_material,
             scaling="no",
             Phis0=None):
 
-        self.kinematics     = kinematics
         self.solid_material = solid_material
 
         if (scaling == "no"):
@@ -51,6 +49,6 @@ class PorousElasticMaterial(ElasticMaterial):
             assert (0),\
                 "scaling must be \"no\" or \"linear\". Aborting."
 
-        for attr in ("Psi", "Sigma", "P", "sigma", "dWbulkdPhis"):
+        for attr in ("Psi", "Sigma", "P", "sigma", "dWbulkdPhis", "dWporedPhif"):
             if (hasattr(self.solid_material, attr)):
                 setattr(self, attr, scaling * getattr(self.solid_material, attr))

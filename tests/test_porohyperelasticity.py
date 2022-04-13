@@ -23,7 +23,7 @@ mat_params = {
     "c1":0.2,
     "c2":0.4,
     "kappa":1e2,
-    "eta":0.}
+    "eta":1e-5}
 
 ####################################################################### test ###
 
@@ -80,7 +80,7 @@ for dim in dim_lst:
                         inverse=inverse,
                         porosity_params={"type":porosity},
                         mat_params={"scaling":scaling, "parameters":mat_params},
-                        step_params={"dt_ini":0.1, "dt_min":0.01, "dt_max":0.1},
+                        step_params={"dt_min":0.1},
                         load_params={"type":load},
                         res_basename=res_folder+"/"+res_basename,
                         plot_curves=0,

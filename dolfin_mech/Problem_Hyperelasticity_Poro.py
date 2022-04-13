@@ -192,8 +192,8 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
 
         operator = dmech.WskelPoroOperator(
             kinematics=self.kinematics,
-            Phis0=self.Phis0,
             U_test=self.get_displacement_subsol().dsubtest,
+            Phis0=self.Phis0,
             material_parameters=material_parameters,
             material_scaling=material_scaling,
             measure=self.get_subdomain_measure(subdomain_id))
@@ -222,9 +222,9 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
 
         operator = dmech.WbulkPoroOperator(
             kinematics=self.kinematics,
+            U_test=self.get_displacement_subsol().dsubtest,
             Phis0=self.Phis0,
             Phis=self.get_porosity_subsol().subfunc,
-            U_test=self.get_displacement_subsol().dsubtest,
             Phis_test=self.get_porosity_subsol().dsubtest,
             material_parameters=material_parameters,
             material_scaling=material_scaling,
@@ -255,7 +255,9 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
 
         operator = dmech.WporePoroOperator(
             kinematics=self.kinematics,
-            U_test=self.get_displacement_subsol().dsubtest,
+            Phis0=self.Phis0,
+            Phis=self.get_porosity_subsol().subfunc,
+            Phis_test=self.get_porosity_subsol().dsubtest,
             material_parameters=material_parameters,
             material_scaling=material_scaling,
             measure=self.get_subdomain_measure(subdomain_id))
@@ -297,6 +299,14 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
         self.add_qoi(
             name="Phif",
             expr=(self.kinematics.J - self.get_porosity_subsol().subfunc) * self.dV)
+            
+        self.add_qoi(
+            name="phis",
+            expr=(self.get_porosity_subsol().subfunc/self.kinematics.J) * self.dV)
+            
+        self.add_qoi(
+            name="phif",
+            expr=(1. - self.get_porosity_subsol().subfunc/self.kinematics.J) * self.dV)
 
 
 

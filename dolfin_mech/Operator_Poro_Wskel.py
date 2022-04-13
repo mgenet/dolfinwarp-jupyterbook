@@ -20,8 +20,8 @@ class WskelPoroOperator(Operator):
 
     def __init__(self,
             kinematics,
-            Phis0,
             U_test,
+            Phis0,
             material_parameters,
             material_scaling,
             measure):
@@ -31,7 +31,6 @@ class WskelPoroOperator(Operator):
             kinematics=kinematics,
             parameters=material_parameters)
         self.material = dmech.PorousElasticMaterial(
-            kinematics=kinematics,
             solid_material=self.solid_material,
             scaling=material_scaling,
             Phis0=Phis0)
@@ -47,8 +46,8 @@ class InverseWskelPoroOperator(Operator):
 
     def __init__(self,
             kinematics,
-            phis0,
             u_test,
+            phis0,
             material_parameters,
             material_scaling,
             measure):
@@ -58,7 +57,6 @@ class InverseWskelPoroOperator(Operator):
             kinematics=kinematics,
             parameters=material_parameters)
         self.material = dmech.PorousElasticMaterial(
-            kinematics=kinematics,
             solid_material=self.solid_material,
             scaling=material_scaling,
             Phis0=self.kinematics.J * phis0)

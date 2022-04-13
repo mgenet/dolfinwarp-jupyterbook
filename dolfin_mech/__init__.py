@@ -3,7 +3,7 @@
 from .Operator_HyperIncompressibility import *
 from .Kinematics_Linearized import *
 from .NonlinearSolver import *
-from .Material_Elastic_Lung_Wpor import *
+from .Material_Elastic_Lung_Wpore import *
 from .Material_Elastic_Kirchhoff import *
 from .Operator_Loading_SurfacePressure import *
 from .Material_Elastic_Lung_Wbulk import *
@@ -47,6 +47,7 @@ from .Material_Elastic_Lung_Wskel import *
 from .Operator_HyperElasticity import *
 from .Operator_Poro_Wskel import *
 from .Operator_Poro_Wbulk import *
+from .Operator_Poro_Wpore import *
 from .Operator_Poro_Pf import *
 from .Kinematics_Inverse import *
 from .Material_Inelastic import *

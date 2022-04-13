@@ -86,8 +86,8 @@ class InversePoroHyperelasticityProblem(PoroHyperelasticityProblem):
 
         operator = dmech.InverseWskelPoroOperator(
             kinematics=self.kinematics,
-            phis0=self.get_porosity_subsol().subfunc,
             u_test=self.get_displacement_subsol().dsubtest,
+            phis0=self.get_porosity_subsol().subfunc,
             material_parameters=material_parameters,
             material_scaling=material_scaling,
             measure=self.get_subdomain_measure(subdomain_id))
@@ -102,9 +102,9 @@ class InversePoroHyperelasticityProblem(PoroHyperelasticityProblem):
 
         operator = dmech.InverseWbulkPoroOperator(
             kinematics=self.kinematics,
-            phis0=self.get_porosity_subsol().subfunc,
-            phis=self.phis,
             u_test=self.get_displacement_subsol().dsubtest,
+            phis=self.phis,
+            phis0=self.get_porosity_subsol().subfunc,
             phis0_test=self.get_porosity_subsol().dsubtest,
             material_parameters=material_parameters,
             material_scaling=material_scaling,
@@ -120,7 +120,9 @@ class InversePoroHyperelasticityProblem(PoroHyperelasticityProblem):
 
         operator = dmech.InverseWporePoroOperator(
             kinematics=self.kinematics,
-            u_test=self.get_displacement_subsol().dsubtest,
+            phis=self.phis,
+            phis0=self.get_porosity_subsol().subfunc,
+            phis0_test=self.get_porosity_subsol().dsubtest,
             material_parameters=material_parameters,
             material_scaling=material_scaling,
             measure=self.get_subdomain_measure(subdomain_id))
@@ -138,5 +140,10 @@ class InversePoroHyperelasticityProblem(PoroHyperelasticityProblem):
             name="phif0",
             expr=(1/self.kinematics.J - self.get_porosity_subsol().subfunc) * self.dV)
 
+        self.add_qoi(
+            name="Phis0",
+            expr=(self.kinematics.J * self.get_porosity_subsol().subfunc) * self.dV)
 
-
+        self.add_qoi(
+            name="Phif0",
+            expr=(1 - self.kinematics.J * self.get_porosity_subsol().subfunc) * self.dV)
