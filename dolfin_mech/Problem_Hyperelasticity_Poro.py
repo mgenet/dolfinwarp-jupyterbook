@@ -25,7 +25,7 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
             domains_mf=None,
             boundaries_mf=None,
             points_mf=None,
-            U_degree=1,
+            displacement_degree=1,
             Phis_degree=None,
             quadrature_degree=None,
             foi_degree=0,
@@ -51,7 +51,7 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
                 points=points_mf)
 
             self.set_subsols(
-                U_degree=U_degree,
+                displacement_degree=displacement_degree,
                 porosity_degree=Phis_degree,
                 porosity_init_val=Phis0_val,
                 porosity_init_fun=Phis0_fun)
@@ -139,16 +139,16 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
 
 
     def set_subsols(self,
-            U_degree=1,
+            displacement_degree=1,
             porosity_degree=None,
             porosity_init_val=None,
             porosity_init_fun=None):
 
         self.add_displacement_subsol(
-            degree=U_degree)
+            degree=displacement_degree)
 
         if (porosity_degree is None):
-            porosity_degree = U_degree-1
+            porosity_degree = displacement_degree-1
         self.add_porosity_subsol(
             degree=porosity_degree,
             init_val=porosity_init_val,

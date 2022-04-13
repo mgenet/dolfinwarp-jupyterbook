@@ -20,15 +20,15 @@ class InverseKinematics():
 
 
     def __init__(self,
-            U,
-            U_old=None):
+            u,
+            u_old=None):
 
-        self.U = U
+        self.u = u
 
-        self.dim = self.U.ufl_shape[0]
+        self.dim = self.u.ufl_shape[0]
         self.I = dolfin.Identity(self.dim)
 
-        self.f     = self.I + dolfin.grad(self.U)
+        self.f     = self.I + dolfin.grad(self.u)
         self.F     = dolfin.inv(self.f)
         self.F     = dolfin.variable(self.F)
         self.J     = dolfin.det(self.F)
@@ -46,10 +46,10 @@ class InverseKinematics():
         self.IIC_bar = (dolfin.tr(self.C_bar)*dolfin.tr(self.C_bar) - dolfin.tr(self.C_bar*self.C_bar))/2
         self.E_bar   = (self.C_bar - self.I)/2
 
-        if (U_old is not None):
-            self.U_old = U_old
+        if (u_old is not None):
+            self.u_old = u_old
 
-            self.f_old = self.I + dolfin.grad(self.U_old)
+            self.f_old = self.I + dolfin.grad(self.u_old)
             self.F_old = dolfin.inv(self.f_old)
             self.J_old = dolfin.det(self.F_old)
             self.C_old = self.F_old.T * self.F_old

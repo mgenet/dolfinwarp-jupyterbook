@@ -30,11 +30,21 @@ class InverseHyperelasticityProblem(HyperelasticityProblem):
 
 
 
+    def get_displacement_name(self):
+        return "u"
+
+
+
+    def get_pressure_name(self):
+        return "p"
+
+
+
     def set_kinematics(self):
 
         self.kinematics = dmech.InverseKinematics(
-            U=self.get_displacement_subsol().subfunc,
-            U_old=self.get_displacement_subsol().func_old)
+            u=self.get_displacement_subsol().subfunc,
+            u_old=self.get_displacement_subsol().func_old)
 
         self.add_foi(expr=self.kinematics.F, fs=self.mfoi_fs, name="F")
         self.add_foi(expr=self.kinematics.J, fs=self.sfoi_fs, name="J")

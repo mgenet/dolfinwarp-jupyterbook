@@ -27,8 +27,8 @@ class ElasticityProblem(Problem):
             domains_mf=None,
             boundaries_mf=None,
             points_mf=None,
-            u_degree=None,
-            p_degree=None,
+            displacement_degree=None,
+            pressure_degree=None,
             quadrature_degree=None,
             foi_degree=0,
             elastic_behavior=None,
@@ -49,8 +49,8 @@ class ElasticityProblem(Problem):
                 points=points_mf)
 
             self.set_subsols(
-                u_degree=u_degree,
-                p_degree=p_degree)
+                displacement_degree=displacement_degree,
+                pressure_degree=pressure_degree)
             self.set_solution_finite_element()
             self.set_solution_function_space()
             self.set_solution_functions()
@@ -75,11 +75,11 @@ class ElasticityProblem(Problem):
     def add_displacement_subsol(self,
             degree):
 
-        self.u_degree = degree
+        self.displacement_degree = degree
         self.add_vector_subsol(
             name="u",
             family="CG",
-            degree=self.u_degree)
+            degree=self.displacement_degree)
 
 
 
@@ -92,17 +92,17 @@ class ElasticityProblem(Problem):
     def add_pressure_subsol(self,
             degree):
 
-        self.p_degree = degree
-        if (self.p_degree == 0):
+        self.pressure_degree = degree
+        if (self.pressure_degree == 0):
             self.add_scalar_subsol(
                 name="p",
                 family="DG",
-                degree=self.p_degree)
+                degree=self.pressure_degree)
         else:
             self.add_scalar_subsol(
                 name="p",
                 family="CG",
-                degree=self.p_degree)
+                degree=self.pressure_degree)
 
 
 
@@ -115,17 +115,17 @@ class ElasticityProblem(Problem):
 
 
     def set_subsols(self,
-            u_degree=1,
-            p_degree=None):
+            displacement_degree=1,
+            pressure_degree=None):
 
         self.add_displacement_subsol(
-            degree=u_degree)
+            degree=displacement_degree)
 
         if (self.w_incompressibility):
-            if (p_degree is None):
-                p_degree = u_degree-1
+            if (pressure_degree is None):
+                pressure_degree = displacement_degree-1
             self.add_pressure_subsol(
-                degree=p_degree)
+                degree=pressure_degree)
 
 
 
@@ -155,9 +155,9 @@ class ElasticityProblem(Problem):
             quadrature_degree = None
         elif (quadrature_degree == "default"):
             if   (self.mesh.ufl_cell().cellname() in ("triangle", "tetrahedron")):
-                quadrature_degree = max(2, 2*(self.u_degree-1)) # MG20211221: This does not allow to reproduce full integration results exactly, but it is quite close…
+                quadrature_degree = max(2, 2*(self.displacement_degree-1)) # MG20211221: This does not allow to reproduce full integration results exactly, but it is quite close…
             elif (self.mesh.ufl_cell().cellname() in ("quadrilateral", "hexahedron")):
-                quadrature_degree = max(2, 2*(self.dim*self.u_degree-1))
+                quadrature_degree = max(2, 2*(self.dim*self.displacement_degree-1))
         else:
             assert (0),\
                 "Must provide an int, \"full\", \"default\" or None. Aborting."

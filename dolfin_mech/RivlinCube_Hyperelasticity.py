@@ -56,10 +56,10 @@ def RivlinCube_Hyperelasticity(
         problem_type = dmech.HyperelasticityProblem
 
     if (incomp):
-        U_degree = 2 # MG20211219: Incompressibility requires U_degree >= 2 ?!
+        displacement_degree = 2 # MG20211219: Incompressibility requires displacement_degree >= 2 ?!
         w_incompressibility = 1
     else:
-        U_degree = 1
+        displacement_degree = 1
         w_incompressibility = 0
 
     quadrature_degree = "default"
@@ -92,7 +92,7 @@ def RivlinCube_Hyperelasticity(
         domains_mf=domains_mf,
         compute_normals=1,
         boundaries_mf=boundaries_mf,
-        U_degree=U_degree, # MG20211219: Incompressibility requires U_degree >= 2 ?!
+        displacement_degree=displacement_degree, # MG20211219: Incompressibility requires displacement_degree >= 2 ?!
         quadrature_degree=quadrature_degree,
         w_incompressibility=w_incompressibility,
         elastic_behavior=elastic_behavior,

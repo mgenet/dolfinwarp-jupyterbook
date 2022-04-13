@@ -44,7 +44,7 @@ def test_normal_displacement_penalty(
             mesh=mesh,
             compute_normals=1,
             boundaries_mf=boundaries_mf,
-            u_degree=2, # MG20211219: Incompressibility requires U_degree >= 2 ?!
+            displacement_degree=2, # MG20211219: Incompressibility requires displacement_degree >= 2 ?!
             quadrature_degree="default",
             w_incompressibility=1,
             elastic_behavior={"model":"H_dev", "parameters":material_parameters})
@@ -53,7 +53,7 @@ def test_normal_displacement_penalty(
             mesh=mesh,
             compute_normals=1,
             boundaries_mf=boundaries_mf,
-            u_degree=1,
+            displacement_degree=1,
             quadrature_degree="default",
             w_incompressibility=0,
             elastic_behavior={"model":"H", "parameters":material_parameters})

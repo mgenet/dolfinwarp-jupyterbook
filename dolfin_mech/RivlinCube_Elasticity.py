@@ -50,10 +50,10 @@ def RivlinCube_Elasticity(
     ################################################################ Problem ###
 
     if (incomp):
-        u_degree = 2 # MG20211219: Incompressibility requires U_degree >= 2 ?!
+        displacement_degree = 2 # MG20211219: Incompressibility requires displacement_degree >= 2 ?!
         w_incompressibility = 1
     else:
-        u_degree = 1
+        displacement_degree = 1
         w_incompressibility = 0
 
     quadrature_degree = "default"
@@ -86,7 +86,7 @@ def RivlinCube_Elasticity(
         domains_mf=domains_mf,
         compute_normals=1,
         boundaries_mf=boundaries_mf,
-        u_degree=u_degree,
+        displacement_degree=displacement_degree,
         quadrature_degree=quadrature_degree,
         w_incompressibility=w_incompressibility,
         elastic_behavior=elastic_behavior,
