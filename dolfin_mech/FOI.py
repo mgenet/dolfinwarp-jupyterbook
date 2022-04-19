@@ -25,7 +25,7 @@ class FOI():
             func=None,
             name=None,
             form_compiler_parameters={},
-            update_type="local_solver"): # local_solver or project
+            update_type="local_solver"): # local_solver or project or interpolate
 
         if (expr is not None) and (fs is not None):
 
@@ -38,9 +38,10 @@ class FOI():
 
             if (update_type == "local_solver"):
 
+                self.form_compiler_parameters = form_compiler_parameters
+
                 self.func_test = dolfin.TestFunction(self.fs)
                 self.func_tria = dolfin.TrialFunction(self.fs)
-                self.form_compiler_parameters = form_compiler_parameters
 
                 self.a_expr = dolfin.inner(
                     self.func_tria,
@@ -60,7 +61,13 @@ class FOI():
 
             elif (update_type == "project"):
 
+                self.form_compiler_parameters = form_compiler_parameters
+
                 self.update = self.update_project
+
+            elif (update_type == "interpolate"):
+
+                self.update = self.update_interpolate
 
         elif (expr is None) and (fs is None) and (func is not None):
 
@@ -93,6 +100,18 @@ class FOI():
             V=self.fs,
             function=self.func,
             form_compiler_parameters=self.form_compiler_parameters)
+        # t = time.time() - t
+        # print("Projec = "+str(t)+" s")
+
+
+
+    def update_interpolate(self):
+
+        # print(self.name)
+        # print(self.form_compiler_parameters)
+
+        # t = time.time()
+        self.func.interpolate(self.expr)
         # t = time.time() - t
         # print("Projec = "+str(t)+" s")
 

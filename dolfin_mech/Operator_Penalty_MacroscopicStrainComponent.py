@@ -12,32 +12,37 @@ import dolfin
 
 import dolfin_mech as dmech
 from .Operator import Operator
+from .Problem import Problem
 
 ################################################################################
 
-class PressureLoadingOperator(Operator):
+class MacroscopicStrainComponentPenaltyOperator(Operator):
 
     def __init__(self,
-            U_test,
-            kinematics,
-            N,
+            epsilon_bar,
+            epsilon_bar_test,
+            i,
+            j,
+            val,
             measure,
-            P=None,
-            P_ini=None,
-            P_fin=None):
+            pen=None,
+            pen_ini=None,
+            pen_fin=None):
 
         self.measure = measure
+        self.tv_pen = dmech.TimeVaryingConstant(
+            val=pen, val_ini=pen_ini, val_fin=pen_fin)
+        pen = self.tv_pen.val
 
-        self.tv_P = dmech.TimeVaryingConstant(
-            val=P, val_ini=P_ini, val_fin=P_fin)
-        P = self.tv_P.val
-
-        T = dolfin.dot(-P * N, dolfin.inv(kinematics.F)) 
-        self.res_form = - dolfin.inner(T, U_test) * kinematics.J * self.measure 
-
+        Pi = (pen/2) * (epsilon_bar[i,j] - val)**2
+        self.res_form = dolfin.derivative(Pi, epsilon_bar[i,j], epsilon_bar_test[i,j]) * self.measure
+        # epsilon_bar = dolfin.variable(epsilon_bar)
+        # Pi = (pen/2) * dolfin.inner(epsilon_bar - val, epsilon_bar - val)
+        # self.res_form = dolfin.derivative(Pi, epsilon_bar, epsilon_bar_test) * self.measure
+        
 
 
     def set_value_at_t_step(self,
             t_step):
 
-        self.tv_P.set_value_at_t_step(t_step)
+        self.tv_pen.set_value_at_t_step(t_step)

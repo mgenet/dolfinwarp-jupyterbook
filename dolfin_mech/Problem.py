@@ -42,6 +42,7 @@ class Problem():
 
     def set_mesh(self,
             mesh,
+            define_spatial_coordinates=False,
             compute_normals=False,
             compute_local_cylindrical_basis=False):
 
@@ -52,6 +53,16 @@ class Problem():
             "dx",
             domain=self.mesh)
         self.mesh_V0 = dolfin.assemble(dolfin.Constant(1) * self.dV)
+
+        if (define_spatial_coordinates):
+            self.spatial_coordinate_fe = dolfin.VectorElement(
+                family="CG",
+                cell=mesh.ufl_cell(),
+                degree=1)
+            self.X = dolfin.Expression(
+                ("x[0]", "x[1]"),
+                element=self.spatial_coordinate_fe)
+            # self.X = dolfin.SpatialCoordinate(self.mesh)
 
         if (compute_normals):
             self.mesh_normals = dolfin.FacetNormal(mesh)
@@ -195,12 +206,14 @@ class Problem():
             name,
             family="CG",
             degree=1,
+            symmetry=None,
             init_val=None):
 
         fe = dolfin.TensorElement(
             family=family,
             cell=self.mesh.ufl_cell(),
-            degree=degree)
+            degree=degree,
+            symmetry=symmetry)
 
         self.add_subsol(
             name=name,
@@ -226,11 +239,13 @@ class Problem():
 
 
 
-    def set_solution_function_space(self):
-
+    def set_solution_function_space(self,
+            pbc=None):
+        print(self.sol_fe)
         self.sol_fs = dolfin.FunctionSpace(
             self.mesh,
-            self.sol_fe) # MG: element keyword don't work here…
+            self.sol_fe,
+            constrained_domain=pbc) # MG: element keyword don't work here…
         #print(self.sol_fs)
 
 

@@ -88,12 +88,14 @@ class TimeIntegrator():
             self.functions_to_write += self.problem.get_subsols_func_lst()
             self.functions_to_write += self.problem.get_subsols_func_old_lst()
             self.functions_to_write += self.problem.get_fois_func_lst()
-
+            # self.functions_to_write += self.problem.get_perturbation_subsol().subfunc + self.problem.U_bar
+            
             self.xdmf_file_sol = dmech.XDMFFile(
                 filename=self.write_sol_filebasename+".xdmf",
                 functions=self.functions_to_write)
             self.problem.update_fois()
             self.xdmf_file_sol.write(0.)
+
 
             self.write_vtus = bool(write_vtus)
             if (self.write_vtus):

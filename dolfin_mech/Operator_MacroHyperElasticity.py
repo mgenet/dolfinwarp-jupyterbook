@@ -10,31 +10,30 @@
 
 import dolfin
 
+import dolfin_mech as dmech
+from .Operator import Operator
+
 ################################################################################
 
-class XDMFFile():
+class MacroHyperElasticityOperator(Operator):
 
     def __init__(self,
-            filename,
-            functions):
-            
-        self.xdmf_file = dolfin.XDMFFile(filename)
-        self.xdmf_file.parameters["flush_output"] = True
-        self.xdmf_file.parameters["functions_share_mesh"] = True
-        #self.xdmf_file.parameters["rewrite_function_mesh"] = False
+            sgma,
+            sgma_test,
+            U,
+            U_test,
+            kinematics,
+            elastic_behavior,
+            measure):
 
-        self.functions = functions
+        Psi, self.Sigma = elastic_behavior.get_free_energy(
+            C=kinematics.C)
+        self.PK1   = kinematics.F * self.Sigma
+        self.sigma = self.PK1 * kinematics.F.T / kinematics.J
 
+        self.measure = measure
+   
+        
+        self.res_form = dolfin.derivative(Psi, U,  U_test) * self.measure
+                    #   + dolfin.inner(sgma - self.Sigma, sgma_test) * self.measure\
 
-
-    def close(self):
-
-        self.xdmf_file.close()
-
-
-
-    def write(self,
-            time=0):
-            
-        for function in self.functions:
-            self.xdmf_file.write(function, float(time))

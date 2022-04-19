@@ -12,28 +12,31 @@ import dolfin
 
 import dolfin_mech as dmech
 from .Operator import Operator
+from .Problem import Problem
 
 ################################################################################
 
-class HyperElasticityOperator(Operator):
+class MacroscopicStress(Operator):
 
     def __init__(self,
-            U,
-            U_test,
+            sigma,
+            sigma_test,
+            measure,
             kinematics,
-            elastic_behavior,
-            measure):
+            elastic_behavior):
 
         Psi, self.Sigma = elastic_behavior.get_free_energy(
             C=kinematics.C)
-        self.PK1   = kinematics.F * self.Sigma
-        self.sigma = self.PK1 * kinematics.F.T / kinematics.J
+        self.PK1 = kinematics.F * self.Sigma
+        sigma_U = self.PK1 * kinematics.F.T / kinematics.J
 
         self.measure = measure
-
-        self.res_form = dolfin.derivative(Psi, U, U_test) * self.measure
-
-        # dE_test = dolfin.derivative(
-        #     Psi, U, U_test)
-        # self.res_form = dolfin.inner(self.Sigma, dE_test) * self.measure
+        self.res_form = dolfin.inner(sigma - sigma_U, sigma_test) * self.measure
+        # self.res_form = dolfin.inner(sigma_U - sigma, sigma_test) * self.measure
+        # self.res_form = (self.sigma_U[0,0] - sigma[0,0]) * sigma_test[0,0] * self.measure\
+        #               + (self.sigma_U[1,1] - sigma[1,1]) * sigma_test[1,1] * self.measure\
+        #               + (self.sigma_U[1,0] - sigma[1,0]) * sigma_test[1,0] * self.measure\
+        #               + (self.sigma_U[0,1] - sigma[0,1]) * sigma_test[0,1] * self.measure
+        
+        print("macroscopic stress variable is added")
 

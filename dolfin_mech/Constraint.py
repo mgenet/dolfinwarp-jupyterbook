@@ -36,7 +36,7 @@ class Constraint():
             self.tv_val = dmech.TimeVaryingConstant(
                 val_ini=val_ini,
                 val_fin=val_fin)
-
+                
         if (sub_domain is not None) and (sub_domains is None) and (sub_domain_id is None):
             if (method is None):
                 self.bc = dolfin.DirichletBC(

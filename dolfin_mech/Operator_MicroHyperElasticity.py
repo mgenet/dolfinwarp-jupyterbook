@@ -15,29 +15,27 @@ from .Operator import Operator
 
 ################################################################################
 
-class PressureLoadingOperator(Operator):
+class MicroHyperElasticityOperator(Operator):
 
     def __init__(self,
+            U,
             U_test,
             kinematics,
-            N,
-            measure,
-            P=None,
-            P_ini=None,
-            P_fin=None):
+            elastic_behavior,
+            measure):
+
+        Psi, self.Sigma = elastic_behavior.get_free_energy(
+            C=kinematics.C)
+        self.PK1   = kinematics.F * self.Sigma
+        self.sigma = self.PK1 * kinematics.F.T / kinematics.J
 
         self.measure = measure
 
-        self.tv_P = dmech.TimeVaryingConstant(
-            val=P, val_ini=P_ini, val_fin=P_fin)
-        P = self.tv_P.val
+        # self.res_form = dolfin.derivative(Psi, U, U_test) * self.measure
 
-        T = dolfin.dot(-P * N, dolfin.inv(kinematics.F)) 
-        self.res_form = - dolfin.inner(T, U_test) * kinematics.J * self.measure 
+        # dE_test = dolfin.derivative(
+        #     Psi, U, U_test)
+        # self.res_form = dolfin.inner(self.Sigma, dE_test) * self.measure
 
+        self.res_form = dolfin.inner(self.sigma, dolfin.nabla_grad(U_test)) * self.measure
 
-
-    def set_value_at_t_step(self,
-            t_step):
-
-        self.tv_P.set_value_at_t_step(t_step)
