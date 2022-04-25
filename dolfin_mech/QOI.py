@@ -22,16 +22,24 @@ class QOI():
             name,
             expr,
             norm=1.,
-            form_compiler_parameters={}):
+            form_compiler_parameters={},
+            point=None,
+            update_type="assembly"):
 
-        self.name = name
-        self.expr = expr
-        self.norm = norm
+        self.name                     = name
+        self.expr                     = expr
+        self.norm                     = norm
         self.form_compiler_parameters = form_compiler_parameters
+        self.point                    = point
+
+        if (update_type == "assembly"):
+            self.update = self.update_assembly
+        elif (update_type == "direct"):
+            self.update = self.update_direct
 
 
 
-    def update(self):
+    def update_assembly(self):
 
         # print(self.name)
         # print(self.expr)
@@ -40,4 +48,10 @@ class QOI():
         self.value = dolfin.assemble(
             self.expr,
             form_compiler_parameters=self.form_compiler_parameters)
+        self.value /= self.norm
+
+
+    def update_direct(self):
+        
+        self.value = self.expr(self.point)
         self.value /= self.norm
