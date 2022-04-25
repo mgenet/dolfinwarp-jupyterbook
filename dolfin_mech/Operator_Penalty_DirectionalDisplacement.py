@@ -15,7 +15,7 @@ from .Operator import Operator
 
 ################################################################################
 
-class DirectionalDisplacmentPenaltyOperator(Operator):
+class DirectionalDisplacementPenaltyOperator(Operator):
 
     def __init__(self,
             U,

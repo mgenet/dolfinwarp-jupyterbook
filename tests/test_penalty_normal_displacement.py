@@ -61,13 +61,13 @@ def test_normal_displacement_penalty(
 
     ########################################## Boundary conditions & Loading ###
 
-    problem.add_normal_displacement0_penalty_operator(
+    problem.add_normal_displacement_penalty_operator(
         measure=problem.dS(xmin_id),
         pen_val=1.)
-    problem.add_normal_displacement0_penalty_operator(
+    problem.add_normal_displacement_penalty_operator(
         measure=problem.dS(ymin_id),
         pen_val=1.)
-    if (dim == 3): problem.add_normal_displacement0_penalty_operator(
+    if (dim == 3): problem.add_normal_displacement_penalty_operator(
         measure=problem.dS(zmin_id),
         pen_val=1.)
 

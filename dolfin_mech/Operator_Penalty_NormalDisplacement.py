@@ -15,7 +15,7 @@ from .Operator import Operator
 
 ################################################################################
 
-class NormalDisplacment0PenaltyOperator(Operator):
+class NormalDisplacementPenaltyOperator(Operator):
 
     def __init__(self,
             U,

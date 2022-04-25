@@ -7,7 +7,7 @@ from .Material_Elastic_Lung_Wpore import *
 from .Material_Elastic_Kirchhoff import *
 from .Operator_Loading_SurfacePressure import *
 from .Material_Elastic_Lung_Wbulk import *
-from .Operator_Penalty_NormalDisplacement0 import *
+from .Operator_Penalty_NormalDisplacement import *
 from .Material_Elastic_ExponentialCiarletGeymonat import *
 from .Material_Elastic_CiarletGeymonat import *
 from .Material_Elastic_MooneyRivlin import *

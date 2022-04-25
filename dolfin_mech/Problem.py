@@ -594,11 +594,11 @@ class Problem():
 
 
 
-    def add_normal_displacement0_penalty_operator(self,
+    def add_normal_displacement_penalty_operator(self,
             k_step=None,
             **kwargs):
 
-        operator = dmech.NormalDisplacment0PenaltyOperator(
+        operator = dmech.NormalDisplacementPenaltyOperator(
             U=self.get_displacement_subsol().subfunc,
             U_test=self.get_displacement_subsol().dsubtest,
             N=self.mesh_normals,
@@ -614,7 +614,7 @@ class Problem():
             k_step=None,
             **kwargs):
 
-        operator = dmech.DirectionalDisplacmentPenaltyOperator(
+        operator = dmech.DirectionalDisplacementPenaltyOperator(
             U=self.get_displacement_subsol().subfunc,
             U_test=self.get_displacement_subsol().dsubtest,
             **kwargs)
