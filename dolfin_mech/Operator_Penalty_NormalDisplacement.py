@@ -22,9 +22,7 @@ class NormalDisplacementPenaltyOperator(Operator):
             U_test,
             N,
             measure,
-            pen_val=None,
-            pen_ini=None,
-            pen_fin=None):
+            pen_val=None, pen_ini=None, pen_fin=None):
 
         self.measure = measure
 

@@ -42,7 +42,7 @@ def test_normal_displacement_penalty(
     if (incomp):
         problem = dmech.ElasticityProblem(
             mesh=mesh,
-            compute_normals=1,
+            define_facet_normals=1,
             boundaries_mf=boundaries_mf,
             displacement_degree=2, # MG20211219: Incompressibility requires displacement_degree >= 2 ?!
             quadrature_degree="default",
@@ -51,7 +51,7 @@ def test_normal_displacement_penalty(
     else:
         problem = dmech.ElasticityProblem(
             mesh=mesh,
-            compute_normals=1,
+            define_facet_normals=1,
             boundaries_mf=boundaries_mf,
             displacement_degree=1,
             quadrature_degree="default",
@@ -80,8 +80,7 @@ def test_normal_displacement_penalty(
         V=problem.get_displacement_function_space().sub(0),
         sub_domains=boundaries_mf,
         sub_domain_id=xmax_id,
-        val_ini=0.,
-        val_fin=1.,
+        val_ini=0., val_fin=1.,
         k_step=k_step)
 
     ################################################# Quantities of Interest ###

@@ -26,11 +26,13 @@ class InversePoroHyperelasticityProblem(PoroHyperelasticityProblem):
 
 
     def get_displacement_name(self):
+
         return "u"
 
 
 
     def get_porosity_name(self):
+
         return "phis0"
 
 

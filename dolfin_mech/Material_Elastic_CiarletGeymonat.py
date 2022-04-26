@@ -31,9 +31,9 @@ class CiarletGeymonatElasticMaterial(ElasticMaterial):
 
         self.Sigma = (self.lmbda/2) * (self.kinematics.J**2 - 1) * self.kinematics.C_inv # MG20200206: Cannot differentiate Psi wrt to C because J is not defined as a function of C
 
-        self.P = dolfin.diff(self.Psi, self.kinematics.F)
+        # self.P = dolfin.diff(self.Psi, self.kinematics.F) # MG20220426: Cannot do that for micromechanics problems
         # self.P = (self.lmbda/2) * (self.kinematics.J**2 - 1) * self.kinematics.F_inv.T
-        # self.P = self.kinematics.F * self.Sigma
+        self.P = self.kinematics.F * self.Sigma
 
         self.sigma = self.P * self.kinematics.F.T / self.kinematics.J
 

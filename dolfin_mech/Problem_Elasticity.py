@@ -8,9 +8,6 @@
 ###                                                                          ###
 ################################################################################
 
-import dolfin
-import numpy
-
 import dolfin_mech as dmech
 from .Problem import Problem
 
@@ -23,7 +20,7 @@ class ElasticityProblem(Problem):
     def __init__(self,
             w_incompressibility=False,
             mesh=None,
-            compute_normals=False,
+            define_facet_normals=False,
             domains_mf=None,
             boundaries_mf=None,
             points_mf=None,
@@ -41,7 +38,7 @@ class ElasticityProblem(Problem):
         if (mesh is not None):
             self.set_mesh(
                 mesh=mesh,
-                compute_normals=compute_normals)
+                define_facet_normals=define_facet_normals)
 
             self.set_measures(
                 domains=domains_mf,
@@ -72,12 +69,17 @@ class ElasticityProblem(Problem):
 
 
 
+    def get_displacement_name(self):
+        return "u"
+
+
+
     def add_displacement_subsol(self,
             degree):
 
         self.displacement_degree = degree
         self.add_vector_subsol(
-            name="u",
+            name=self.get_displacement_name(),
             family="CG",
             degree=self.displacement_degree)
 
@@ -85,7 +87,21 @@ class ElasticityProblem(Problem):
 
     def get_displacement_subsol(self):
 
-        return self.get_subsol("u")
+        return self.get_subsol(self.get_displacement_name())
+
+
+
+    def get_displacement_function_space(self):
+
+        if (len(self.subsols) == 1):
+            return self.sol_fs
+        else:
+            return self.get_subsol_function_space(name=self.get_displacement_name())
+
+
+
+    def get_pressure_name(self):
+        return "p"
 
 
 
@@ -95,12 +111,12 @@ class ElasticityProblem(Problem):
         self.pressure_degree = degree
         if (self.pressure_degree == 0):
             self.add_scalar_subsol(
-                name="p",
+                name=self.get_pressure_name(),
                 family="DG",
                 degree=self.pressure_degree)
         else:
             self.add_scalar_subsol(
-                name="p",
+                name=self.get_pressure_name(),
                 family="CG",
                 degree=self.pressure_degree)
 
@@ -110,7 +126,15 @@ class ElasticityProblem(Problem):
 
         assert (self.w_incompressibility),\
             "There is no pressure subsol. Aborting."
-        return self.get_subsol("p")
+        return self.get_subsol(self.get_pressure_name())
+
+
+
+    def get_pressure_function_space(self):
+
+        assert (self.w_incompressibility),\
+            "There is no pressure function space. Aborting."
+        return self.get_subsol_function_space(name=self.get_pressure_name())
 
 
 
@@ -126,23 +150,6 @@ class ElasticityProblem(Problem):
                 pressure_degree = displacement_degree-1
             self.add_pressure_subsol(
                 degree=pressure_degree)
-
-
-
-    def get_displacement_function_space(self):
-
-        if (len(self.subsols) == 1):
-            return self.sol_fs
-        else:
-            return self.get_subsol_function_space(name="u")
-
-
-
-    def get_pressure_function_space(self):
-
-        assert (self.w_incompressibility),\
-            "There is no pressure function space. Aborting."
-        return self.get_subsol_function_space(name="p")
 
 
 

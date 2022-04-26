@@ -40,7 +40,9 @@ class Problem():
 
     def set_mesh(self,
             mesh,
-            compute_normals=False,
+            define_spatial_coordinates=False,
+            define_facet_normals=False,
+            compute_bbox=False,
             compute_local_cylindrical_basis=False):
 
         self.dim = mesh.ufl_domain().geometric_dimension()
@@ -51,12 +53,30 @@ class Problem():
             domain=self.mesh)
         self.mesh_V0 = dolfin.assemble(dolfin.Constant(1) * self.dV)
 
-        if (compute_normals):
+        if (define_spatial_coordinates):
+            self.X = dolfin.SpatialCoordinate(self.mesh)
+
+        if (define_facet_normals):
             self.mesh_normals = dolfin.FacetNormal(mesh)
+
+        if (compute_bbox):
+            coord = self.mesh.coordinates()
+            self.mesh_bbox = []
+            xmin = dolfin.MPI.min(mesh.mpi_comm(), min(coord[:,0]))
+            xmax = dolfin.MPI.max(mesh.mpi_comm(), max(coord[:,0]))
+            self.mesh_bbox += [xmin, xmax]
+            if (self.dim >= 2):
+                ymin = dolfin.MPI.min(mesh.mpi_comm(), min(coord[:,1]))
+                ymax = dolfin.MPI.max(mesh.mpi_comm(), max(coord[:,1]))
+                self.mesh_bbox += [ymin, ymax]
+                if (self.dim >= 3):
+                    zmin = dolfin.MPI.min(mesh.mpi_comm(), min(coord[:,2]))
+                    zmax = dolfin.MPI.max(mesh.mpi_comm(), max(coord[:,2]))
+                    self.mesh_bbox += [zmin, zmax]
 
         if (compute_local_cylindrical_basis):
             self.local_basis_fe = dolfin.VectorElement(
-                family="DG",
+                family="DG", # MG20220424: Why not CG?
                 cell=mesh.ufl_cell(),
                 degree=1)
 
@@ -93,43 +113,46 @@ class Problem():
             boundaries=None,
             points=None):
 
+        self.domains = domains
         self.dV = dolfin.Measure(
             "cell",
             domain=self.mesh,
-            subdomain_data=domains)
+            subdomain_data=self.domains)
         # if (domains is not None):
         #     self.dV = dolfin.Measure(
         #         "dx",
         #         domain=self.mesh,
-        #         subdomain_data=domains)
+        #         subdomain_data=self.domains)
         # else:
         #     self.dV = dolfin.Measure(
         #         "dx",
         #         domain=self.mesh)
 
+        self.boundaries = boundaries
         self.dS = dolfin.Measure(
             "exterior_facet",
             domain=self.mesh,
-            subdomain_data=boundaries)
+            subdomain_data=self.boundaries)
         # if (boundaries is not None):
         #     self.dS = dolfin.Measure(
         #         "ds",
         #         domain=self.mesh,
-        #         subdomain_data=boundaries)
+        #         subdomain_data=self.boundaries)
         # else:
         #     self.dS = dolfin.Measure(
         #         "ds",
         #         domain=self.mesh)
 
+        self.points = points
         self.dP = dolfin.Measure(
             "vertex",
             domain=self.mesh,
-            subdomain_data=points)
+            subdomain_data=self.points)
         # if (points is not None):
         #     self.dP = dolfin.Measure(
         #         "dP",
         #         domain=self.mesh,
-        #         subdomain_data=points)
+        #         subdomain_data=self.points)
         # else:
         #     self.dP = dolfin.Measure(
         #         "dP",
@@ -193,12 +216,14 @@ class Problem():
             name,
             family="CG",
             degree=1,
+            symmetry=None,
             init_val=None):
 
         fe = dolfin.TensorElement(
             family=family,
             cell=self.mesh.ufl_cell(),
-            degree=degree)
+            degree=degree,
+            symmetry=symmetry)
 
         self.add_subsol(
             name=name,
@@ -224,12 +249,13 @@ class Problem():
 
 
 
-    def set_solution_function_space(self):
+    def set_solution_function_space(self,
+            constrained_domain=None):
 
         self.sol_fs = dolfin.FunctionSpace(
             self.mesh,
-            self.sol_fe) # MG: element keyword don't work here…
-        #print(self.sol_fs)
+            self.sol_fe,
+            constrained_domain=constrained_domain) # MG: element keyword don't work here…
 
 
 
@@ -443,10 +469,7 @@ class Problem():
         operator = dmech.VolumeForce0LoadingOperator(
             U_test=self.get_displacement_subsol().dsubtest,
             **kwargs)
-        self.add_operator(
-            operator=operator,
-            k_step=k_step)
-        return operator
+        return self.add_operator(operator=operator, k_step=k_step)
 
 
 
@@ -458,10 +481,7 @@ class Problem():
             U_test=self.get_displacement_subsol().dsubtest,
             kinematics=self.kinematics,
             **kwargs)
-        self.add_operator(
-            operator=operator,
-            k_step=k_step)
-        return operator
+        return self.add_operator(operator=operator, k_step=k_step)
 
 
 
@@ -472,10 +492,7 @@ class Problem():
         operator = dmech.SurfaceForce0LoadingOperator(
             U_test=self.get_displacement_subsol().dsubtest,
             **kwargs)
-        self.add_operator(
-            operator=operator,
-            k_step=k_step)
-        return operator
+        return self.add_operator(operator=operator, k_step=k_step)
 
 
 
@@ -488,10 +505,7 @@ class Problem():
             kinematics=self.kinematics,
             N=self.mesh_normals,
             **kwargs)
-        self.add_operator(
-            operator=operator,
-            k_step=k_step)
-        return operator
+        return self.add_operator(operator=operator, k_step=k_step)
 
 
 
@@ -503,10 +517,7 @@ class Problem():
             U_test=self.get_displacement_subsol().dsubtest,
             N=self.mesh_normals,
             **kwargs)
-        self.add_operator(
-            operator=operator,
-            k_step=k_step)
-        return operator
+        return self.add_operator(operator=operator, k_step=k_step)
 
 
 
@@ -519,10 +530,7 @@ class Problem():
             kinematics=self.kinematics,
             N=self.mesh_normals,
             **kwargs)
-        self.add_operator(
-            operator=operator,
-            k_step=k_step)
-        return operator
+        return self.add_operator(operator=operator, k_step=k_step)
 
 
 
@@ -535,10 +543,7 @@ class Problem():
             U_test=self.get_displacement_subsol().dsubtest,
             N=self.mesh_normals,
             **kwargs)
-        self.add_operator(
-            operator=operator,
-            k_step=k_step)
-        return operator
+        return self.add_operator(operator=operator, k_step=k_step)
 
 
 
@@ -553,10 +558,7 @@ class Problem():
             kinematics=self.kinematics,
             N=self.mesh_normals,
             **kwargs)
-        self.add_operator(
-            operator=operator,
-            k_step=k_step)
-        return operator
+        return self.add_operator(operator=operator, k_step=k_step)
 
 
 
@@ -570,10 +572,7 @@ class Problem():
             kinematics=self.kinematics,
             N=self.mesh_normals,
             **kwargs)
-        self.add_operator(
-            operator=operator,
-            k_step=k_step)
-        return operator
+        return self.add_operator(operator=operator, k_step=k_step)
 
 
 
@@ -587,10 +586,7 @@ class Problem():
             kinematics=self.kinematics,
             N=self.mesh_normals,
             **kwargs)
-        self.add_operator(
-            operator=operator,
-            k_step=k_step)
-        return operator
+        return self.add_operator(operator=operator, k_step=k_step)
 
 
 
@@ -603,10 +599,7 @@ class Problem():
             U_test=self.get_displacement_subsol().dsubtest,
             N=self.mesh_normals,
             **kwargs)
-        self.add_operator(
-            operator=operator,
-            k_step=k_step)
-        return operator
+        return self.add_operator(operator=operator, k_step=k_step)
 
 
 
@@ -618,10 +611,7 @@ class Problem():
             U=self.get_displacement_subsol().subfunc,
             U_test=self.get_displacement_subsol().dsubtest,
             **kwargs)
-        self.add_operator(
-            operator=operator,
-            k_step=k_step)
-        return operator
+        return self.add_operator(operator=operator, k_step=k_step)
 
 
 
@@ -633,10 +623,7 @@ class Problem():
             U=self.get_displacement_subsol().subfunc,
             U_test=self.get_displacement_subsol().dsubtest,
             **kwargs)
-        self.add_operator(
-            operator=operator,
-            k_step=k_step)
-        return operator
+        return self.add_operator(operator=operator, k_step=k_step)
 
 
 
@@ -680,7 +667,15 @@ class Problem():
         if (k_step is not None):
             self.res_form += sum([operator.res_form for operator in self.steps[k_step].operators if (operator.measure.integral_type() != "vertex")]) # MG20190513: Cannot use point integral within assemble_system
 
+        # print (self.res_form)
+        # for operator in self.operators:
+        #     if (operator.measure.integral_type() != "vertex"):
+        #         print (type(operator))
+        #         print (operator.res_form)
+
         self.jac_form = dolfin.derivative(
             self.res_form,
             self.sol_func,
             self.dsol_tria)
+
+        # print (self.jac_form)

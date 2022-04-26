@@ -75,7 +75,7 @@ class KirchhoffBulkElasticMaterial(ElasticMaterial):
         self.Psi   = (self.kinematics.dim*self.K/2) * dolfin.tr(self.kinematics.E_sph)**2
         self.Sigma =  self.kinematics.dim*self.K    *           self.kinematics.E_sph
 
-        # self.P = dolfin.diff(self.Psi, self.kinematics.F)
+        # self.P = dolfin.diff(self.Psi, self.kinematics.F) # MG20220426: Cannot do that for micromechanics problems
         self.P     = self.kinematics.F * self.Sigma
 
         self.sigma = self.P * self.kinematics.F.T / self.kinematics.J
