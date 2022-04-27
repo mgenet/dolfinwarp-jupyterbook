@@ -136,10 +136,6 @@ def microporohyperelasticity(
     #              - mshr.Sphere(dolfin.Point(x0, y0, z0), r0)
     # mesh = mshr.generate_mesh(geometry, 10)
 
-    # xdmf_file_mesh = dolfin.XDMFFile(res_basename+"-mesh.xdmf")
-    # xdmf_file_mesh.write(mesh)
-    # xdmf_file_mesh.close()
-
     ################################################## Subdomains & Measures ###
 
     xmin_sd = dolfin.CompiledSubDomain("near(x[0], x0) && on_boundary", x0=xmin)
@@ -172,9 +168,10 @@ def microporohyperelasticity(
     if (dim==3): zmax_sd.mark(boundaries_mf, zmax_id)
     sint_sd.mark(boundaries_mf, sint_id)
 
-    # xdmf_file_boundaries = dolfin.XDMFFile(res_basename+"-boundaries.xdmf")
-    # xdmf_file_boundaries.write(boundaries_mf)
-    # xdmf_file_boundaries.close()
+    if (verbose):
+        xdmf_file_boundaries = dolfin.XDMFFile(res_basename+"-boundaries.xdmf")
+        xdmf_file_boundaries.write(boundaries_mf)
+        xdmf_file_boundaries.close()
 
     ################################################################ Problem ###
 
@@ -270,7 +267,7 @@ for dim in dim_lst:
 
     bcs_lst  = []
     bcs_lst += ["kubc"]
-    # bcs_lst += ["pbc"]
+    bcs_lst += ["pbc"]
     for bcs in bcs_lst:
 
         load_lst  = []
