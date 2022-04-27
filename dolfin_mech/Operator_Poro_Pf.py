@@ -20,9 +20,7 @@ class PfPoroOperator(Operator):
     def __init__(self,
             Phis_test,
             measure,
-            pf_val=None,
-            pf_ini=None,
-            pf_fin=None):
+            pf_val=None, pf_ini=None, pf_fin=None):
 
         self.measure = measure
 

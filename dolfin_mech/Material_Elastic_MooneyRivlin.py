@@ -43,8 +43,8 @@ class MooneyRivlinElasticMaterial(ElasticMaterial):
                 self.Psi   =   self.C2 * (self.kinematics.IIC - 3 - 4*dolfin.ln(self.kinematics.J))
                 self.Sigma = 2*self.C2 * (self.kinematics.IC * self.kinematics.I - self.kinematics.C - 2*self.kinematics.C_inv) # MG20200206: Cannot differentiate Psi wrt to C because J is not defined as a function of C
         
-        self.P = dolfin.diff(self.Psi, self.kinematics.F)
-        # self.P = self.kinematics.F * self.Sigma
+        # self.P = dolfin.diff(self.Psi, self.kinematics.F) # MG20220426: Cannot do that for micromechanics problems
+        self.P = self.kinematics.F * self.Sigma
 
         self.sigma = self.P * self.kinematics.F.T / self.kinematics.J
 

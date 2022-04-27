@@ -23,19 +23,15 @@ class Constraint():
             sub_domain=None,
             sub_domains=None,
             sub_domain_id=None,
-            val=None,
-            val_ini=None,
-            val_fin=None,
+            val=None, val_ini=None, val_fin=None,
             method=None): # topological, geometric, pointwise
 
         if (val is not None) and (val_ini is None) and (val_fin is None):
             self.tv_val = dmech.TimeVaryingConstant(
-                val_ini=val,
-                val_fin=val)
+                val_ini=val, val_fin=val)
         elif (val is None) and (val_ini is not None) and (val_fin is not None):
             self.tv_val = dmech.TimeVaryingConstant(
-                val_ini=val_ini,
-                val_fin=val_fin)
+                val_ini=val_ini, val_fin=val_fin)
 
         if (sub_domain is not None) and (sub_domains is None) and (sub_domain_id is None):
             if (method is None):

@@ -59,7 +59,7 @@ def test_directional_displacement_penalty(
         problem = dmech.ElasticityProblem(
             mesh=mesh,
             points_mf=x0_mf,
-            compute_normals=1,
+            define_facet_normals=1,
             boundaries_mf=boundaries_mf,
             displacement_degree=2, # MG20211219: Incompressibility requires displacement_degree >= 2 ?!
             quadrature_degree="default",
@@ -69,7 +69,7 @@ def test_directional_displacement_penalty(
         problem = dmech.ElasticityProblem(
             mesh=mesh,
             points_mf=x0_mf,
-            compute_normals=1,
+            define_facet_normals=1,
             boundaries_mf=boundaries_mf,
             displacement_degree=1,
             quadrature_degree="default",
@@ -105,8 +105,7 @@ def test_directional_displacement_penalty(
         V=problem.get_displacement_function_space().sub(0),
         sub_domains=boundaries_mf,
         sub_domain_id=xmax_id,
-        val_ini=0.,
-        val_fin=1.,
+        val_ini=0., val_fin=1.,
         k_step=k_step)
 
     ################################################# Quantities of Interest ###

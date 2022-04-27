@@ -24,18 +24,10 @@ class SurfacePressureGradientLoadingOperator(Operator):
             kinematics,
             N,
             measure,
-            X0_val=None,
-            X0_ini=None,
-            X0_fin=None,
-            N0_val=None,
-            N0_ini=None,
-            N0_fin=None,
-            P0_val=None,
-            P0_ini=None,
-            P0_fin=None,
-            DP_val=None,
-            DP_ini=None,
-            DP_fin=None):
+            X0_val=None, X0_ini=None, X0_fin=None,
+            N0_val=None, N0_ini=None, N0_fin=None,
+            P0_val=None, P0_ini=None, P0_fin=None,
+            DP_val=None, DP_ini=None, DP_fin=None):
 
         self.measure = measure
 
@@ -77,18 +69,10 @@ class SurfacePressureGradient0LoadingOperator(Operator):
             U_test,
             N,
             measure,
-            X0_val=None,
-            X0_ini=None,
-            X0_fin=None,
-            N0_val=None,
-            N0_ini=None,
-            N0_fin=None,
-            P0_val=None,
-            P0_ini=None,
-            P0_fin=None,
-            DP_val=None,
-            DP_ini=None,
-            DP_fin=None):
+            X0_val=None, X0_ini=None, X0_fin=None,
+            N0_val=None, N0_ini=None, N0_fin=None,
+            P0_val=None, P0_ini=None, P0_fin=None,
+            DP_val=None, DP_ini=None, DP_fin=None):
 
         self.measure = measure
 

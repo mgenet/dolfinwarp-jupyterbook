@@ -22,9 +22,7 @@ class SurfacePressureLoadingOperator(Operator):
             kinematics,
             N,
             measure,
-            P_val=None,
-            P_ini=None,
-            P_fin=None):
+            P_val=None, P_ini=None, P_fin=None):
 
         self.measure = measure
 
@@ -50,9 +48,7 @@ class SurfacePressure0LoadingOperator(Operator):
             U_test,
             N,
             measure,
-            P_val=None,
-            P_ini=None,
-            P_fin=None):
+            P_val=None, P_ini=None, P_fin=None):
 
         self.measure = measure
 

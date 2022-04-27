@@ -84,7 +84,7 @@ def RivlinCube_Elasticity(
     problem = dmech.ElasticityProblem(
         mesh=mesh,
         domains_mf=domains_mf,
-        compute_normals=1,
+        define_facet_normals=1,
         boundaries_mf=boundaries_mf,
         displacement_degree=displacement_degree,
         quadrature_degree=quadrature_degree,
@@ -117,29 +117,25 @@ def RivlinCube_Elasticity(
             V=problem.get_displacement_function_space().sub(0),
             sub_domains=boundaries_mf,
             sub_domain_id=xmax_id,
-            val_ini=0.,
-            val_fin=u,
+            val_ini=0., val_fin=u,
             k_step=k_step)
     elif (load_type == "volu"):
         f = load_params.get("f", 1.)
         problem.add_volume_force0_loading_operator(
             measure=problem.dV,
-            F_ini=[0.]*dim,
-            F_fin=[f]+[0.]*(dim-1),
+            F_ini=[0.]*dim, F_fin=[f]+[0.]*(dim-1),
             k_step=k_step)
     elif (load_type == "surf"):
         f = load_params.get("f", 1.)
         problem.add_surface_force0_loading_operator(
             measure=problem.dS(xmax_id),
-            F_ini=[0.]*dim,
-            F_fin=[f]+[0.]*(dim-1),
+            F_ini=[0.]*dim, F_fin=[f]+[0.]*(dim-1),
             k_step=k_step)
     elif (load_type == "pres"):
         p = load_params.get("p", -1.)
         problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(xmax_id),
-            P_ini=0,
-            P_fin=p,
+            P_ini=0, P_fin=p,
             k_step=k_step)
     elif (load_type == "pgra"):
         X0 = load_params.get("X0", [0.5]*dim)
@@ -150,17 +146,14 @@ def RivlinCube_Elasticity(
             measure=problem.dS(),
             X0_val=X0,
             N0_val=N0,
-            P0_ini=0.,
-            P0_fin=P0,
-            DP_ini=0.,
-            DP_fin=DP,
+            P0_ini=0., P0_fin=P0,
+            DP_ini=0., DP_fin=DP,
             k_step=k_step)
     elif (load_type == "tens"):
         gamma = load_params.get("gamma", 0.01)
         problem.add_surface_tension0_loading_operator(
             measure=problem.dS,
-            gamma_ini=0.00,
-            gamma_fin=gamma,
+            gamma_ini=0.0, gamma_fin=gamma,
             k_step=k_step)
 
     ################################################# Quantities of Interest ###

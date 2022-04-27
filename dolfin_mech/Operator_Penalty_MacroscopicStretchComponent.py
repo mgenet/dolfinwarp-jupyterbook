@@ -6,6 +6,11 @@
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
+###                                                                          ###
+### And Mahdi Manoochehrtayebi, 2021-2022                                    ###
+###                                                                          ###
+### École Polytechnique, Palaiseau, France                                   ###
+###                                                                          ###
 ################################################################################
 
 import dolfin
@@ -15,35 +20,33 @@ from .Operator import Operator
 
 ################################################################################
 
-class DirectionalDisplacementPenaltyOperator(Operator):
+class MacroscopicStretchComponentPenaltyOperator(Operator):
 
     def __init__(self,
-            U,
-            U_test,
+            U_bar,
+            U_bar_test,
+            comp_i, comp_j,
             measure,
-            N_val=None,  N_ini=None, N_fin=None,
+            comp_val=None, comp_ini=None, comp_fin=None,
             pen_val=None, pen_ini=None, pen_fin=None):
 
         self.measure = measure
 
-        self.tv_N = dmech.TimeVaryingConstant(
-            val=N_val, val_ini=N_ini, val_fin=N_fin)
-        N = self.tv_N.val
+        self.tv_comp = dmech.TimeVaryingConstant(
+            val=comp_val, val_ini=comp_ini, val_fin=comp_fin)
+        comp = self.tv_comp.val
 
         self.tv_pen = dmech.TimeVaryingConstant(
             val=pen_val, val_ini=pen_ini, val_fin=pen_fin)
         pen = self.tv_pen.val
 
-        Pi = (pen/2) * dolfin.inner(U, N)**2 * self.measure
-        self.res_form = dolfin.derivative(Pi, U, U_test)
-
-        # self.res_form = pen * dolfin.inner(U     , N)\
-        #                     * dolfin.inner(U_test, N) * self.measure
+        Pi = (pen/2) * (U_bar[comp_i,comp_j] - comp)**2 * self.measure
+        self.res_form = dolfin.derivative(Pi, U_bar[comp_i,comp_j], U_bar_test[comp_i,comp_j])
 
 
 
     def set_value_at_t_step(self,
             t_step):
 
-        self.tv_N.set_value_at_t_step(t_step)
+        self.tv_comp.set_value_at_t_step(t_step)
         self.tv_pen.set_value_at_t_step(t_step)

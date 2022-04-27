@@ -21,7 +21,7 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
 
     def __init__(self,
             mesh=None,
-            compute_normals=False,
+            define_facet_normals=False,
             domains_mf=None,
             boundaries_mf=None,
             points_mf=None,
@@ -43,7 +43,7 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
         if (mesh is not None):
             self.set_mesh(
                 mesh=mesh,
-                compute_normals=compute_normals)
+                define_facet_normals=define_facet_normals)
 
             self.set_measures(
                 domains=domains_mf,
@@ -130,6 +130,12 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
 
 
 
+    def get_porosity_function_space(self):
+
+        return self.get_subsol_function_space(name=self.get_porosity_name())
+
+
+
     def set_subsols(self,
             displacement_degree=1,
             porosity_degree=None,
@@ -145,12 +151,6 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
             degree=porosity_degree,
             init_val=porosity_init_val,
             init_fun=porosity_init_fun)
-
-
-
-    def get_porosity_function_space(self):
-
-        return self.get_subsol_function_space(name=self.get_porosity_name())
 
 
 

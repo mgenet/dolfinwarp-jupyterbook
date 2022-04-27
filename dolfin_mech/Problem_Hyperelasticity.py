@@ -20,7 +20,7 @@ class HyperelasticityProblem(Problem):
     def __init__(self,
             w_incompressibility=False,
             mesh=None,
-            compute_normals=False,
+            define_facet_normals=False,
             domains_mf=None,
             boundaries_mf=None,
             points_mf=None,
@@ -38,7 +38,7 @@ class HyperelasticityProblem(Problem):
         if (mesh is not None):
             self.set_mesh(
                 mesh=mesh,
-                compute_normals=compute_normals)
+                define_facet_normals=define_facet_normals)
 
             self.set_measures(
                 domains=domains_mf,
@@ -93,6 +93,15 @@ class HyperelasticityProblem(Problem):
 
 
 
+    def get_displacement_function_space(self):
+
+        if (len(self.subsols) == 1):
+            return self.sol_fs
+        else:
+            return self.get_subsol_function_space(name=self.get_displacement_name())
+
+
+
     def get_pressure_name(self):
         return "P"
 
@@ -123,6 +132,14 @@ class HyperelasticityProblem(Problem):
 
 
 
+    def get_pressure_function_space(self):
+
+        assert (self.w_incompressibility),\
+            "There is no pressure function space. Aborting."
+        return self.get_subsol_function_space(name=self.get_pressure_name())
+
+
+
     def set_subsols(self,
             displacement_degree=1,
             pressure_degree=None):
@@ -135,23 +152,6 @@ class HyperelasticityProblem(Problem):
                 pressure_degree = displacement_degree-1
             self.add_pressure_subsol(
                 degree=pressure_degree)
-
-
-
-    def get_displacement_function_space(self):
-
-        if (len(self.subsols) == 1):
-            return self.sol_fs
-        else:
-            return self.get_subsol_function_space(name=self.get_displacement_name())
-
-
-
-    def get_pressure_function_space(self):
-
-        assert (self.w_incompressibility),\
-            "There is no pressure function space. Aborting."
-        return self.get_subsol_function_space(name=self.get_pressure_name())
 
 
 
@@ -208,8 +208,9 @@ class HyperelasticityProblem(Problem):
             subdomain_id=None):
 
         operator = dmech.HyperElasticityOperator(
-            kinematics=self.kinematics,
+            U=self.get_displacement_subsol().subfunc,
             U_test=self.get_displacement_subsol().dsubtest,
+            kinematics=self.kinematics,
             material_model=material_model,
             material_parameters=material_parameters,
             measure=self.get_subdomain_measure(subdomain_id))

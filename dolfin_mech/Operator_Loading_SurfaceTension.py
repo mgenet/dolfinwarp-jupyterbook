@@ -23,9 +23,7 @@ class SurfaceTensionLoadingOperator(Operator):
             kinematics,
             N,
             measure,
-            gamma_val=None,
-            gamma_ini=None,
-            gamma_fin=None):
+            gamma_val=None, gamma_ini=None, gamma_fin=None):
 
         self.measure = measure
 
@@ -55,9 +53,7 @@ class SurfaceTension0LoadingOperator(Operator):
             kinematics,
             N,
             measure,
-            gamma_val=None,
-            gamma_ini=None,
-            gamma_fin=None):
+            gamma_val=None, gamma_ini=None, gamma_fin=None):
 
         self.measure = measure
 

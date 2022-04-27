@@ -90,7 +90,7 @@ def RivlinCube_Hyperelasticity(
     problem = problem_type(
         mesh=mesh,
         domains_mf=domains_mf,
-        compute_normals=1,
+        define_facet_normals=1,
         boundaries_mf=boundaries_mf,
         displacement_degree=displacement_degree, # MG20211219: Incompressibility requires displacement_degree >= 2 ?!
         quadrature_degree=quadrature_degree,
@@ -123,60 +123,51 @@ def RivlinCube_Hyperelasticity(
             V=problem.get_displacement_function_space().sub(0),
             sub_domains=boundaries_mf,
             sub_domain_id=xmax_id,
-            val_ini=0.,
-            val_fin=u,
+            val_ini=0., val_fin=u,
             k_step=k_step)
     elif (load_type == "volu0"):
         f = load_params.get("f", 0.5)
         problem.add_volume_force0_loading_operator(
             measure=problem.dV,
-            F_ini=[0.]*dim,
-            F_fin=[f]+[0.]*(dim-1),
+            F_ini=[0.]*dim, F_fin=[f]+[0.]*(dim-1),
             k_step=k_step)
     elif (load_type == "volu"):
         f = load_params.get("f", 1.)
         problem.add_volume_force_loading_operator(
             measure=problem.dV,
-            F_ini=[0.]*dim,
-            F_fin=[f]+[0.]*(dim-1),
+            F_ini=[0.]*dim, F_fin=[f]+[0.]*(dim-1),
             k_step=k_step)
     elif (load_type == "surf0"):
         f = load_params.get("f", 1.)
         problem.add_surface_force0_loading_operator(
             measure=problem.dS(xmax_id),
-            F_ini=[0.]*dim,
-            F_fin=[f]+[0.]*(dim-1),
+            F_ini=[0.]*dim, F_fin=[f]+[0.]*(dim-1),
             k_step=k_step)
     elif (load_type == "surf"):
         f = load_params.get("f", 1.0)
         problem.add_surface_force_loading_operator(
             measure=problem.dS(xmax_id),
-            F_ini=[0.]*dim,
-            F_fin=[f]+[0.]*(dim-1),
+            F_ini=[0.]*dim, F_fin=[f]+[0.]*(dim-1),
             k_step=k_step)
     elif (load_type == "pres0"):
         p = load_params.get("p", -0.5)
         problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(xmax_id),
-            P_ini=0,
-            P_fin=p,
+            P_ini=0, P_fin=p,
             k_step=k_step)
     elif (load_type == "pres0_multi"):
         p = load_params.get("p", -0.5)
         problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(xmax_id),
-            P_ini=0,
-            P_fin=p,
+            P_ini=0, P_fin=p,
             k_step=k_step)
         problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(ymax_id),
-            P_ini=0,
-            P_fin=p,
+            P_ini=0, P_fin=p,
             k_step=k_step)
         if (dim==3): problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(zmax_id),
-            P_ini=0,
-            P_fin=p,
+            P_ini=0, P_fin=p,
             k_step=k_step)
     elif (load_type == "pres0_inertia"):
         p = load_params.get("p", -0.5)
@@ -186,40 +177,33 @@ def RivlinCube_Hyperelasticity(
             k_step=k_step)
         problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(xmin_id),
-            P_ini=0,
-            P_fin=p,
+            P_ini=0, P_fin=p,
             k_step=k_step)
         problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(xmax_id),
-            P_ini=0,
-            P_fin=p,
+            P_ini=0, P_fin=p,
             k_step=k_step)
         problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(ymin_id),
-            P_ini=0,
-            P_fin=p,
+            P_ini=0, P_fin=p,
             k_step=k_step)
         problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(ymax_id),
-            P_ini=0,
-            P_fin=p,
+            P_ini=0, P_fin=p,
             k_step=k_step)
         if (dim==3): problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(zmin_id),
-            P_ini=0,
-            P_fin=p,
+            P_ini=0, P_fin=p,
             k_step=k_step)
         if (dim==3): problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(zmax_id),
-            P_ini=0,
-            P_fin=p,
+            P_ini=0,P_fin=p,
             k_step=k_step)
     elif (load_type == "pres"):
         p = load_params.get("p", -0.5)
         problem.add_surface_pressure_loading_operator(
             measure=problem.dS(xmax_id),
-            P_ini=0,
-            P_fin=p,
+            P_ini=0, P_fin=p,
             k_step=k_step)
     elif (load_type == "pgra0"):
         X0 = load_params.get("X0", [0.5]*dim)
@@ -230,10 +214,8 @@ def RivlinCube_Hyperelasticity(
             measure=problem.dS(),
             X0_val=X0,
             N0_val=N0,
-            P0_ini=0.,
-            P0_fin=P0,
-            DP_ini=0.,
-            DP_fin=DP,
+            P0_ini=0., P0_fin=P0,
+            DP_ini=0., DP_fin=DP,
             k_step=k_step)
     elif (load_type == "pgra"):
         X0 = load_params.get("X0", [0.5]*dim)
@@ -244,17 +226,14 @@ def RivlinCube_Hyperelasticity(
             measure=problem.dS(),
             X0_val=X0,
             N0_val=N0,
-            P0_ini=0.,
-            P0_fin=P0,
-            DP_ini=0.,
-            DP_fin=DP,
+            P0_ini=0., P0_fin=P0,
+            DP_ini=0., DP_fin=DP,
             k_step=k_step)
     elif (load_type == "tens"):
         gamma = load_params.get("gamma", 0.01)
         problem.add_surface_tension_loading_operator(
             measure=problem.dS,
-            gamma_ini=0.00,
-            gamma_fin=gamma,
+            gamma_ini=0., gamma_fin=gamma,
             k_step=k_step)
 
     ################################################# Quantities of Interest ###

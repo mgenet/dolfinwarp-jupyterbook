@@ -20,9 +20,7 @@ class TimeVaryingConstant():
 
 
     def __init__(self,
-            val=None,
-            val_ini=None,
-            val_fin=None):
+            val=None, val_ini=None, val_fin=None):
 
         if  (val     is not None)\
         and (val_ini is     None)\

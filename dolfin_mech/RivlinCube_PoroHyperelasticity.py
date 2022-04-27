@@ -96,7 +96,7 @@ def RivlinCube_PoroHyperelasticity(
     if (inverse):
         problem = dmech.InversePoroHyperelasticityProblem(
             mesh=mesh,
-            compute_normals=1,
+            define_facet_normals=1,
             boundaries_mf=boundaries_mf,
             displacement_degree=1,
             porosity_init_val=porosity_val,
@@ -107,7 +107,7 @@ def RivlinCube_PoroHyperelasticity(
     else:
         problem = dmech.PoroHyperelasticityProblem(
             mesh=mesh,
-            compute_normals=1,
+            define_facet_normals=1,
             boundaries_mf=boundaries_mf,
             displacement_degree=1,
             porosity_init_val=porosity_val,
@@ -138,52 +138,43 @@ def RivlinCube_PoroHyperelasticity(
         pf = load_params.get("pf", +0.5)
         problem.add_pf_operator(
             measure=problem.dV,
-            pf_ini=0.,
-            pf_fin=pf,
+            pf_ini=0., pf_fin=pf,
             k_step=k_step)
     elif (load_type == "external"):
         problem.add_pf_operator(
             measure=problem.dV,
-            pf_ini=0.,
-            pf_fin=0.,
+            pf_ini=0., pf_fin=0.,
             k_step=k_step)
         P = load_params.get("P", -0.5)
         problem.add_surface_pressure_loading_operator(
             measure=problem.dS(xmax_id),
-            P_ini=0,
-            P_fin=P,
+            P_ini=0., P_fin=P,
             k_step=k_step)
         problem.add_surface_pressure_loading_operator(
             measure=problem.dS(ymax_id),
-            P_ini=0,
-            P_fin=P,
+            P_ini=0., P_fin=P,
             k_step=k_step)
         if (dim==3): problem.add_surface_pressure_loading_operator(
             measure=problem.dS(zmax_id),
-            P_ini=0,
-            P_fin=P,
+            P_ini=0., P_fin=P,
             k_step=k_step)
     elif (load_type == "external0"):
         problem.add_pf_operator(
             measure=problem.dV,
-            pf_ini=0.,
-            pf_fin=0.,
+            pf_ini=0., pf_fin=0.,
             k_step=k_step)
         P = load_params.get("P", -0.5)
         problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(xmax_id),
-            P_ini=0,
-            P_fin=P,
+            P_ini=0., P_fin=P,
             k_step=k_step)
         problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(ymax_id),
-            P_ini=0,
-            P_fin=P,
+            P_ini=0., P_fin=P,
             k_step=k_step)
         if (dim==3): problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(zmax_id),
-            P_ini=0,
-            P_fin=P,
+            P_ini=0., P_fin=P,
             k_step=k_step)
 
     ################################################# Quantities of Interest ###

@@ -21,9 +21,7 @@ class VolumeForceLoadingOperator(Operator):
             U_test,
             kinematics,
             measure,
-            F_val=None,
-            F_ini=None,
-            F_fin=None):
+            F_val=None, F_ini=None, F_fin=None):
 
         self.measure = measure
 
@@ -47,9 +45,7 @@ class VolumeForce0LoadingOperator(Operator):
     def __init__(self,
             U_test,
             measure,
-            F_val=None,
-            F_ini=None,
-            F_fin=None):
+            F_val=None, F_ini=None, F_fin=None):
 
         self.measure = measure
 
