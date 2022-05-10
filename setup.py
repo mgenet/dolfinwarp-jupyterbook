@@ -21,5 +21,5 @@ setuptools.setup(
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",
     ],
-    install_requires=["numpy", "myPythonLibrary"],
+    install_requires=["matplotlib", "numpy", "pandas", "myPythonLibrary"],
 )
