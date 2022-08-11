@@ -275,7 +275,7 @@ class MicroPoroHyperelasticityProblem(HyperelasticityProblem):
 
         self.kinematics = dmech.Kinematics(
             U=self.U_tot,
-            U_old=self.U_tot)
+            U_old=self.U_tot_old)
 
         self.add_foi(expr=self.kinematics.F, fs=self.mfoi_fs, name="F_tot", update_type="project")
         self.add_foi(expr=self.kinematics.J, fs=self.sfoi_fs, name="J_tot", update_type="project")
