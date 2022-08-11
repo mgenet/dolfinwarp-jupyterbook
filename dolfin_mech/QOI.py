@@ -22,6 +22,8 @@ class QOI():
             name,
             expr,
             norm=1.,
+            constant=0.,
+            divide_by_dt=False,
             form_compiler_parameters={},
             point=None,
             update_type="assembly"):
@@ -29,6 +31,8 @@ class QOI():
         self.name                     = name
         self.expr                     = expr
         self.norm                     = norm
+        self.constant                 = constant
+        self.divide_by_dt             = divide_by_dt
         self.form_compiler_parameters = form_compiler_parameters
         self.point                    = point
 
@@ -39,7 +43,7 @@ class QOI():
 
 
 
-    def update_assembly(self):
+    def update_assembly(self, dt=None):
 
         # print(self.name)
         # print(self.expr)
@@ -48,10 +52,23 @@ class QOI():
         self.value = dolfin.assemble(
             self.expr,
             form_compiler_parameters=self.form_compiler_parameters)
+
+        self.value += self.constant
         self.value /= self.norm
 
+        if (self.divide_by_dt):
+            assert (dt != 0),\
+                "dt (="+str(dt)+") should be non zero. Aborting."
+            self.value /= dt
 
-    def update_direct(self):
+
+
+    def update_direct(self, dt=None):
         
         self.value = self.expr(self.point)
+
+        self.value += self.constant
         self.value /= self.norm
+
+        if (self.divide_by_dt) and (dt is not None):
+            self.value /= dt

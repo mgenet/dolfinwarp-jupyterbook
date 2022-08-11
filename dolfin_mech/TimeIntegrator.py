@@ -77,7 +77,7 @@ class TimeIntegrator():
                 filename=self.write_qois_filebasename+".dat",
                 limited_precision=write_qois_limited_precision)
 
-            self.problem.update_qois()
+            self.problem.update_qois(dt=1)
             self.qoi_printer.write_line([0.]+[qoi.value for qoi in self.problem.qois])
 
         self.write_sol = bool(write_sol)
@@ -198,7 +198,7 @@ class TimeIntegrator():
                             dolfin.File(self.write_sol_filebasename+"_"+str(k_t_tot).zfill(3)+".xml") << self.problem.get_displacement_subsol().subfunc
 
                     if (self.write_qois):
-                        self.problem.update_qois()
+                        self.problem.update_qois(dt)
                         self.qoi_printer.write_line([t]+[qoi.value for qoi in self.problem.qois])
 
                     if dolfin.near(t, self.step.t_fin, eps=1e-9):

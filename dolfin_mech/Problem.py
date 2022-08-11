@@ -443,10 +443,10 @@ class Problem():
 
 
 
-    def update_qois(self):
+    def update_qois(self, dt=None):
 
         for qoi in self.qois:
-            qoi.update()
+            qoi.update(dt)
 
 ################################################################## operators ###
 
