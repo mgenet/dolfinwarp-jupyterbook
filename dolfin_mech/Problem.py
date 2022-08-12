@@ -419,6 +419,15 @@ class Problem():
 
 
 
+    def get_foi(self, name):
+
+        for foi in self.fois:
+            if (foi.name == name): return foi
+        assert (0),\
+            "No FOI named \""+name+"\". Aborting."
+
+
+
     def update_fois(self):
 
         for foi in self.fois:
