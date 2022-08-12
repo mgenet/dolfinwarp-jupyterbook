@@ -14,6 +14,7 @@
 ################################################################################
 
 import dolfin
+import numpy
 
 import dolfin_mech as dmech
 from .Problem_Hyperelasticity import HyperelasticityProblem
@@ -51,6 +52,11 @@ class MicroPoroHyperelasticityProblem(HyperelasticityProblem):
             self.X_0 = dolfin.Constant(tuple(["0."]*self.dim))
             if (mesh_bbox is not None):
                 self.mesh_bbox = mesh_bbox
+            d = [0]*self.dim
+            for k_dim in range(self.dim):
+                d[k_dim] = self.mesh_bbox[2*k_dim+1] - self.mesh_bbox[2*k_dim+0]
+            self.mesh_bbox_V0 = numpy.prod(d)
+            self.Vf0 = self.mesh_bbox_V0 - self.mesh_V0
 
             self.set_measures(
                 domains=domains_mf,
@@ -333,6 +339,8 @@ class MicroPoroHyperelasticityProblem(HyperelasticityProblem):
                 break
 
         operator = dmech.MacroscopicStressOperator(
+            mesh_V0=self.mesh_V0,
+            mesh_bbox_V0=self.mesh_bbox_V0,
             sigma_bar=self.get_macroscopic_stress_subsol().subfunc,
             sigma_bar_test=self.get_macroscopic_stress_subsol().dsubtest,
             material=material,
