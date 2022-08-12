@@ -256,9 +256,9 @@ def microporohyperelasticity(
 res_folder = sys.argv[0][:-3]
 test = mypy.Test(
     res_folder=res_folder,
-    perform_tests=0,
-    stop_at_failure=0,
-    clean_after_tests=0)
+    perform_tests=1,
+    stop_at_failure=1,
+    clean_after_tests=1)
 
 dim_lst  = []
 dim_lst += [2]
