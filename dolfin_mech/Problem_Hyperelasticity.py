@@ -263,6 +263,33 @@ class HyperelasticityProblem(Problem):
 
 
 
+    def add_point_displacement_qoi(self,
+            name,
+            coordinates,
+            component):
+
+        self.add_qoi(
+            name=name,
+            expr=self.get_displacement_subsol().subfunc[component],
+            point=coordinates,
+            update_type="direct")
+
+
+
+    def add_point_position_qoi(self,
+            name,
+            coordinates,
+            component):
+
+        self.add_qoi(
+            name=name,
+            expr=self.get_displacement_subsol().subfunc[component],
+            constant=coordinates[component],
+            point=coordinates,
+            update_type="direct")
+
+
+
     def add_deformed_volume_qoi(self):
 
         self.add_qoi(
