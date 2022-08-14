@@ -9,7 +9,6 @@
 ################################################################################
 
 import dolfin
-from matplotlib import scale
 
 import dolfin_mech as dmech
 from .Operator import Operator
