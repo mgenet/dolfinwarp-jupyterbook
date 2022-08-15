@@ -27,10 +27,10 @@ def HeartSlice_Hyperelasticity(
 
     ################################################################### Mesh ###
 
-    X0 = mesh_params.get("X0")
-    Y0 = mesh_params.get("Y0")
-    Ri = mesh_params.get("Ri")
-    Re = mesh_params.get("Re")
+    X0 = mesh_params.get("X0", 0.5)
+    Y0 = mesh_params.get("Y0", 0.5)
+    Ri = mesh_params.get("Ri", 0.2)
+    Re = mesh_params.get("Re", 0.4)
 
     mesh, boundaries_mf, Si_id, Se_id, points_mf, x1_sd, x2_sd, x3_sd, x4_sd = dmech.HeartSlice_Mesh(
         params=mesh_params)
@@ -70,12 +70,14 @@ def HeartSlice_Hyperelasticity(
         # print (len(internal_nodes_coords))
         dRi = load_params.get("dRi", -0.10     )
         dTi = load_params.get("dTi", -math.pi/4)
-        dTi_mat = numpy.array([[+math.cos(dTi), -math.sin(dTi)],
-                               [+math.sin(dTi), +math.cos(dTi)]])
         for X in internal_nodes_coords:
-            eR  = numpy.array(X) - numpy.array([X0,Y0])
-            eR /= numpy.linalg.norm(eR)
-            x = numpy.array([X0,Y0]) + dRi * eR + numpy.dot(dTi_mat, numpy.array(X)-numpy.array([X0,Y0]))
+            X_inplane = numpy.array(X) - numpy.array([X0,Y0])
+            R = numpy.linalg.norm(X_inplane)
+            T = math.atan2(X_inplane[1], X_inplane[0])
+            r = R + dRi
+            t = T + dTi
+            x_inplane = numpy.array([r * math.cos(t), r * math.sin(t)])
+            x = numpy.array([X0,Y0]) + x_inplane
             U = x - X
             # X_sd = dolfin.AutoSubDomain(lambda x, on_boundary: dolfin.near(x[0], X[0], eps=1e-3) and dolfin.near(x[1], X[1], eps=1e-3)) # MG20220813: OMG this behaves so weird!
             X_sd = dolfin.CompiledSubDomain("near(x[0], x0) && near(x[1], y0)", x0=X[0], y0=X[1])
@@ -87,14 +89,16 @@ def HeartSlice_Hyperelasticity(
                 method="pointwise")
         external_nodes_coords = [node_coords for node_coords in mesh.coordinates() if dolfin.near((node_coords[0]-X0)**2 + (node_coords[1]-Y0)**2, Re**2, eps=1e-3)]
         # print (len(external_nodes_coords))
-        dRe = load_params.get("dRe", -0.05)
+        dRe = load_params.get("dRe", -0.05     )
         dTe = load_params.get("dTe", -math.pi/8)
-        dTe_mat = numpy.array([[+math.cos(dTe), -math.sin(dTe)],
-                               [+math.sin(dTe), +math.cos(dTe)]])
         for X in external_nodes_coords:
-            eR  = numpy.array(X) - numpy.array([X0,Y0])
-            eR /= numpy.linalg.norm(eR)
-            x = numpy.array([X0,Y0]) + dRe * eR + numpy.dot(dTe_mat, numpy.array(X)-numpy.array([X0,Y0]))
+            X_inplane = numpy.array(X) - numpy.array([X0,Y0])
+            R = numpy.linalg.norm(X_inplane)
+            T = math.atan2(X_inplane[1], X_inplane[0])
+            r = R + dRe
+            t = T + dTe
+            x_inplane = numpy.array([r * math.cos(t), r * math.sin(t)])
+            x = numpy.array([X0,Y0]) + x_inplane
             U = x - X
             # X_sd = dolfin.AutoSubDomain(lambda x, on_boundary: dolfin.near(x[0], X[0], eps=1e-3) and dolfin.near(x[1], X[1], eps=1e-3)) # MG20220813: OMG this behaves so weird!
             X_sd = dolfin.CompiledSubDomain("near(x[0], x0) && near(x[1], y0)", x0=X[0], y0=X[1])
@@ -165,7 +169,8 @@ def HeartSlice_Hyperelasticity(
         print_sta=res_basename*verbose,
         write_qois=res_basename+"-qois",
         write_qois_limited_precision=1,
-        write_sol=res_basename*verbose)
+        write_sol=res_basename*verbose,
+        write_vtus=res_basename*verbose)
 
     success = integrator.integrate()
     assert (success),\

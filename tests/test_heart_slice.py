@@ -57,6 +57,6 @@ for incomp in incomp_lst:
             step_params={"dt_ini":1/10, "dt_min":1/100},
             load_params={"type":load},
             res_basename=res_folder+"/"+res_basename,
-            verbose=1)
+            verbose=0)
 
         test.test(res_basename)

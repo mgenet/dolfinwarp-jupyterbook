@@ -17,10 +17,10 @@ import meshio
 def HeartSlice_Mesh(
         params={}):
 
-    X0 = params.get("X0", 0.50)
-    Y0 = params.get("Y0", 0.50)
-    Ri = params.get("Ri", 0.20)
-    Re = params.get("Re", 0.40)
+    X0 = params.get("X0", 0.5)
+    Y0 = params.get("Y0", 0.5)
+    Ri = params.get("Ri", 0.2)
+    Re = params.get("Re", 0.4)
     l  = params.get("l" , 0.1)
 
     mesh_filebasename = params.get("mesh_filebasename", "mesh")
