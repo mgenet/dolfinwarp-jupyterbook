@@ -4,11 +4,12 @@ stages:
 
 tests:
   stage: test
-  # only: # MG20220814: Keep this for memory
-    # - Operators # MG20220814: Keep this for memory
-  except:
-    - PreOperators # MG20220413: this branch is outdated
-    - CylindricalModel # MG20211221: this branch is outdated
+  only:
+    - devel
+    - /^devel-.*/
+  # except: # MG20220815: Keep this for memory
+  #   - PreOperators # MG20220413: this branch is outdated
+  #   - CylindricalModel # MG20211221: this branch is outdated
   tags:
     - ci.inria.fr
     - large
