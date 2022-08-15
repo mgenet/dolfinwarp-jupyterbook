@@ -30,7 +30,7 @@ tests:
 pypi:
   stage: deploy
   only:
-    - tags
+    - master
   tags:
     - ci.inria.fr
     - small
