@@ -136,16 +136,16 @@ class InversePoroHyperelasticityProblem(PoroHyperelasticityProblem):
 
         self.add_qoi(
             name=self.get_porosity_name(),
-            expr=self.get_porosity_subsol().subfunc * self.dV)
+            expr=self.get_porosity_subsol().subfunc/dolfin.Constant(self.mesh_V0) * self.dV)
 
         self.add_qoi(
             name="phif0",
-            expr=(1/self.kinematics.J - self.get_porosity_subsol().subfunc) * self.dV)
+            expr=(1/self.kinematics.J - self.get_porosity_subsol().subfunc)/dolfin.Constant(self.mesh_V0) * self.dV )
 
         self.add_qoi(
             name="Phis0",
-            expr=(self.kinematics.J * self.get_porosity_subsol().subfunc) * self.dV)
+            expr=(self.kinematics.J * self.get_porosity_subsol().subfunc)/dolfin.Constant(self.mesh_V0) * self.dV)
 
         self.add_qoi(
             name="Phif0",
-            expr=(1 - self.kinematics.J * self.get_porosity_subsol().subfunc) * self.dV)
+            expr=(1 - self.kinematics.J * self.get_porosity_subsol().subfunc)/dolfin.Constant(self.mesh_V0) * self.dV)
