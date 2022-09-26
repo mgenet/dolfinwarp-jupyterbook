@@ -24,6 +24,7 @@ def RivlinCube_PoroHyperelasticity(
         mat_params={},
         step_params={},
         load_params={},
+        move = {},
         res_basename="RivlinCube_PoroHyperelasticity",
         plot_curves=False,
         verbose=0):
@@ -35,6 +36,9 @@ def RivlinCube_PoroHyperelasticity(
     elif (dim==3):
         mesh, boundaries_mf, xmin_id, xmax_id, ymin_id, ymax_id, zmin_id, zmax_id = dmech.RivlinCube_Mesh(dim=dim, params=cube_params)
 
+    if move.get("move", False) == True :
+        Umove = move.get("U")
+        dolfin.ALE.move(mesh, Umove)
     ################################################################ Porosity ###
 
     porosity_type = porosity_params.get("type", "constant")
@@ -175,6 +179,143 @@ def RivlinCube_PoroHyperelasticity(
         if (dim==3): problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(zmax_id),
             P_ini=0., P_fin=P,
+            k_step=k_step)
+    elif (load_type == "volu0"):
+        problem.add_pf_operator(
+            measure=problem.dV,
+            pf_ini=0.,
+            pf_fin=0.,
+            k_step=k_step)
+        f = load_params.get("f", 0.5)
+        problem.add_volume_force0_loading_operator(
+            measure=problem.dV,
+            F_ini=[0.]*dim,
+            F_fin = [0.]*(dim-1) + [f],
+            k_step=k_step)
+        problem.add_pf_operator(
+            measure=problem.dV,
+            pf_ini=0.,
+            pf_fin=0.,
+            k_step=k_step)
+        P = load_params.get("P", -0.5)
+        problem.add_surface_pressure0_loading_operator(
+            measure=problem.dS(xmax_id),
+            P_ini=0,
+            P_fin=P,
+            k_step=k_step)
+        problem.add_surface_pressure0_loading_operator(
+            measure=problem.dS(ymax_id),
+            P_ini=0,
+            P_fin=P,
+            k_step=k_step)
+        if (dim==3): problem.add_surface_pressure0_loading_operator(
+            measure=problem.dS(zmax_id),
+            P_ini=0,
+            P_fin=P,
+            k_step=k_step)
+    elif (load_type == "volu"):
+        problem.add_pf_operator(
+            measure=problem.dV,
+            pf_ini=0.,
+            pf_fin=0.,
+            k_step=k_step)
+        f = load_params.get("f", 1.)
+        problem.add_volume_force_loading_operator(
+            measure=problem.dV,
+            F_ini=[0.]*dim,
+            F_fin=[0.]*(dim-1) + [f],
+            k_step=k_step)
+        problem.add_pf_operator(
+            measure=problem.dV,
+            pf_ini=0.,
+            pf_fin=0.,
+            k_step=k_step)
+        P = load_params.get("P", -0.5)
+        problem.add_surface_pressure_loading_operator(
+            measure=problem.dS(xmax_id),
+            P_ini=0,
+            P_fin=P,
+            k_step=k_step)
+        problem.add_surface_pressure_loading_operator(
+            measure=problem.dS(ymax_id),
+            P_ini=0,
+            P_fin=P,
+            k_step=k_step)
+        if (dim==3): problem.add_surface_pressure_loading_operator(
+            measure=problem.dS(zmax_id),
+            P_ini=0,
+            P_fin=P,
+            k_step=k_step)
+    elif (load_type == "pgra0"):
+        problem.add_pf_operator(
+            measure=problem.dV,
+            pf_ini=0.,
+            pf_fin=0.,
+            k_step=k_step)
+        f = load_params.get("f", 0.5)
+        problem.add_volume_force0_loading_operator(
+            measure=problem.dV,
+            F_ini=[0.]*dim,
+            F_fin=[0.]*(dim-1)+[f],
+            k_step=k_step)
+        X0 = load_params.get("X0", [50]*dim)
+        N0 = load_params.get("N0", [0.]*(dim-1)+[1.])
+        P0 = load_params.get("P0", -0.5)
+        DP = load_params.get("DP", -0.25)
+        problem.add_surface_pressure_gradient0_loading_operator(
+            measure=problem.dS,
+            X0_val=X0,
+            N0_val=N0,
+            P0_ini=0.,
+            P0_fin=P0,
+            DP_ini=0.,
+            DP_fin=DP,
+            k_step=k_step)
+    elif (load_type == "pgra"):
+        problem.add_pf_operator(
+            measure=problem.dV,
+            pf_ini=0.,
+            pf_fin=0.,
+            k_step=k_step)
+        X0 = load_params.get("X0", [50]*dim)
+        N0 = load_params.get("N0", [0.]*(dim-1)+[1.])
+        P0 = load_params.get("P0", -0.5)
+        DP = load_params.get("DP", None)
+        F0 = load_params.get("F0", None)
+        if DP == None and F0 == None:
+            print("error, DP or F0 should be specified")
+        if DP == None:
+            problem.add_surface_pressure_gradient_loading_operator(
+                measure=problem.dS(),
+                X0_val=X0,
+                N0_val=N0,
+                P0_ini=0.,
+                P0_fin=P0,
+                DP_ini=0.,
+                DP_fin=DP,
+                F0 =  F0, 
+                k_step=k_step)
+        else:
+            problem.add_surface_pressure_gradient_loading_operator(
+                measure=problem.dS,
+                X0_val=X0,
+                N0_val=N0,
+                P0_ini=0.,
+                P0_fin=P0,
+                DP_ini=0.,
+                DP_fin=DP,
+                F0 = None,
+                k_step=k_step)
+        problem.add_pf_operator(
+            measure=problem.dV,
+            pf_ini=0.,
+            pf_fin=0.,
+            k_step=k_step)
+        f = load_params.get("f", 1.)
+        problem.add_volume_force0_loading_operator(
+            measure=problem.dV,
+            F_ini=[0.]*dim,
+            F_fin=[0.]*(dim-1) + [f],
             k_step=k_step)
 
     ################################################# Quantities of Interest ###
