@@ -49,7 +49,7 @@ class SurfacePressureGradientLoadingOperator(Operator):
         else :
             self.tv_DP = dmech.TimeVaryingConstant(
                  val=None, val_ini=0., val_fin=F0*V0)
-            DP = self.tv_DP.val / v
+        DP = self.tv_DP.val / v
             # DP = F0*V0 / v
         
         # print(DP_fin)

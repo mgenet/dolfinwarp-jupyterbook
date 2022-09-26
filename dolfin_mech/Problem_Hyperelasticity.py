@@ -68,8 +68,63 @@ class HyperelasticityProblem(Problem):
 
             self.add_elasticity_operators(
                 elastic_behaviors=elastic_behaviors)
+            
+            self.add_deformed_volume_operator()
 
 
+    def get_deformed_volume_name(self):
+        print("name")
+        return "v"
+
+
+
+    def add_deformed_volume_subsol(self,
+            init_val=None):
+
+        self.add_scalar_subsol(
+            name=self.get_deformed_volume_name(),
+            family="R",
+            degree=0,
+            init_val=self.mesh_V0)
+
+
+
+    def get_deformed_volume_subsol(self):
+        print("def susbsol")
+
+        return self.get_subsol(self.get_deformed_volume_name())
+
+    
+    def add_deformed_volume_operator(self,
+            k_step=None):
+
+        operator = dmech.DeformedVolumeOperator(
+            v=self.get_deformed_volume_subsol().subfunc,
+            v_test=self.get_deformed_volume_subsol().dsubtest,
+            J=self.kinematics.J,
+            V0=self.mesh_V0,
+            measure=self.dV)
+        self.add_operator(
+            operator=operator,
+            k_step=k_step)
+
+    
+    def add_surface_pressure_gradient_loading_operator(self,
+            k_step=None,
+            **kwargs):
+
+        operator = dmech.SurfacePressureGradientLoadingOperator(
+            X=self.X,
+            V0 = self.mesh_V0,
+            v=self.get_deformed_volume_subsol().subfunc,
+            U=self.get_displacement_subsol().subfunc,
+            U_test=self.get_displacement_subsol().dsubtest, 
+            kinematics=self.kinematics,
+            N=self.mesh_normals,
+            **kwargs)
+        return self.add_operator(operator=operator, k_step=k_step)
+
+    
 
     def get_displacement_name(self):
         return "U"
@@ -153,6 +208,7 @@ class HyperelasticityProblem(Problem):
             self.add_pressure_subsol(
                 degree=pressure_degree)
 
+        self.add_deformed_volume_subsol()
 
 
     def set_quadrature_degree(self,
