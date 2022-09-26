@@ -47,7 +47,6 @@ from .Operator_Poro_Wbulk import *
 from .Operator_Poro_Wpore import *
 from .Operator_Poro_Wskel import *
 from .Operator_TensorSymmetry import *
-from .Operator_Poro_DeformedVolume import *
 from .Problem import *
 from .Problem_Elasticity import *
 from .Problem_Hyperelasticity import *
@@ -69,4 +68,3 @@ from .TimeVaryingConstant import *
 from .XDMFFile import *
 from .compute_error import *
 from .write_VTU_file import *
-from .RigidBodyMotion import *

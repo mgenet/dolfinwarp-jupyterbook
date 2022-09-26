@@ -40,7 +40,7 @@ class Problem():
 
     def set_mesh(self,
             mesh,
-            define_spatial_coordinates=True,
+            define_spatial_coordinates=False,
             define_facet_normals=False,
             compute_bbox=False,
             compute_local_cylindrical_basis=False):
@@ -539,7 +539,7 @@ class Problem():
             **kwargs):
 
         operator = dmech.SurfacePressureGradient0LoadingOperator(
-            X=self.X,
+            X=dolfin.SpatialCoordinate(self.mesh),
             U_test=self.get_displacement_subsol().dsubtest,
             N=self.mesh_normals,
             **kwargs)
@@ -552,9 +552,9 @@ class Problem():
             **kwargs):
 
         operator = dmech.SurfacePressureGradientLoadingOperator(
-            X=self.X,
+            X=dolfin.SpatialCoordinate(self.mesh),
             U=self.get_displacement_subsol().subfunc,
-            U_test=self.get_displacement_subsol().dsubtest, 
+            U_test=self.get_displacement_subsol().dsubtest,
             kinematics=self.kinematics,
             N=self.mesh_normals,
             **kwargs)

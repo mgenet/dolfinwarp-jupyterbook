@@ -23,13 +23,13 @@ class TimeIntegrator():
             problem,
             solver,
             parameters,
-            print_out=False,
-            print_sta=False,
-            write_qois=False,
+            print_out=True,
+            print_sta=True,
+            write_qois=True,
             write_qois_limited_precision=False,
-            write_sol=False,
+            write_sol=True,
             write_vtus=False,
-            write_xmls=False): #### True
+            write_xmls=False):
 
         self.problem = problem
 
@@ -104,7 +104,7 @@ class TimeIntegrator():
 
             self.write_xmls = bool(write_xmls)
             if (self.write_xmls):
-                dolfin.File(self.write_sol_filebasename+".xml") << self.problem.get_subsols_func_lst()[0]
+                dolfin.File(self.write_sol_filebasename+"_"+str(0).zfill(3)+".xml") << self.problem.get_displacement_subsol().subfunc
 
 
 
@@ -195,7 +195,7 @@ class TimeIntegrator():
                                 time=k_t_tot)
 
                         if (self.write_xmls):
-                            dolfin.File(self.write_sol_filebasename+"_"+str(k_t_tot).zfill(3)+".xml") << self.problem.get_subsols_func_lst()[0]
+                            dolfin.File(self.write_sol_filebasename+"_"+str(k_t_tot).zfill(3)+".xml") << self.problem.get_displacement_subsol().subfunc
 
                     if (self.write_qois):
                         self.problem.update_qois()
