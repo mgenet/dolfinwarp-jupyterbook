@@ -18,4 +18,3 @@ class DeformedVolumeOperator(Operator):
         self.measure = measure
         
         self.res_form =  ((J - v/self.V0)* v_test) * self.measure
-    

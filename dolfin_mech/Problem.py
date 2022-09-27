@@ -40,7 +40,7 @@ class Problem():
 
     def set_mesh(self,
             mesh,
-            define_spatial_coordinates=False,
+            define_spatial_coordinates=True,
             define_facet_normals=False,
             compute_bbox=False,
             compute_local_cylindrical_basis=False):
