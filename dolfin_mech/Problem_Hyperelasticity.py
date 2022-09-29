@@ -73,7 +73,6 @@ class HyperelasticityProblem(Problem):
 
 
     def get_deformed_volume_name(self):
-        print("name")
         return "v"
 
 
@@ -90,8 +89,6 @@ class HyperelasticityProblem(Problem):
 
 
     def get_deformed_volume_subsol(self):
-        print("def susbsol")
-
         return self.get_subsol(self.get_deformed_volume_name())
 
     
