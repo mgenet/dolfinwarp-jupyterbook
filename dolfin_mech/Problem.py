@@ -630,6 +630,7 @@ class Problem():
 
         operator = dmech.InertiaOperator(
             U=self.get_displacement_subsol().subfunc,
+            U_old=self.get_displacement_subsol().func_old,
             U_test=self.get_displacement_subsol().dsubtest,
             **kwargs)
         return self.add_operator(operator=operator, k_step=k_step)

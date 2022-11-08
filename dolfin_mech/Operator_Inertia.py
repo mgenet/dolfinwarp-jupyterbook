@@ -19,6 +19,7 @@ class InertiaOperator(Operator):
 
     def __init__(self,
             U,
+            U_old,
             U_test,
             measure,
             rho_val=None, rho_ini=None, rho_fin=None):
@@ -32,7 +33,10 @@ class InertiaOperator(Operator):
         self.tv_dt = dmech.TimeVaryingConstant(0.)
         dt = self.tv_dt.val
 
-        Pi = (rho/2/dt) * dolfin.inner(U, U)**2 * self.measure
+        # Pi = (rho/2/dt) * dolfin.inner(U, U)**2 * self.measure # MG20221108: What was that?!
+
+        V = (U - U_old)/dt
+        Pi = (rho/2) * dolfin.inner(V, V) * self.measure
         self.res_form = dolfin.derivative(Pi, U, U_test)
 
 

@@ -173,7 +173,7 @@ def RivlinCube_Hyperelasticity(
         p = load_params.get("p", -0.5)
         problem.add_inertia_operator(
             measure=problem.dV,
-            rho_val=1.,
+            rho_val=1e-2,
             k_step=k_step)
         problem.add_surface_pressure0_loading_operator(
             measure=problem.dS(xmin_id),
