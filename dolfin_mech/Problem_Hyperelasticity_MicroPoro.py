@@ -333,7 +333,7 @@ class MicroPoroHyperelasticityProblem(HyperelasticityProblem):
 
     def add_macrosocpic_stress_operator(self):
 
-        for operator in self.operators:
+        for operator in self.operators: # MG20221110: Warning! Only works if there is a single operator with a material law!!
             if hasattr(operator, "material"):
                 material = operator.material
                 break
