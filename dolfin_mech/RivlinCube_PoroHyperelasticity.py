@@ -7,7 +7,7 @@
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
 ################################################################################
-
+# from copy import deepcopy
 import dolfin
 import matplotlib.pyplot as mpl
 import pandas
@@ -27,14 +27,67 @@ def RivlinCube_PoroHyperelasticity(
         move = {},
         res_basename="RivlinCube_PoroHyperelasticity",
         plot_curves=False,
-        verbose=0):
+        verbose=0,
+        inertia_val = 0,
+        multimaterial = 1,
+        BC=1):
 
     ################################################################### Mesh ###
-
     if   (dim==2):
         mesh, boundaries_mf, xmin_id, xmax_id, ymin_id, ymax_id = dmech.RivlinCube_Mesh(dim=dim, params=cube_params)
     elif (dim==3):
         mesh, boundaries_mf, xmin_id, xmax_id, ymin_id, ymax_id, zmin_id, zmax_id = dmech.RivlinCube_Mesh(dim=dim, params=cube_params)
+
+    if multimaterial :
+        domains_mf = None
+        print(len(mat_params))
+        if len(mat_params)>=2 :
+            tol = 1E-14
+            number_zones = len(mat_params)
+            mid_point = abs(cube_params.get("Y1", 1.)-cube_params.get("Y1", 0.))/number_zones
+            domains_mf = dolfin.MeshFunction('size_t', mesh, mesh.topology().dim())
+            if number_zones == 2:
+                subdomain_0 = dolfin.CompiledSubDomain("x[1] <= y1 + tol",  y1=mid_point, tol=tol)
+                subdomain_1 = dolfin.CompiledSubDomain(" x[1] >= y1 - tol",  y1=mid_point, tol=tol)
+                subdomain_0.mark(domains_mf, 0)
+                mat_params[0]["subdomain_id"] = 0
+                subdomain_1.mark(domains_mf, 1)
+                mat_params[1]["subdomain_id"] = 1
+            elif number_zones == 3 :
+                domains_mf.set_all(0)
+                # print("creating 3 subdomains...")
+                y1 = mid_point
+                y2 = 2*mid_point
+                # print("y1, y2", y1, y2)
+                subdomain_0 = dolfin.CompiledSubDomain("x[1] <= y1 + tol",  y1=y1, tol=tol)
+                subdomain_1 = dolfin.CompiledSubDomain(" x[1] >= y1 - tol",  y1=y1, tol=tol)
+                subdomain_2 = dolfin.CompiledSubDomain("x[1] >= y2 - tol",  y2=y2, tol=tol)
+                subdomain_0.mark(domains_mf, 0)
+                mat_params[0]["subdomain_id"] = 0
+                subdomain_1.mark(domains_mf, 1)
+                mat_params[1]["subdomain_id"] = 1
+                subdomain_2.mark(domains_mf, 2)
+                mat_params[2]["subdomain_id"] = 2
+                boundary_file = dolfin.File("/Users/peyrault/Documents/Gravity/Gravity_cluster/Tests/boundaries.pvd") 
+                boundary_file << domains_mf
+            else:
+                domains_mf.set_all(0)
+                subdomain_lst = []
+                subdomain_lst.append(dolfin.CompiledSubDomain("x[1] <= y1 + tol",  y1= (number_zones+1)*abs(cube_params.get("Y1", 1.)-cube_params.get("Y1", 0.))/number_zones, tol=tol))
+                for mat_id in range(0, number_zones):
+                    subdomain_lst.append(dolfin.CompiledSubDomain(" x[1] >= y1 - tol",  y1=(number_zones+1)*abs(cube_params.get("Y1", 1.)-cube_params.get("Y1", 0.))/number_zones, tol=tol))
+                    mat_params[mat_id]["subdomain_id"] = mat_id
+                    subdomain_lst[mat_id].mark(domains_mf, mat_id)
+                    subdomain_lst[mat_id+1].mark(domains_mf, mat_id+1)
+                boundary_file = dolfin.File("/Users/peyrault/Documents/Gravity/Gravity_cluster/Tests/boundaries.pvd") 
+                boundary_file << domains_mf
+
+
+    V = dolfin.Measure(
+            "dx",
+            domain=mesh)
+    # print("mesh coordinates are", mesh.coordinates())
+
 
     if move.get("move", False) == True :
         Umove = move.get("U")
@@ -69,6 +122,22 @@ def RivlinCube_PoroHyperelasticity(
                 "double",
                 mesh,
                 porosity_filename)
+        elif (porosity_type == "mesh_function_xml_custom"):
+            porosity_filename = res_basename+"-poro.xml"
+            n_cells = len(mesh.cells())
+            with open(porosity_filename, "w") as file:
+                file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+                file.write('<dolfin xmlns:dolfin="http://fenicsproject.org">\n')
+                file.write('  <mesh_function type="double" dim="'+str(dim)+'" size="'+str(n_cells)+'">\n')
+                for k_cell in range(n_cells):
+                    file.write('    <entity index="'+str(k_cell)+'" value="'+str(porosity_val[k_cell])+'"/>\n')
+                file.write('  </mesh_function>\n')
+                file.write('</dolfin>\n')
+                file.close()
+            porosity_mf = dolfin.MeshFunction(
+                "double",
+                mesh,
+                porosity_filename)
         porosity_expr = dolfin.CompiledExpression(getattr(dolfin.compile_cpp_code(dmech.get_ExprMeshFunction_cpp_pybind()), "MeshExpr")(), mf=porosity_mf, degree=0)
         porosity_fs = dolfin.FunctionSpace(mesh, 'DG', 0)
         porosity_fun = dolfin.interpolate(porosity_expr, porosity_fs)
@@ -95,37 +164,138 @@ def RivlinCube_PoroHyperelasticity(
                 porosity_filename)
         porosity_val = None
 
-    ################################################################ Problem ###
-
-    if (inverse):
-        problem = dmech.InversePoroHyperelasticityProblem(
-            mesh=mesh,
-            define_facet_normals=1,
-            boundaries_mf=boundaries_mf,
-            displacement_degree=1,
-            porosity_init_val=porosity_val,
-            porosity_init_fun=porosity_fun,
-            skel_behavior=mat_params,
-            bulk_behavior=mat_params,
-            pore_behavior=mat_params)
+    ################################################################ Problem ###    
+    if(multimaterial):
+        if (inverse):
+            problem = dmech.InversePoroHyperelasticityProblem(
+                mesh=mesh,
+                define_facet_normals=1,
+                boundaries_mf=boundaries_mf,
+                domains_mf = domains_mf,
+                displacement_degree=1,
+                porosity_init_val=porosity_val,
+                porosity_init_fun=porosity_fun,
+                # skel_behavior=mat_params,
+                skel_behaviors=mat_params,
+                # bulk_behavior=mat_params,
+                bulk_behaviors=mat_params,
+                # pore_behavior=mat_params,
+                pore_behaviors=mat_params)
+        else:
+            problem = dmech.PoroHyperelasticityProblem(
+                mesh=mesh,
+                define_facet_normals=1,
+                boundaries_mf=boundaries_mf,
+                domains_mf = domains_mf,
+                displacement_degree=1,
+                porosity_init_val=porosity_val,
+                porosity_init_fun=porosity_fun,
+                # skel_behavior=mat_params,
+                skel_behaviors=mat_params,
+                # bulk_behavior=mat_params,
+                bulk_behaviors=mat_params,
+                # pore_behavior=mat_params,
+                pore_behaviors=mat_params)
     else:
-        problem = dmech.PoroHyperelasticityProblem(
-            mesh=mesh,
-            define_facet_normals=1,
-            boundaries_mf=boundaries_mf,
-            displacement_degree=1,
-            porosity_init_val=porosity_val,
-            porosity_init_fun=porosity_fun,
-            skel_behavior=mat_params,
-            bulk_behavior=mat_params,
-            pore_behavior=mat_params)
+        if (inverse):
+            problem = dmech.InversePoroHyperelasticityProblem(
+                mesh=mesh,
+                define_facet_normals=1,
+                boundaries_mf=boundaries_mf,
+                domains_mf = domains_mf,
+                displacement_degree=1,
+                porosity_init_val=porosity_val,
+                porosity_init_fun=porosity_fun,
+                skel_behavior=mat_params,
+                # skel_behaviors=mat_params,
+                bulk_behavior=mat_params,
+                # bulk_behaviors=mat_params,
+                pore_behavior=mat_params)
+                # pore_behaviors=mat_params)
+        else:
+            problem = dmech.PoroHyperelasticityProblem(
+                mesh=mesh,
+                define_facet_normals=1,
+                boundaries_mf=boundaries_mf,
+                domains_mf = domains_mf,
+                displacement_degree=1,
+                porosity_init_val=porosity_val,
+                porosity_init_fun=porosity_fun,
+                skel_behavior=mat_params,
+                # skel_behaviors=mat_params,
+                bulk_behavior=mat_params,
+                # bulk_behaviors=mat_params,
+                pore_behavior=mat_params)
+                # pore_behaviors=mat_params)
+
 
     ########################################## Boundary conditions & Loading ###
-
-    problem.add_constraint(V=problem.get_displacement_function_space().sub(0), sub_domains=boundaries_mf, sub_domain_id=xmin_id, val=0.)
-    problem.add_constraint(V=problem.get_displacement_function_space().sub(1), sub_domains=boundaries_mf, sub_domain_id=ymin_id, val=0.)
-    if (dim==3):
-        problem.add_constraint(V=problem.get_displacement_function_space().sub(2), sub_domains=boundaries_mf, sub_domain_id=zmin_id, val=0.)
+    # problem.add_constraint(V=problem.get_displacement_function_space().sub(0), sub_domains=boundaries_mf, sub_domain_id=xmin_id, val=0.)
+    # problem.add_constraint(V=problem.get_displacement_function_space().sub(1), sub_domains=boundaries_mf, sub_domain_id=ymin_id, val=0.)
+    # if (dim==3):
+    #     problem.add_constraint(V=problem.get_displacement_function_space().sub(2), sub_domains=boundaries_mf, sub_domain_id=zmin_id, val=0.)
+    BC=1
+    if BC ==1:
+        print("implementing boundary conditions 1")
+        # if move.get("move", False) == True:
+        #     pinpoint_sd = dmech.PinpointSubDomain(coords=[0.,0.,0.], tol=1e-3)
+        # else :
+        pinpoint_sd = dmech.PinpointSubDomain(coords=[0.,0.,0.], tol=1e-4)
+        problem.add_constraint(
+                V=problem.get_displacement_function_space(), 
+                val=[0.] * dim,
+                sub_domain=pinpoint_sd,
+                method='pointwise')
+        if move.get("move", False) == False:
+            pinpoint_sd = dmech.PinpointSubDomain(coords=[cube_params["X1"],0.,0.], tol=1e-4)
+        else :
+            pinpoint_sd = dmech.PinpointSubDomain(coords=[cube_params["X1"] + Umove([cube_params["X1"], 0., 0.])[0],0.,0.], tol=1e-4)
+        # pinpoint_sd = dmech.PinpointSubDomain(coords=[cube_params["X1"],0.,0.], tol=1e-3)
+        problem.add_constraint(
+                V=problem.get_displacement_function_space().sub(1), 
+                val=0.,
+                sub_domain=pinpoint_sd,
+                method='pointwise')
+        problem.add_constraint(
+                V=problem.get_displacement_function_space().sub(2), 
+                val=0.,
+                sub_domain=pinpoint_sd,
+                method='pointwise')
+        if move.get("move", False) == False:
+            pinpoint_sd = dmech.PinpointSubDomain(coords=[0.,cube_params["Y1"],0.], tol=1e-4)
+        else :
+            pinpoint_sd = dmech.PinpointSubDomain(coords=[0. + Umove([0., cube_params["Y1"], 0.])[0],cube_params["Y1"] + Umove([0., cube_params["Y1"], 0.])[1],0.], tol=1e-3)
+    #     # pinpoint_sd = dmech.PinpointSubDomain(coords=[0.,cube_params["Y1"],0.], tol=1e-3)
+        problem.add_constraint(
+                V=problem.get_displacement_function_space().sub(2), 
+                val=0.,
+                sub_domain=pinpoint_sd,
+                method='pointwise')
+    elif BC ==2:
+        print("implementing boundary conditions 2")
+        pinpoint_sd = dmech.PinpointSubDomain(coords=[0., 0., cube_params["Z1"]], tol=1e-3)
+        problem.add_constraint(
+            V=problem.get_displacement_function_space(), 
+            val=[0.]*dim,
+            sub_domain=pinpoint_sd,
+            method='pointwise')
+        pinpoint_sd = dmech.PinpointSubDomain(coords=[cube_params["X1"], 0., cube_params["Z1"]], tol=1e-3)
+        problem.add_constraint(
+            V=problem.get_displacement_function_space().sub(1), 
+            val=0.,
+            sub_domain=pinpoint_sd,
+            method='pointwise')
+        problem.add_constraint(
+            V=problem.get_displacement_function_space().sub(2), 
+            val=0.,
+            sub_domain=pinpoint_sd,
+            method='pointwise')
+        pinpoint_sd = dmech.PinpointSubDomain(coords=[0., cube_params["Y1"], cube_params["Z1"]], tol=1e-3)
+        problem.add_constraint(
+            V=problem.get_displacement_function_space().sub(2), 
+            val=0.,
+            sub_domain=pinpoint_sd,
+            method='pointwise')
 
     Deltat = step_params.get("Deltat", 1.)
     dt_ini = step_params.get("dt_ini", 1.)
@@ -138,6 +308,17 @@ def RivlinCube_PoroHyperelasticity(
         dt_max=dt_max)
 
     load_type = load_params.get("type", "internal")
+
+    # problem.add_pf_operator(
+    #     measure=problem.dV,
+    #     pf_ini=0., pf_fin=0.,
+    #     k_step=k_step)
+    problem.add_inertia_operator(
+            measure=problem.dV,
+            rho_val=float(inertia_val),
+            k_step=k_step)
+
+    
     if (load_type == "internal"):
         pf = load_params.get("pf", +0.5)
         problem.add_pf_operator(
@@ -252,7 +433,7 @@ def RivlinCube_PoroHyperelasticity(
             pf_ini=0.,
             pf_fin=0.,
             k_step=k_step)
-        f = load_params.get("f", 0.5)
+        f = load_params.get("f", 1.)
         problem.add_volume_force0_loading_operator(
             measure=problem.dV,
             F_ini=[0.]*dim,
@@ -312,7 +493,7 @@ def RivlinCube_PoroHyperelasticity(
             pf_fin=0.,
             k_step=k_step)
         f = load_params.get("f", 1.)
-        problem.add_volume_force0_loading_operator(
+        problem.add_volume_force_loading_operator(
             measure=problem.dV,
             F_ini=[0.]*dim,
             F_fin=[0.]*(dim-1) + [f],
@@ -394,3 +575,25 @@ def RivlinCube_PoroHyperelasticity(
         qois_fig, qois_axes = mpl.subplots()
         qois_data.plot(x="pf", y=all_porosities, ax=qois_axes, ylim=[0,1], ylabel="porosity")
         qois_fig.savefig(res_basename+"-porosities-vs-pressure.pdf")
+
+    for foi in problem.fois:
+        if foi.name == "Phis0":
+            phi = foi.func.vector().get_local()
+        if foi.name == "E":
+            green_lagrange_tensor = foi.func
+ 
+    phi0 = 0.
+    for qoi in problem.qois:
+        if qoi.name == "Phis0":
+            phi0 = qoi.value
+    
+    # print("deformed mesh is", mesh.coordinates())
+    # for i in range(0, len( mesh.coordinates())):
+        # print(mesh_old[i]- mesh.coordinates()[i])
+
+    print("green-lagrange tensor", (dolfin.assemble(dolfin.inner(green_lagrange_tensor,green_lagrange_tensor)*V)/2/dolfin.assemble(dolfin.Constant(1)*V))**2 )
+
+    return(problem.get_subsols_func_lst()[0],  phi, phi0, V)
+    # mesh_old = copy.deepcopy(mesh.coordinates())
+    # dolfin.ALE.move(mesh, problem.get_subsols_func_lst()[0])
+    # return(problem.get_subsols_func_lst()[0],  phi, phi0, V, mesh_old, mesh)

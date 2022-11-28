@@ -191,3 +191,5 @@ def RivlinCube_Elasticity(
         "Integration failed. Aborting."
 
     integrator.close()
+
+    # return(problem.get_subsols_func_lst()[0], problem.dV)

@@ -29,7 +29,7 @@ class TimeIntegrator():
             write_qois_limited_precision=False,
             write_sol=True,
             write_vtus=False,
-            write_xmls=False):
+            write_xmls=True):
 
         self.problem = problem
 
@@ -104,7 +104,7 @@ class TimeIntegrator():
 
             self.write_xmls = bool(write_xmls)
             if (self.write_xmls):
-                dolfin.File(self.write_sol_filebasename+"_"+str(0).zfill(3)+".xml") << self.problem.get_displacement_subsol().subfunc
+                dolfin.File(self.write_sol_filebasename+"_"+str(0).zfill(3)+".xml") << problem.get_subsols_func_lst()[0]
 
 
 
@@ -195,7 +195,7 @@ class TimeIntegrator():
                                 time=k_t_tot)
 
                         if (self.write_xmls):
-                            dolfin.File(self.write_sol_filebasename+"_"+str(k_t_tot).zfill(3)+".xml") << self.problem.get_displacement_subsol().subfunc
+                            dolfin.File(self.write_sol_filebasename+"_"+str(k_t_tot).zfill(3)+".xml") << self.problem.get_subsols_func_lst()[0]
 
                     if (self.write_qois):
                         self.problem.update_qois()
@@ -235,6 +235,8 @@ class TimeIntegrator():
                         self.printer.print_str("Warning! Time integrator failed to move forward!")
                         self.success = False
                         break
+            if (self.write_xmls):
+                dolfin.File(self.write_sol_filebasename+"final"+".xml") << self.problem.get_subsols_func_lst()[0]
 
             self.printer.dec()
 
