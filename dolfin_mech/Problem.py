@@ -445,6 +445,7 @@ class Problem():
 
         qoi = dmech.QOI(
             *args,
+            norm = self.mesh_V0,
             form_compiler_parameters=self.form_compiler_parameters,
             **kwargs)
         self.qois += [qoi]
@@ -630,6 +631,7 @@ class Problem():
 
         operator = dmech.InertiaOperator(
             U=self.get_displacement_subsol().subfunc,
+            U_old=self.get_displacement_subsol().func_old,
             U_test=self.get_displacement_subsol().dsubtest,
             **kwargs)
         return self.add_operator(operator=operator, k_step=k_step)
