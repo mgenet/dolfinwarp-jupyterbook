@@ -24,6 +24,7 @@ def RivlinCube_PoroHyperelasticity(
         mat_params={},
         step_params={},
         load_params={},
+        move = {},
         res_basename="RivlinCube_PoroHyperelasticity",
         plot_curves=False,
         verbose=0,

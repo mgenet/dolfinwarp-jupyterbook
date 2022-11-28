@@ -95,6 +95,7 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
                 pore_behaviors = [pore_behavior]
             self.add_Wpore_operators(pore_behaviors)
 
+            self.add_deformed_volume_operator()
 
 
     def get_porosity_name(self):
@@ -136,6 +137,29 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
 
 
 
+    def get_deformed_volume_name(self):
+        return "v"
+
+
+
+    def add_deformed_volume_subsol(self,
+            init_val=None):
+
+        self.add_scalar_subsol(
+            name=self.get_deformed_volume_name(),
+            family="R",
+            degree=0,
+            init_val=self.mesh_V0)
+
+
+
+    def get_deformed_volume_subsol(self):
+
+        return self.get_subsol(self.get_deformed_volume_name())
+
+
+
+
     def set_subsols(self,
             displacement_degree=1,
             porosity_degree=None,
@@ -151,6 +175,10 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
             degree=porosity_degree,
             init_val=porosity_init_val,
             init_fun=porosity_init_fun)
+
+        self.add_deformed_volume_subsol()
+
+        
 
 
 
@@ -287,6 +315,38 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
             operator=operator,
             k_step=k_step)
         self.add_foi(expr=operator.pf, fs=self.sfoi_fs, name="pf")
+
+
+
+    def add_deformed_volume_operator(self,
+            k_step=None):
+
+        operator = dmech.DeformedVolumeOperator(
+            v=self.get_deformed_volume_subsol().subfunc,
+            v_test=self.get_deformed_volume_subsol().dsubtest,
+            J=self.kinematics.J,
+            V0=self.mesh_V0,
+            measure=self.dV)
+        self.add_operator(
+            operator=operator,
+            k_step=k_step)
+
+
+
+    def add_surface_pressure_gradient_loading_operator(self,
+            k_step=None,
+            **kwargs):
+
+        operator = dmech.SurfacePressureGradientLoadingOperator(
+            X=self.X,
+            V0 = self.mesh_V0,
+            v=self.get_deformed_volume_subsol().subfunc,
+            U=self.get_displacement_subsol().subfunc,
+            U_test=self.get_displacement_subsol().dsubtest, 
+            kinematics=self.kinematics,
+            N=self.mesh_normals,
+            **kwargs)
+        return self.add_operator(operator=operator, k_step=k_step)
 
 
 
