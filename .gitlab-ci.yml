@@ -21,12 +21,12 @@ tests-on-ubuntu-20.04:
     # - conda env list # MG20211221: conda not available in python image
     - apt update; apt upgrade -y
     - apt update; DEBIAN_FRONTEND=noninteractive TZ=Europe/Paris apt install -y git gnuplot python3-matplotlib python3-numpy python3-pandas python3-pip python-is-python3 # MG20220814: environment variables are needed to prevent tzdata installation hanging while waiting timezone info, cf. https://anonoz.github.io/tech/2020/04/24/docker-build-stuck-tzdata.html
-    - apt update; apt install -y software-properties-common; add-apt-repository -y ppa:fenics-packages/fenics; apt update; apt install -y fenics
+    - apt update; apt install -y software-properties-common; add-apt-repository -y ppa:fenics-packages/fenics; apt update; apt install -y fenics; export DISPLAY=0:0
 #     - apt update; apt install -y libopenblas-base; export OMP_NUM_THREADS="1" # MG20221201: This seems to fail in ubuntu 20.04
     - apt update; apt install -y libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxft-dev libxinerama1 gcc-multilib xvfb gmsh; pip install gmsh
     - apt update; apt install -y python3-h5py; pip install meshio; pip install --upgrade numpy # MG20220814: meshio needs latest numpy apparently
+    - pip install numpy==1.23.5 # MG20230103: apparently numpy >= 1.24 does not work anymore with the old version of pandas (and probably other stuff) present in Ubuntu 20.04 apt repo, cf. https://stackoverflow.com/a/74975994
     - pip install git+https://gitlab.inria.fr/mgenet/myPythonLibrary.git
-    # - git checkout Operators # MG20211221: Branch is already checked out
     - cd tests; ln -s ../dolfin_mech; make
 
 tests-on-ubuntu-22.04:
