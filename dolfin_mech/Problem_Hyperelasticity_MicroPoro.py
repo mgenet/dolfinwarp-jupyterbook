@@ -113,6 +113,7 @@ class MicroPoroHyperelasticityProblem(HyperelasticityProblem):
             self.add_macroscopic_stretch_symmetry_penalty_operator(pen_val=1e6)
 
             self.add_macrosocpic_stress_operator()
+            # self.add_macrosocpic_stress_operator(pen_val=1e6)
 
             if (bcs == "kubc"):
                 self.add_kubc()
@@ -324,6 +325,7 @@ class MicroPoroHyperelasticityProblem(HyperelasticityProblem):
 
         operator = dmech.MacroscopicStretchSymmetryPenaltyOperator(
             U_bar=self.get_macroscopic_stretch_subsol().subfunc,
+            U_bar_test=self.get_macroscopic_stretch_subsol().dsubtest,
             sol=self.sol_func,
             sol_test=self.dsol_test,
             measure=self.dV,
@@ -339,13 +341,16 @@ class MicroPoroHyperelasticityProblem(HyperelasticityProblem):
         operator = dmech.MacroscopicStretchComponentPenaltyOperator(
             U_bar=self.get_macroscopic_stretch_subsol().subfunc,
             U_bar_test=self.get_macroscopic_stretch_subsol().dsubtest,
+            sol=self.sol_func,
+            sol_test=self.dsol_test,
             measure=self.dV,
             **kwargs)
         return self.add_operator(operator, k_step=k_step)
 
 
 
-    def add_macrosocpic_stress_operator(self):
+    def add_macrosocpic_stress_operator(self,
+            **kwargs):
 
         for operator in self.operators: # MG20221110: Warning! Only works if there is a single operator with a material law!!
             if hasattr(operator, "material"):
@@ -357,8 +362,11 @@ class MicroPoroHyperelasticityProblem(HyperelasticityProblem):
             mesh_bbox_V0=self.mesh_bbox_V0,
             sigma_bar=self.get_macroscopic_stress_subsol().subfunc,
             sigma_bar_test=self.get_macroscopic_stress_subsol().dsubtest,
+            sol=self.sol_func,
+            sol_test=self.dsol_test,
             material=material,
-            measure=self.dV)
+            measure=self.dV,
+            **kwargs)
         return self.add_operator(operator)
 
 
@@ -367,14 +375,14 @@ class MicroPoroHyperelasticityProblem(HyperelasticityProblem):
             k_step=None,
             **kwargs):
 
-        for operator in self.operators:
+        for operator in self.operators: # MG20221110: Warning! Only works if there is a single operator with a material law!!
             if hasattr(operator, "material"):
                 material = operator.material
                 break
 
         operator = dmech.MacroscopicStressComponentPenaltyOperator(
-            # sigma_bar=self.get_macroscopic_stress_subsol().subfunc,
-            # sigma_bar_test=self.get_macroscopic_stress_subsol().dsubtest,
+            sigma_bar=self.get_macroscopic_stress_subsol().subfunc,
+            sigma_bar_test=self.get_macroscopic_stress_subsol().dsubtest,
             sol=self.sol_func,
             sol_test=self.dsol_test,
             material=material,
