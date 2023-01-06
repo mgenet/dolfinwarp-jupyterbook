@@ -109,7 +109,8 @@ class MicroPoroHyperelasticityProblem(HyperelasticityProblem):
                 self.add_hydrostatic_pressure_operator()
                 self.add_incompressibility_operator()
 
-            self.add_macroscopic_stretch_symmetry_operator()
+            # self.add_macroscopic_stretch_symmetry_operator()
+            self.add_macroscopic_stretch_symmetry_penalty_operator(pen_val=1e6)
 
             self.add_macrosocpic_stress_operator()
 
@@ -314,6 +315,19 @@ class MicroPoroHyperelasticityProblem(HyperelasticityProblem):
             tensor=self.get_macroscopic_stretch_subsol().subfunc,
             tensor_test=self.get_macroscopic_stretch_subsol().dsubtest,
             measure=self.dV)
+        return self.add_operator(operator)
+
+
+
+    def add_macroscopic_stretch_symmetry_penalty_operator(self,
+            **kwargs):
+
+        operator = dmech.MacroscopicStretchSymmetryPenaltyOperator(
+            U_bar=self.get_macroscopic_stretch_subsol().subfunc,
+            sol=self.sol_func,
+            sol_test=self.dsol_test,
+            measure=self.dV,
+            **kwargs)
         return self.add_operator(operator)
 
 

@@ -47,6 +47,7 @@ from .Operator_MacroscopicStress import *
 from .Operator_Penalty_DirectionalDisplacement import *
 from .Operator_Penalty_MacroscopicStressComponent import *
 from .Operator_Penalty_MacroscopicStretchComponent import *
+from .Operator_Penalty_MacroscopicStretchSymmetry import *
 from .Operator_Penalty_NormalDisplacement import *
 from .Operator_Poro_Pf import *
 from .Operator_Poro_Wbulk import *
