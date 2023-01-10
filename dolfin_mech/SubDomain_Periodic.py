@@ -72,12 +72,22 @@ class PeriodicSubDomain(dolfin.SubDomain):
 
 
     def inside_2D(self, x, on_boundary):
-        return bool(on_boundary and (dolfin.near(x[0], self.xmin, self.tol) or dolfin.near(x[1], self.ymin, self.tol)) and not (dolfin.near(x[0], self.xmax, self.tol) or dolfin.near(x[1], self.ymax, self.tol)))
+        return bool(on_boundary and
+                    (dolfin.near(x[0], self.xmin, self.tol)
+                  or dolfin.near(x[1], self.ymin, self.tol))
+            and not (dolfin.near(x[0], self.xmax, self.tol)
+                  or dolfin.near(x[1], self.ymax, self.tol)))
 
 
 
     def inside_3D(self, x, on_boundary):
-        return bool(on_boundary and (dolfin.near(x[0], self.xmin, self.tol) or dolfin.near(x[1], self.ymin, self.tol) or dolfin.near(x[2], self.zmin, self.tol)) and not (dolfin.near(x[0], self.xmax, self.tol) or dolfin.near(x[1], self.ymax, self.tol) or dolfin.near(x[2], self.zmax, self.tol)))
+        return bool(on_boundary and
+                    (dolfin.near(x[0], self.xmin, self.tol)
+                  or dolfin.near(x[1], self.ymin, self.tol)
+                  or dolfin.near(x[2], self.zmin, self.tol))
+            and not (dolfin.near(x[0], self.xmax, self.tol)
+                  or dolfin.near(x[1], self.ymax, self.tol)
+                  or dolfin.near(x[2], self.zmax, self.tol)))
 
 
 
@@ -174,6 +184,6 @@ class PeriodicSubDomain(dolfin.SubDomain):
             y[2] = self.zmin
         # FAB: Else clause is there to have the point always end up mapped somewhere, cf. https://fenicsproject.discourse.group/t/periodic-boundary-class-for-2-target-domains/99/2
         else:
-            y[0] = -1000.
-            y[1] = -1000.
-            y[2] = -1000.
+            y[0] = -1.
+            y[1] = -1.
+            y[2] = -1.
