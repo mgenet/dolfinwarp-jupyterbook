@@ -469,7 +469,11 @@ class Problem():
             self.steps[k_step].operators += [operator]
         return operator
 
+################################################################## operators ###
 
+# MG20230131: Loading operators should not be there,
+# but they are shared between Elasticity & HyperElasticity problems,
+# so it is more convenient for the moment.
 
     def add_volume_force0_loading_operator(self,
             k_step=None,
@@ -635,7 +639,7 @@ class Problem():
             **kwargs)
         return self.add_operator(operator=operator, k_step=k_step)
 
-
+################################################################ constraints ###
 
     def add_constraint(self,
             *args,
