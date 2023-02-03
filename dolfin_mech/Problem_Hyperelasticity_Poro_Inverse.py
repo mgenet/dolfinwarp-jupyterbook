@@ -12,6 +12,7 @@ import dolfin
 
 import dolfin_mech as dmech
 from .Problem_Hyperelasticity_Poro import PoroHyperelasticityProblem
+import numpy
 
 ################################################################################
 
@@ -53,11 +54,15 @@ class InversePoroHyperelasticityProblem(PoroHyperelasticityProblem):
     def init_known_porosity(self,
             porosity_init_val,
             porosity_init_fun):
+        
+        # print(porosity_init_fun.vector().get_local())
 
         if   (porosity_init_val   is not None):
             self.phis = dolfin.Constant(porosity_init_val)
         elif (porosity_init_fun is not None):
             self.phis = porosity_init_fun
+            # print(self.phis.vector().get_local())
+            # print("phi average", dolfin.assemble(self.phis*self.dV))
         self.add_foi(
             expr=self.phis,
             fs=self.get_porosity_function_space().collapse(),
@@ -78,6 +83,19 @@ class InversePoroHyperelasticityProblem(PoroHyperelasticityProblem):
             expr=1 - self.kinematics.J * self.get_porosity_subsol().subfunc,
             fs=self.get_porosity_function_space().collapse(),
             name="Phif0")
+
+    def get_X0_mass(self):
+        self.X0_mass = numpy.empty(self.dim)
+        # print("dim=", self.dim)
+        for k_dim in range(self.dim):
+            self.X0_mass[k_dim] = dolfin.assemble((self.phis*self.X[k_dim])*self.dV)/dolfin.assemble(self.phis*self.dV)
+        # print("X0mass", self.X0_mass)
+        # self.X0_mass = dolfin.Constant(self.X0_mass)
+        return(self.X0_mass)
+    
+    def get_density(self):
+        self.density = self.phis*1e-6
+        return(self.density)
 
 
 
@@ -112,7 +130,6 @@ class InversePoroHyperelasticityProblem(PoroHyperelasticityProblem):
             material_scaling=material_scaling,
             measure=self.get_subdomain_measure(subdomain_id))
         return self.add_operator(operator)
-
 
 
     def add_Wpore_operator(self,

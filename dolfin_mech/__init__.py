@@ -54,6 +54,8 @@ from .Operator_Poro_Wbulk import *
 from .Operator_Poro_Wpore import *
 from .Operator_Poro_Wskel import *
 from .Operator_TensorSymmetry import *
+from .Operator_Poro_DeformedMatrix import *
+from .Operator_Poro_x0Direct import *
 from .Problem import *
 from .Problem_Elasticity import *
 from .Problem_Hyperelasticity import *
