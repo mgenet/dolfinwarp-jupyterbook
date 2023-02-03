@@ -95,7 +95,13 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
                 pore_behaviors = [pore_behavior]
             self.add_Wpore_operators(pore_behaviors)
 
-            self.add_deformed_volume_operator()
+            if not self.inverse:
+                self.add_deformed_volume_operator()
+                self.add_x0_direct_operator()
+                self.add_deformed_matrix1_operator()
+                self.add_deformed_matrix2_operator()
+                self.add_deformed_matrix3_operator()
+                self.add_deformed_matrix4_operator()
 
 
     def get_porosity_name(self):
@@ -140,6 +146,20 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
     def get_deformed_volume_name(self):
         return "v"
 
+    def get_deformed_matrix1_name(self):
+        return "M1_d"
+    
+    def get_deformed_matrix2_name(self):
+        return "M2_d"
+
+    def get_deformed_matrix3_name(self):
+        return "M3_d"
+
+    def get_deformed_matrix4_name(self):
+        return "M4_d"
+
+    def get_x0_direct_name(self):
+        return "x0"
 
 
     def add_deformed_volume_subsol(self,
@@ -151,11 +171,148 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
             degree=0,
             init_val=self.mesh_V0)
 
+    def add_deformed_matrix1_subsol(self,
+            degree=0,
+            symmetry=None,
+            init_val=None):
+
+        self.add_tensor_subsol(
+            name=self.get_deformed_matrix1_name(),
+            family="R",
+            degree=degree,
+            symmetry=symmetry,
+            init_val=init_val)
+
+    def add_deformed_matrix2_subsol(self,
+            degree=0,
+            symmetry=None,
+            init_val=None):
+
+        self.add_tensor_subsol(
+            name=self.get_deformed_matrix2_name(),
+            family="R",
+            degree=degree,
+            symmetry=symmetry,
+            init_val=init_val)
+
+    def add_deformed_matrix3_subsol(self,
+            degree=0,
+            symmetry=None,
+            init_val=None):
+
+        self.add_tensor_subsol(
+            name=self.get_deformed_matrix3_name(),
+            family="R",
+            degree=degree,
+            symmetry=symmetry,
+            init_val=init_val)
+
+    def add_deformed_matrix4_subsol(self,
+            degree=0,
+            symmetry=None,
+            init_val=None):
+
+        self.add_tensor_subsol(
+            name=self.get_deformed_matrix4_name(),
+            family="R",
+            degree=degree,
+            symmetry=symmetry,
+            init_val=init_val)
+    
+    
+
+
+    def add_x0_direct_subsol(self,
+            init_val=None):
+
+        self.add_vector_subsol(
+            name=self.get_x0_direct_name(),
+            family="R",
+            degree=0,
+            init_val=[dolfin.assemble(self.X[0]*self.dV)/self.mesh_V0, dolfin.assemble(self.X[1]*self.dV)/self.mesh_V0, dolfin.assemble(self.X[2]*self.dV)/self.mesh_V0])
 
 
     def get_deformed_volume_subsol(self):
 
         return self.get_subsol(self.get_deformed_volume_name())
+
+    def get_deformed_matrix1_subsol(self):
+        return self.get_subsol(self.get_deformed_matrix1_name())
+
+    def get_deformed_matrix2_subsol(self):
+        return self.get_subsol(self.get_deformed_matrix2_name())
+    
+    def get_deformed_matrix3_subsol(self):
+        return self.get_subsol(self.get_deformed_matrix3_name())
+
+    def get_deformed_matrix4_subsol(self):
+        return self.get_subsol(self.get_deformed_matrix4_name())
+
+    
+    def get_x0_direct_subsol(self):
+
+        return self.get_subsol(self.get_x0_direct_name())
+
+
+    
+    def get_density_direct(self):
+        self.density = self.Phis0*1e-6
+        # print("density=", self.density)
+        return(self.density)
+    
+    def get_X0_mass_direct(self):
+        self.X0_mass_direct = numpy.empty(self.dim)
+        for k_dim in range(self.dim):
+            self.X0_mass_direct[k_dim] = dolfin.assemble((self.Phis0*(self.X[k_dim]+self.get_displacement_subsol().subfunc[k_dim]))*self.dV)/dolfin.assemble(self.Phis0*self.dV)
+        self.X0_mass_direct = dolfin.Constant(self.X0_mass_direct)
+        return(self.X0_mass_direct)
+
+
+    def list_to_matrix(self, a):
+        length = self.dim
+        as_matrix = [[0, -a[2], a[1]], [a[2], 0, -a[0]], [-a[1], a[0],0]]
+        return(as_matrix)
+
+    def get_coefficients_inverse(self):
+        X0 = self.get_X0_mass()
+        Xtilde = self.X-dolfin.Constant(X0)
+        N = self.mesh_normals
+        # print("test",dolfin.assemble(N[2]*N[1]*self.dS))
+        # A = dolfin.as_matrix([[dolfin.assemble((N[i]*N[j])*self.dS) for j in range(self.dim)] for i in range(self.dim)])
+        A = [[dolfin.assemble((N[i]*N[j])*self.dS) for j in range(self.dim)] for i in range(self.dim)]
+        # print("A=", A)
+        B_int = dolfin.cross(Xtilde,N) 
+        # B = dolfin.as_matrix([[dolfin.assemble((N[i]*B_int[j])*self.dS) for j in range(self.dim)] for i in range(self.dim)])
+        B = [[dolfin.assemble((N[i]*B_int[j])*self.dS) for j in range(self.dim)] for i in range(self.dim)]
+        # print("B=", B)
+        C_int1 = self.list_to_matrix(Xtilde)
+        C_int2 = dolfin.outer(N,N)
+        C_int3 = dolfin.as_matrix(C_int1)*dolfin.as_matrix(C_int2)
+        # C = dolfin.as_matrix( [ [dolfin.assemble(C_int3[i,j]*self.dS) for j in range(self.dim)] for i in range(self.dim)])
+        C = [ [dolfin.assemble(C_int3[i,j]*self.dS) for j in range(self.dim)] for i in range(self.dim)]
+        # print("C=", C)
+        D_int1 = self.list_to_matrix(Xtilde)
+        D_int2 = dolfin.cross(Xtilde, N)  
+        D_int3 = dolfin.outer(N, D_int2)
+        D_int4 = dolfin.as_matrix(D_int1)*dolfin.as_matrix(D_int3)
+        # D = dolfin.as_matrix( [ [dolfin.assemble(D_int4[i,j]*self.dS) for j in range(self.dim)] for i in range(self.dim)])
+        D =  [ [dolfin.assemble(D_int4[i,j]*self.dS) for j in range(self.dim)] for i in range(self.dim)]
+        # print("D=", D)
+        E = numpy.block([[numpy.array(A), numpy.array(B)], [numpy.array(C), numpy.array(D)]])
+        # print("E=", E)
+        inverse_matrix = inv(E) 
+        # print("inverse=", inverse_matrix)
+        G_ = self.sign * 9.81e3 * dolfin.assemble(self.get_density()*self.dV)
+        second_membre = numpy.transpose(numpy.matrix([0, 0, G_,0,0,0]))
+        # print("second membre", second_membre)
+        sol = inverse_matrix*second_membre
+        sol = sol.tolist()
+        lbda = [sol[0][0], sol[1][0], sol[2][0]]
+        mu = [sol[3][0], sol[4][0], sol[5][0]]
+        print("lbda, mu =", lbda, mu)
+        return([lbda, mu])
+
+    
 
 
 
@@ -176,7 +333,13 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
             init_val=porosity_init_val,
             init_fun=porosity_init_fun)
 
-        self.add_deformed_volume_subsol()
+        if not inverse:
+            self.add_deformed_volume_subsol()
+            self.add_x0_direct_subsol()
+            self.add_deformed_matrix1_subsol(symmetry=None)
+            self.add_deformed_matrix2_subsol(symmetry=None)
+            self.add_deformed_matrix3_subsol(symmetry=None)
+            self.add_deformed_matrix4_subsol(symmetry=None)
 
         
 
@@ -332,6 +495,94 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
             k_step=k_step)
 
 
+    def add_deformed_matrix1_operator(self,
+            k_step=None):
+
+        operator = dmech.DeformedMatrixOperator1(
+            M1_d=self.get_deformed_matrix1_subsol().subfunc,
+            M1_test=self.get_deformed_matrix1_subsol().dsubtest,
+            kinematics = self.kinematics,
+            N = self.mesh_normals,
+            S0=dolfin.assemble(dolfin.Constant(1)*self.dS),
+            measure=self.dS)
+        self.add_operator(
+            operator=operator,
+            k_step=k_step)
+
+    def add_deformed_matrix2_operator(self,
+            k_step=None):
+
+        operator = dmech.DeformedMatrixOperator2(
+            X = self.X,
+            U=self.get_displacement_subsol().subfunc,
+            x0 = self.get_x0_direct_subsol().subfunc,
+            M2_d=self.get_deformed_matrix2_subsol().subfunc,
+            M2_test=self.get_deformed_matrix2_subsol().dsubtest,
+            kinematics = self.kinematics,
+            N = self.mesh_normals,
+            S0=dolfin.assemble(dolfin.Constant(1)*self.dS),
+            measure=self.dS)
+        self.add_operator(
+            operator=operator,
+            k_step=k_step)
+
+    def add_deformed_matrix3_operator(self,
+            k_step=None):
+
+        operator = dmech.DeformedMatrixOperator3(
+            X = self.X,
+            U=self.get_displacement_subsol().subfunc,
+            x0 = self.get_x0_direct_subsol().subfunc,
+            M3_d=self.get_deformed_matrix3_subsol().subfunc,
+            M3_test=self.get_deformed_matrix3_subsol().dsubtest,
+            kinematics = self.kinematics,
+            N = self.mesh_normals,
+            S0=dolfin.assemble(dolfin.Constant(1)*self.dS),
+            measure=self.dS)
+        self.add_operator(
+            operator=operator,
+            k_step=k_step)
+
+    def add_deformed_matrix4_operator(self,
+            k_step=None):
+
+        operator = dmech.DeformedMatrixOperator4(
+            X = self.X,
+            U=self.get_displacement_subsol().subfunc,
+            x0 = self.get_x0_direct_subsol().subfunc,
+            M4_d=self.get_deformed_matrix4_subsol().subfunc,
+            M4_test=self.get_deformed_matrix4_subsol().dsubtest,
+            kinematics = self.kinematics,
+            N = self.mesh_normals,
+            S0=dolfin.assemble(dolfin.Constant(1)*self.dS),
+            measure=self.dS)
+        self.add_operator(
+            operator=operator,
+            k_step=k_step)
+
+
+    def add_x0_direct_operator(self,
+            k_step=None):
+
+        operator = dmech.x0DirectOperator(
+            x0=self.get_x0_direct_subsol().subfunc,
+            x0_test=self.get_x0_direct_subsol().dsubtest,
+            X=self.X,
+            U=self.get_displacement_subsol().subfunc,
+            phis0 = self.Phis0,
+            V0=self.mesh_V0,
+            rho0=dolfin.assemble(self.Phis0*self.dV),
+            measure=self.dV)
+        self.add_operator(
+            operator=operator,
+            k_step=k_step)
+
+
+    def call_before_assembly(self,
+            k_iter,
+            **kwargs):
+        # print("J=", dolfin.assemble(self.kinematics.J*self.dV))
+        return(k_iter)
 
     def add_surface_pressure_gradient_loading_operator(self,
             k_step=None,
@@ -339,12 +590,31 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
 
         operator = dmech.SurfacePressureGradientLoadingOperator(
             X=self.X,
-            V0 = self.mesh_V0,
-            v=self.get_deformed_volume_subsol().subfunc,
+            x0 = self.get_x0_direct_subsol().subfunc,
             U=self.get_displacement_subsol().subfunc,
             U_test=self.get_displacement_subsol().dsubtest, 
             kinematics=self.kinematics,
             N=self.mesh_normals,
+            M1_d =self.get_deformed_matrix1_subsol().subfunc,
+            M2_d =self.get_deformed_matrix2_subsol().subfunc,
+            M3_d =self.get_deformed_matrix3_subsol().subfunc,
+            M4_d =self.get_deformed_matrix4_subsol().subfunc,
+            second_membre = [0, 0, dolfin.assemble(dolfin.Constant(9.81e-3)*self.Phis0*self.dV),0,0,0],
+            **kwargs)
+
+        return self.add_operator(operator=operator, k_step=k_step)
+
+
+    def add_surface_pressure_gradient0_loading_operator(self,
+            k_step=None,
+            **kwargs):
+
+        operator = dmech.SurfacePressureGradient0LoadingOperator(
+            X=self.X,
+            X0 = self.get_X0_mass(),
+            U_test=self.get_displacement_subsol().dsubtest, 
+            N=self.mesh_normals,
+            vect = self.get_coefficients_inverse(),
             **kwargs)
         return self.add_operator(operator=operator, k_step=k_step)
 
