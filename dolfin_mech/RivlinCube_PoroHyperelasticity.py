@@ -179,7 +179,6 @@ def RivlinCube_PoroHyperelasticity(
 
     ################################################# Quantities of Interest ###
 
-    problem.add_deformed_volume_qoi()
     problem.add_global_strain_qois()
     problem.add_global_stress_qois()
     problem.add_global_porosity_qois()

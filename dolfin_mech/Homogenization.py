@@ -15,7 +15,7 @@ import dolfin_mech as dmech
 # from __future__ import print_function
 import dolfin
 import numpy as np
-
+import math
 ################################################################################
 
 class HomogenizedParameters():
@@ -25,30 +25,21 @@ class HomogenizedParameters():
     def __init__(self,
             dim,
             mesh,
-            E_s,
-            nu_s):
+            mat_params,
+            vertices,
+            vol,
+            bbox):
 
 
         self.mesh = mesh
-        self.E_s = E_s
-        self.nu_s = nu_s
+        self.E_s = mat_params["E"]
+        self.nu_s = mat_params["nu"]
         self.dim = dim
+        self.vertices=vertices
+        self.vol=vol
 
-        coord = self.mesh.coordinates()
-        x_max = max(coord[:,0]); x_min = min(coord[:,0])
-        y_max = max(coord[:,1]); y_min = min(coord[:,1])
-        if (self.dim==3): z_max = max(coord[:,2]); z_min = min(coord[:,2])
-        self.corners = np.array([[x_min, y_min],
-                                 [x_max, y_min],
-                                 [x_max, y_max],
-                                 [x_min, y_max]])
-        if (self.dim==2): 
-            self.bbox = [x_min, x_max, y_min, y_max]
-            self.vol = (x_max - x_min) * (y_max - y_min)
-        elif (self.dim==3): 
-            self.bbox = [x_min, x_max, y_min, y_max, z_min, z_max]
-            self.vol = (x_max - x_min) * (y_max - y_min) * (z_max - z_min)
-        # print ("self.vol:", self.vol)
+        self.bbox=bbox
+        print ("self.vol:", self.vol)
 
 
     
@@ -94,7 +85,7 @@ class HomogenizedParameters():
     def homogenized_param(self):
         Ve = dolfin.VectorElement("CG", self.mesh.ufl_cell(), 2)
         Re = dolfin.VectorElement("R", self.mesh.ufl_cell(), 0)
-        W = dolfin.FunctionSpace(self.mesh, dolfin.MixedElement([Ve, Re]), constrained_domain=dmech.PeriodicSubDomain(self.dim, self.bbox))
+        W = dolfin.FunctionSpace(self.mesh, dolfin.MixedElement([Ve, Re]), constrained_domain=dmech.PeriodicSubDomain(self.dim, self.bbox, self.vertices))
         V = dolfin.FunctionSpace(self.mesh, Ve)
 
         v_, lamb_ = dolfin.TestFunctions(W)
@@ -147,6 +138,8 @@ class HomogenizedParameters():
 
         print("E_hom:" +str(E_hom))
         print("nu_hom:" +str(nu_hom))
+        # print(Chom[0, 0], lmbda_hom + 2*mu_hom)
+        print("Isotropy = " +str ((lmbda_hom + 2*mu_hom - abs(lmbda_hom + 2*mu_hom - Chom[0, 0]))/(lmbda_hom + 2*mu_hom) * 100) +"%")
 
         return lmbda_hom, mu_hom
 

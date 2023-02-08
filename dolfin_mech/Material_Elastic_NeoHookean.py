@@ -31,22 +31,33 @@ class NeoHookeanElasticMaterial(ElasticMaterial):
         if (decoup):
             if   (self.kinematics.dim == 2):
                 self.Psi   = self.C1 * (self.kinematics.IC_bar + self.kinematics.J**(-2/3) - 3)  # MG20200206: Plane strain
+                self.Psi_old   = self.C1 * (self.kinematics.IC_bar_old + self.kinematics.J_old**(-2/3) - 3)  # MG20200206: Plane strain
                 assert (0), "ToDo. Aborting."
             elif (self.kinematics.dim == 3):
                 self.Psi   = self.C1 * (self.kinematics.IC_bar - 3)
+                self.Psi_old   = self.C1 * (self.kinematics.IC_bar_old - 3)
                 self.Sigma = dolfin.diff(self.Psi, self.kinematics.C)
+                self.Sigma_old = dolfin.diff(self.Psi_old, self.kinematics.C_old)
         else:
             if   (self.kinematics.dim == 2):
                 self.Psi   =   self.C1 * (self.kinematics.IC - 2 - 2*dolfin.ln(self.kinematics.J)) # MG20200206: Plane strain
                 self.Sigma = 2*self.C1 * (self.kinematics.I - self.kinematics.C_inv) # MG20200206: Cannot differentiate Psi wrt to C because J is not defined as a function of C
+
+                self.Psi_old   =   self.C1 * (self.kinematics.IC_old - 2 - 2*dolfin.ln(self.kinematics.J_old)) # Mahdi
+                self.Sigma_old = 2*self.C1 * (self.kinematics.I - self.kinematics.C_inv_old) # Mahdi
+
             elif (self.kinematics.dim == 3):
                 self.Psi   =   self.C1 * (self.kinematics.IC - 3 - 2*dolfin.ln(self.kinematics.J))
                 self.Sigma = 2*self.C1 * (self.kinematics.I - self.kinematics.C_inv) # MG20200206: Cannot differentiate Psi wrt to C because J is not defined as a function of C
 
+                self.Psi_old   =   self.C1 * (self.kinematics.IC_old - 3 - 2*dolfin.ln(self.kinematics.J_old)) # Mahdi
+                self.Sigma_old = 2*self.C1 * (self.kinematics.I - self.kinematics.C_inv_old) # Mahdi
         # self.P = dolfin.diff(self.Psi, self.kinematics.F) # MG20220426: Cannot do that for micromechanics problems
         self.P = self.kinematics.F * self.Sigma
+        self.P_old = self.kinematics.F_old * self.Sigma_old
 
         self.sigma = self.P * self.kinematics.F.T / self.kinematics.J
+        self.sigma_old = self.P_old * self.kinematics.F_old.T / self.kinematics.J_old
 
 
 

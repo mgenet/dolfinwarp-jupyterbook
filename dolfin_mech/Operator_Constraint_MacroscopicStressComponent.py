@@ -18,34 +18,49 @@ import dolfin
 import dolfin_mech as dmech
 from .Operator import Operator
 
-import numpy
-
 ################################################################################
 
-class MacroscopicStressOperator(Operator):
+class MacroscopicStressComponentConstraintOperator(Operator):
 
     def __init__(self,
-            sigma_bar,
-            sigma_bar_test,
+            lambda_bar, lambda_bar_test,
+            sol, sol_test,
             vs,
             v,
-            Vs0,
             kinematics,
             material,
+            Vs0,
+            i, j,
             measure,
-            P_val=None, P_ini=None, P_fin=None):
+            sigma_bar_ij_val=None, sigma_bar_ij_ini=None, sigma_bar_ij_fin=None,
+            pf_val=None, pf_ini=None, pf_fin=None):
 
+        self.kinematics = kinematics
         self.material = material
         self.measure  = measure
 
-        self.tv_P = dmech.TimeVaryingConstant(
-            val=P_val, val_ini=P_ini, val_fin=P_fin)
-        P = self.tv_P.val
+        self.tv_pf = dmech.TimeVaryingConstant(
+            val=pf_val, val_ini=pf_ini, val_fin=pf_fin)
+        pf = self.tv_pf.val
 
-        self.res_form = dolfin.inner(sigma_bar * v/Vs0 - self.material.sigma * kinematics.J + (v - vs)/Vs0 * P * dolfin.Identity(2), sigma_bar_test) * self.measure # MG20220426: Need to compute <sigma> properly, including fluid pressure
+        self.tv_sigma_bar_ij = dmech.TimeVaryingConstant(
+            val=sigma_bar_ij_val, val_ini=sigma_bar_ij_ini, val_fin=sigma_bar_ij_fin)
+        sigma_bar_ij = self.tv_sigma_bar_ij.val
+
+        dim = self.kinematics.U.ufl_shape[0]
+        I = dolfin.Identity(dim)
+        vf = v - vs
+
+
+        sigma_tilde = self.material.sigma * kinematics.J - (vf/Vs0) * pf * I
+        self.res_form = lambda_bar_test[i,j] * (sigma_tilde[i,j] - sigma_bar_ij * v/Vs0) * self.measure
+
+        self.res_form += lambda_bar[i,j] * dolfin.derivative(sigma_tilde[i,j], sol, sol_test) * self.measure
+
 
 
     def set_value_at_t_step(self,
-        t_step):
-        
-        self.tv_P.set_value_at_t_step(t_step)
+            t_step):
+
+        self.tv_sigma_bar_ij.set_value_at_t_step(t_step)
+        self.tv_pf.set_value_at_t_step(t_step)

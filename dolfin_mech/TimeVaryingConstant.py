@@ -85,6 +85,7 @@ class TimeVaryingConstant():
 
 
 
+
     def set_dvalue_at_t_step(self,
             t_step):
 
@@ -115,3 +116,15 @@ class TimeVaryingConstant():
         # print (self.val.str(1))
         self.set_value(0*self.val_ini)
         # print (self.val.str(1))
+
+
+    
+    # def surface_change_rate(self,
+    #         kinematics,
+    #         dt):
+            # measure,
+            # dt):
+        # print(kinematics.J)
+        # print("dtt = " +str(dt))
+        # print(dolfin.assemble(dolfin.Constant(1) * measure))
+

@@ -31,8 +31,10 @@ class CiarletGeymonatNeoHookeanElasticMaterial(ElasticMaterial):
 
         self.Psi   = self.bulk.Psi   + self.dev.Psi
         self.Sigma = self.bulk.Sigma + self.dev.Sigma
+        self.Sigma_old = self.bulk.Sigma_old + self.dev.Sigma_old
         self.P     = self.bulk.P     + self.dev.P
         self.sigma = self.bulk.sigma + self.dev.sigma
+        self.sigma_old = self.bulk.sigma_old + self.dev.sigma_old
 
 
 

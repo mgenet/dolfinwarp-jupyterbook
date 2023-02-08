@@ -9,6 +9,7 @@ from .Expression_MeshFunction_cpp import *
 from .FOI import *
 from .HeartSlice_Hyperelasticity import *
 from .HeartSlice_Mesh import *
+from .Homogenization import *
 from .Kinematics import *
 from .Kinematics_Inverse import *
 from .Kinematics_Linearized import *
@@ -65,7 +66,7 @@ from .QOI import *
 from .RivlinCube_Elasticity import *
 from .RivlinCube_Hyperelasticity import *
 from .RivlinCube_Mesh import *
-from .RivlinCube_PoroHyperelasticity import *
+# from .RivlinCube_PoroHyperelasticity import *
 from .Step import *
 from .SubDomain_Periodic import *
 from .SubDomain_Pinpoint import *
@@ -75,3 +76,8 @@ from .TimeVaryingConstant import *
 from .XDMFFile import *
 from .compute_error import *
 from .write_VTU_file import *
+from .Operator_MicroPoro_DeformedTotalVolume import *
+from .Operator_MicroPoro_DeformedSolidVolume import *
+from .Operator_MicroPoro_DeformedFluidVolume import *
+from .Operator_Constraint_MacroscopicStressComponent import *
+from .Operator_Penalty_LagrangeMultiplierComponent import *

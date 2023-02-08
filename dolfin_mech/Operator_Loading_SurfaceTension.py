@@ -31,17 +31,29 @@ class SurfaceTensionLoadingOperator(Operator):
             val=gamma_val, val_ini=gamma_ini, val_fin=gamma_fin)
         gamma = self.tv_gamma.val
 
+        # self.tv_gamma.surface_change_rate(kinematics, dt)
+        print("gamma =" +str(gamma))
         FmTN = dolfin.dot(dolfin.inv(kinematics.F).T, N)
         T = dolfin.sqrt(dolfin.inner(FmTN, FmTN))
         Pi = gamma * T * kinematics.J * self.measure
         self.res_form = dolfin.derivative(Pi, U, U_test)
 
+        self.kinematics=kinematics
 
+    # def surface_change_rate(self,
+    #         dt):
+
+    #     self.tv_gamma.surface_change_rate(self.kinematics, dt)
 
     def set_value_at_t_step(self,
             t_step):
 
         self.tv_gamma.set_value_at_t_step(t_step)
+        print("t_step =" +str(t_step))
+        print("value at t_step = " +str(self.tv_gamma.set_value_at_t_step(t_step)))
+
+    def returne_surface_rate(self):
+        self.tv_gamma.surface_change_rate()
 
 ################################################################################
 
@@ -64,7 +76,7 @@ class SurfaceTension0LoadingOperator(Operator):
         dim = u.ufl_shape[0]
         I = dolfin.Identity(dim)
         Pi = gamma * (1 + dolfin.inner(
-            kinematics.epsilon,
+            kinematics.E,
             I - dolfin.outer(N,N))) * self.measure
         self.res_form = dolfin.derivative(Pi, u, u_test) # MG20211220: Is that correct?!
 
