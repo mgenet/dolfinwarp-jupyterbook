@@ -25,16 +25,26 @@ class MacroscopicStressComponentPenaltyOperator(Operator):
     def __init__(self,
             sigma_bar,
             sigma_bar_test,
+            vs,
+            v,
             sol,
             sol_test,
             material,
+            kinematics,
+            V0,
             comp_i, comp_j,
             measure,
+            pf,
             comp_val=None, comp_ini=None, comp_fin=None,
-            pen_val=None, pen_ini=None, pen_fin=None):
+            pen_val=None, pen_ini=None, pen_fin=None,
+            P_val=None, P_ini=None, P_fin=None):
 
         self.material = material
         self.measure  = measure
+
+        self.tv_P = dmech.TimeVaryingConstant(
+            val=P_val, val_ini=P_ini, val_fin=P_fin)
+        P = self.tv_P.val
 
         self.tv_comp = dmech.TimeVaryingConstant(
             val=comp_val, val_ini=comp_ini, val_fin=comp_fin)
@@ -44,13 +54,15 @@ class MacroscopicStressComponentPenaltyOperator(Operator):
             val=pen_val, val_ini=pen_ini, val_fin=pen_fin)
         pen = self.tv_pen.val
 
-        Pi = (pen/2) * (self.material.sigma[comp_i,comp_j] - comp)**2 * self.measure # MG20220426: Need to compute <sigma> properly, including fluid pressure
-        # self.res_form = dolfin.derivative(Pi, sigma_bar[comp_i,comp_j], sigma_bar_test[comp_i,comp_j]) # MG20230106: This does not work…
-        self.res_form = dolfin.derivative(Pi, sol, sol_test) # MG20230106: This works…
+        # sigma_bar * v/V0 - self.material.sigma * kinematics.J + (v - vs)/V0 * P * dolfin.Identity(2), sigma_bar_test
 
-        # Pi = (pen/2) * (sigma_bar[comp_i,comp_j] - comp)**2 * self.measure # MG20230106: This does not work…
+        Pi = (pen/2) * (self.material.sigma[comp_i,comp_j] * kinematics.J - (v - vs)/V0 * P * dolfin.Identity(2)[comp_i,comp_j]  - comp*v/V0)**2 * self.measure 
+        # Pi = (pen/2) * (sigma_bar[comp_i,comp_j] - comp)**2 * self.measure 
+        # Pi = (pen/2) * (self.material.sigma[comp_i,comp_j] - comp)**2 * self.measure # MG20220426: Need to compute <sigma> properly, including fluid pressure
+        self.res_form = dolfin.derivative(Pi, sol, sol_test)
+
+        # Pi = (pen/2) * (sigma_bar[comp_i,comp_j] - comp)**2 * self.measure
         # self.res_form = dolfin.derivative(Pi, sigma_bar[comp_i,comp_j], sigma_bar_test[comp_i,comp_j])
-        # self.res_form = dolfin.derivative(Pi, sol, sol_test)
 
 
 
@@ -59,3 +71,4 @@ class MacroscopicStressComponentPenaltyOperator(Operator):
 
         self.tv_comp.set_value_at_t_step(t_step)
         self.tv_pen.set_value_at_t_step(t_step)
+        self.tv_P.set_value_at_t_step(t_step)

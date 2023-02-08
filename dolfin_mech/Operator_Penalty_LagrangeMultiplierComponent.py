@@ -15,12 +15,12 @@ from .Operator import Operator
 
 ################################################################################
 
-class MacroscopicStretchSymmetryPenaltyOperator(Operator):
+class LagrangeMultiplierComponentPenaltyOperator(Operator):
 
     def __init__(self,
-            U_bar,
-            sol,
-            sol_test,
+            lambda_bar,
+            lambda_bar_test,
+            i,j,
             measure,
             pen_val=None, pen_ini=None, pen_fin=None):
 
@@ -30,9 +30,7 @@ class MacroscopicStretchSymmetryPenaltyOperator(Operator):
             val=pen_val, val_ini=pen_ini, val_fin=pen_fin)
         pen = self.tv_pen.val
 
-        Pi = (pen/2) * dolfin.inner(U_bar.T - U_bar, U_bar.T - U_bar) * self.measure
-        # self.res_form = dolfin.derivative(Pi, U_bar, U_bar_test) # MG20230106: Somehow this does not work… NotImplementedError("Cannot take length of non-vector expression.")
-        self.res_form = dolfin.derivative(Pi, sol, sol_test)
+        self.res_form = pen * lambda_bar[i,j] * lambda_bar_test[i,j] * self.measure
 
 
 

@@ -35,28 +35,24 @@ def microporohyperelasticity(
 
     xmin = 0.
     ymin = 0.
+    zmin = 0.
     xmax = 1.
     ymax = 1.
+    zmax = 1.
     x0 = 0.3
     y0 = 0.3
-    if (dim==3):
-        zmin = 0.
-        zmax = 1.
-        z0 = 0.3
+    z0 = 0.3
     r0 = 0.2
     l = 0.10
     e = 1e-6
 
-    def setPeriodic(coord, xmin, ymin, zmin, xmax, ymax, zmax, e):
+    def setPeriodic(coord):
         # From https://gitlab.onelab.info/gmsh/gmsh/-/issues/744
-        smin = gmsh.model.getEntitiesInBoundingBox(
-            xmin - e,
-            ymin - e,
-            zmin - e,
-            (xmin + e) if (coord == 0) else (xmax + e),
-            (ymin + e) if (coord == 1) else (ymax + e),
-            (zmin + e) if (coord == 2) else (zmax + e),
-            2)
+        smin = gmsh.model.getEntitiesInBoundingBox(xmin - e, ymin - e, zmin - e,
+                                                  (xmin + e) if (coord == 0) else (xmax + e),
+                                                  (ymin + e) if (coord == 1) else (ymax + e),
+                                                  (zmin + e) if (coord == 2) else (zmax + e),
+                                                  2)
         dx = (xmax - xmin) if (coord == 0) else 0
         dy = (ymax - ymin) if (coord == 1) else 0
         dz = (zmax - zmin) if (coord == 2) else 0
@@ -89,8 +85,6 @@ def microporohyperelasticity(
         gmsh.model.occ.cut(objectDimTags=[(2, box_tag)], toolDimTags=[(2, hole_tag)], tag=rve_tag)
         gmsh.model.occ.synchronize()
         gmsh.model.addPhysicalGroup(dim=2, tags=[rve_tag])
-        # setPeriodic(coord=0, xmin=xmin, ymin=ymin, zmin=0., xmax=xmax, ymax=ymax, zmax=0., e=e)
-        # setPeriodic(coord=1, xmin=xmin, ymin=ymin, zmin=0., xmax=xmax, ymax=ymax, zmax=0., e=e)
         gmsh.model.mesh.setPeriodic(dim=1, tags=[2], tagsMaster=[1], affineTransform=[1, 0, 0, xmax-xmin,\
                                                                                       0, 1, 0, 0        ,\
                                                                                       0, 0, 1, 0        ,\
@@ -107,9 +101,9 @@ def microporohyperelasticity(
         gmsh.model.occ.cut(objectDimTags=[(3, box_tag)], toolDimTags=[(3, hole_tag)], tag=rve_tag)
         gmsh.model.occ.synchronize()
         gmsh.model.addPhysicalGroup(dim=3, tags=[rve_tag])
-        setPeriodic(coord=0, xmin=xmin, ymin=ymin, zmin=zmin, xmax=xmax, ymax=ymax, zmax=zmax, e=e)
-        setPeriodic(coord=1, xmin=xmin, ymin=ymin, zmin=zmin, xmax=xmax, ymax=ymax, zmax=zmax, e=e)
-        setPeriodic(coord=2, xmin=xmin, ymin=ymin, zmin=zmin, xmax=xmax, ymax=ymax, zmax=zmax, e=e)
+        setPeriodic(0)
+        setPeriodic(1)
+        setPeriodic(2)
         # gmsh.model.mesh.setPeriodic(dim=2, tags=[2], tagsMaster=[1], affineTransform=[1, 0, 0, xmax-xmin,\
         #                                                                               0, 1, 0, 0        ,\
         #                                                                               0, 0, 1, 0        ,\
