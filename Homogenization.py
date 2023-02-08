@@ -38,10 +38,10 @@ class HomogenizedParameters():
         x_max = max(coord[:,0]); x_min = min(coord[:,0])
         y_max = max(coord[:,1]); y_min = min(coord[:,1])
         if (self.dim==3): z_max = max(coord[:,2]); z_min = min(coord[:,2])
-        self.vertices = np.array([[x_min, y_min],
-                                  [x_max, y_min],
-                                  [x_max, y_max],
-                                  [x_min, y_max]])
+        self.corners = np.array([[x_min, y_min],
+                                 [x_max, y_min],
+                                 [x_max, y_max],
+                                 [x_min, y_max]])
         if (self.dim==2): 
             self.bbox = [x_min, x_max, y_min, y_max]
             self.vol = (x_max - x_min) * (y_max - y_min)
@@ -93,7 +93,7 @@ class HomogenizedParameters():
     def homogenized_param(self):
         Ve = dolfin.VectorElement("CG", self.mesh.ufl_cell(), 2)
         Re = dolfin.VectorElement("R", self.mesh.ufl_cell(), 0)
-        W = dolfin.FunctionSpace(self.mesh, dolfin.MixedElement([Ve, Re]), constrained_domain=dmech.PeriodicSubDomain(self.dim, self.bbox, self.vertices))
+        W = dolfin.FunctionSpace(self.mesh, dolfin.MixedElement([Ve, Re]), constrained_domain=dmech.PeriodicSubDomain(self.dim, self.bbox))
         V = dolfin.FunctionSpace(self.mesh, Ve)
 
         v_, lamb_ = dolfin.TestFunctions(W)
@@ -142,9 +142,6 @@ class HomogenizedParameters():
 
         E_hom = mu_hom*(3*lmbda_hom + 2*mu_hom)/(lmbda_hom + mu_hom)
         nu_hom = lmbda_hom/(lmbda_hom + mu_hom)/2
-
-        print("E_hom:" +str(E_hom))
-        print("nu_hom:" +str(nu_hom))
 
         return lmbda_hom, mu_hom
 

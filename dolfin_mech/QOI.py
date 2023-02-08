@@ -40,16 +40,10 @@ class QOI():
             self.update = self.update_assembly
         elif (update_type == "direct"):
             self.update = self.update_direct
-        elif (update_type == "scalar"):
-            self.update = self.update_scalar
-        elif (update_type == "volume"):
-            self.update = self.update_volume
-        elif (update_type == "surface"):
-            self.update = self.update_internal_surface
 
 
 
-    def update_assembly(self, dt=None, t_step=None, kinematics=None, dV=None, dS=None):
+    def update_assembly(self, dt=None):
 
         # print(self.name)
         # print(self.expr)
@@ -68,11 +62,8 @@ class QOI():
             self.value /= dt
 
 
-        
 
-
-
-    def update_direct(self, dt=None, t_step=None, kinematics=None, dV=None, dS=None):
+    def update_direct(self, dt=None):
         
         self.value = self.expr(self.point)
 
@@ -81,50 +72,3 @@ class QOI():
 
         if (self.divide_by_dt) and (dt is not None):
             self.value /= dt
-
-        # print("t_step = " +str(t_step))
-
-
-
-
-    def update_scalar(self, dt=None, t_step=None, kinematics=None, dV=None, dS=None):
-        
-        self.value = self.expr 
-
-        self.value += self.constant
-        self.value /= self.norm
-
-        # self.value *= t_step
-
-        if (self.divide_by_dt) and (dt is not None):
-            self.value /= dt
-
-        # print("t_step = " +str(dt * self.value))
-
-
-
-    def update_volume(self, dt=None, t_step=None, kinematics=None, dV=None, dS=None):
-        
-        self.value = self.expr 
-
-        
-        self.value += self.constant
-        self.value /= self.norm
-
-        self.value *= dolfin.assemble(kinematics.C[0,0]*dV)/dolfin.assemble(dolfin.Constant(1) * dV)
-
-
-
-    def update_internal_surface(self, dt=None, t_step=None, kinematics=None, dV=None, dS=None):
-        
-        self.value = self.expr 
-
-        
-        self.value += self.constant
-        self.value /= self.norm
-
-        # self.value *= dolfin.assemble(dolfin.Constant(1))
-        self.value *= dolfin.assemble(dolfin.Constant(1) * dS(0))
-
-
-        
