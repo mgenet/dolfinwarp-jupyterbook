@@ -24,12 +24,13 @@ class MacroscopicStressComponentConstraintOperator(Operator):
 
     def __init__(self,
             lambda_bar, lambda_bar_test,
+            U_bar,
             sol, sol_test,
-            vs,
-            v,
+            # vs,
+            # v,
             kinematics,
             material,
-            Vs0,
+            V0, Vs0,
             i, j,
             measure,
             sigma_bar_ij_val=None, sigma_bar_ij_ini=None, sigma_bar_ij_fin=None,
@@ -47,13 +48,14 @@ class MacroscopicStressComponentConstraintOperator(Operator):
             val=sigma_bar_ij_val, val_ini=sigma_bar_ij_ini, val_fin=sigma_bar_ij_fin)
         sigma_bar_ij = self.tv_sigma_bar_ij.val
 
-        dim = self.kinematics.U.ufl_shape[0]
-        I = dolfin.Identity(dim)
-        vf = v - vs
+        dim = U_bar.ufl_shape[0]
+        I_bar = dolfin.Identity(dim)
+        F_bar = I_bar + U_bar
+        J_bar = dolfin.det(F_bar)
+        v = J_bar * V0
 
-
-        sigma_tilde = self.material.sigma * kinematics.J - (vf/Vs0) * pf * I
-        self.res_form = lambda_bar_test[i,j] * (sigma_tilde[i,j] - sigma_bar_ij * v/Vs0) * self.measure
+        sigma_tilde = (self.material.sigma * self.kinematics.J - (v/Vs0 - self.kinematics.J) * pf * I_bar)/v
+        self.res_form = lambda_bar_test[i,j] * (sigma_tilde[i,j] - sigma_bar_ij/Vs0) * self.measure
 
         self.res_form += lambda_bar[i,j] * dolfin.derivative(sigma_tilde[i,j], sol, sol_test) * self.measure
 
@@ -62,5 +64,5 @@ class MacroscopicStressComponentConstraintOperator(Operator):
     def set_value_at_t_step(self,
             t_step):
 
-        self.tv_sigma_bar_ij.set_value_at_t_step(t_step)
         self.tv_pf.set_value_at_t_step(t_step)
+        self.tv_sigma_bar_ij.set_value_at_t_step(t_step)

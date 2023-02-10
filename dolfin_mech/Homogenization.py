@@ -16,6 +16,7 @@ import dolfin_mech as dmech
 import dolfin
 import numpy as np
 import math
+
 ################################################################################
 
 class HomogenizedParameters():
