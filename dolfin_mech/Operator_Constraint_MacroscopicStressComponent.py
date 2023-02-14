@@ -23,8 +23,9 @@ from .Operator import Operator
 class MacroscopicStressComponentConstraintOperator(Operator):
 
     def __init__(self,
+            U_bar, U_bar_test,
+            U_tilde, U_tilde_test,
             lambda_bar, lambda_bar_test,
-            U_bar,
             sol, sol_test,
             # vs,
             # v,
@@ -58,6 +59,12 @@ class MacroscopicStressComponentConstraintOperator(Operator):
         self.res_form = lambda_bar_test[i,j] * (sigma_tilde[i,j] - sigma_bar_ij/Vs0) * self.measure
 
         self.res_form += lambda_bar[i,j] * dolfin.derivative(sigma_tilde[i,j], sol, sol_test) * self.measure
+        # self.res_form += lambda_bar[i,j] * dolfin.derivative(sigma_tilde[i,j], U_bar, U_bar_test) * self.measure # MG20230214: This does not work somehow…
+        # self.res_form += lambda_bar[i,j] * dolfin.derivative(sigma_tilde[i,j], U_bar[0,0], U_bar_test[0,0]) * self.measure
+        # self.res_form += lambda_bar[i,j] * dolfin.derivative(sigma_tilde[i,j], U_bar[0,1], U_bar_test[0,1]) * self.measure
+        # self.res_form += lambda_bar[i,j] * dolfin.derivative(sigma_tilde[i,j], U_bar[1,0], U_bar_test[1,0]) * self.measure
+        # self.res_form += lambda_bar[i,j] * dolfin.derivative(sigma_tilde[i,j], U_bar[1,1], U_bar_test[1,1]) * self.measure
+        # self.res_form += lambda_bar[i,j] * dolfin.derivative(sigma_tilde[i,j], U_tilde, U_tilde_test) * self.measure
 
 
 

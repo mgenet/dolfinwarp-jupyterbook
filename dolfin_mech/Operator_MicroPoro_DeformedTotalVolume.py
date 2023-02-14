@@ -18,9 +18,8 @@ class DeformedTotalVolumeOperator(Operator):
 
         self.measure = measure
 
-        self.U_bar = U_bar
-        dim = self.U_bar.ufl_shape[0]
-        self.F_bar = dolfin.Identity(dim) + self.U_bar
-        self.J_bar = dolfin.det(self.F_bar)
+        dim = U_bar.ufl_shape[0]
+        F_bar = dolfin.Identity(dim) + U_bar
+        J_bar = dolfin.det(F_bar)
         
-        self.res_form = ((v - self.J_bar*V0) * v_test)/Vs0 * self.measure
+        self.res_form = ((v - J_bar*V0) * v_test)/Vs0 * self.measure
