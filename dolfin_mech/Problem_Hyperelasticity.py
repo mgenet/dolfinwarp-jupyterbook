@@ -69,7 +69,6 @@ class HyperelasticityProblem(Problem):
             self.add_elasticity_operators(
                 elastic_behaviors=elastic_behaviors)
             
-            self.add_deformed_volume_operator()
 
 
     def get_deformed_volume_name(self):
@@ -205,7 +204,7 @@ class HyperelasticityProblem(Problem):
             self.add_pressure_subsol(
                 degree=pressure_degree)
 
-        self.add_deformed_volume_subsol()
+
 
 
     def set_quadrature_degree(self,
