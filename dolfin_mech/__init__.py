@@ -57,6 +57,7 @@ from .Operator_Poro_Wskel import *
 from .Operator_TensorSymmetry import *
 from .Problem import *
 from .Problem_Elasticity import *
+from .Problem_Elasticity_MicroPoro import *
 from .Problem_Hyperelasticity import *
 from .Problem_Hyperelasticity_Inverse import *
 from .Problem_Hyperelasticity_MicroPoro import *
