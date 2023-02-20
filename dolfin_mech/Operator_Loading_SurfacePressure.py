@@ -24,14 +24,15 @@ class SurfacePressureLoadingOperator(Operator):
             measure,
             P_val=None, P_ini=None, P_fin=None):
 
+        self.kinematics = kinematics
         self.measure = measure
 
         self.tv_P = dmech.TimeVaryingConstant(
             val=P_val, val_ini=P_ini, val_fin=P_fin)
         P = self.tv_P.val
 
-        T = dolfin.dot(-P * N, dolfin.inv(kinematics.F))
-        self.res_form = - dolfin.inner(T, U_test) * kinematics.J * self.measure
+        T = dolfin.dot(-P * N, dolfin.inv(self.kinematics.F))
+        self.res_form = - dolfin.inner(T, U_test) * self.kinematics.J * self.measure
 
 
 

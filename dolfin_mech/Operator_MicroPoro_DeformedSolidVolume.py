@@ -17,4 +17,4 @@ class DeformedSolidVolumeOperator(Operator):
         self.Vs0 = dolfin.Constant(Vs0)
         self.measure = measure
         
-        self.res_form = ((J - vs/self.Vs0) * vs_test) * self.measure
+        self.res_form = ((vs/self.Vs0 - J) * vs_test) * self.measure

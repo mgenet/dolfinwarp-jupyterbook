@@ -20,7 +20,7 @@ class LagrangeMultiplierComponentPenaltyOperator(Operator):
     def __init__(self,
             lambda_bar,
             lambda_bar_test,
-            i,j,
+            i, j,
             measure,
             pen_val=None, pen_ini=None, pen_fin=None):
 
