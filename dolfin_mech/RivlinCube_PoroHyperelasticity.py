@@ -10,7 +10,7 @@
 # from copy import deepcopy
 import dolfin
 import matplotlib.pyplot as mpl
-import pandas 
+import pandas
 
 import dolfin_mech as dmech
 
@@ -35,6 +35,7 @@ def RivlinCube_PoroHyperelasticity(
 
     ################################################################### Mesh ###
 
+
     if   (dim==2):
         mesh, boundaries_mf, xmin_id, xmax_id, ymin_id, ymax_id = dmech.RivlinCube_Mesh(dim=dim, params=cube_params)
     elif (dim==3):
@@ -42,7 +43,7 @@ def RivlinCube_PoroHyperelasticity(
 
     if multimaterial :
         domains_mf = None
-        # print(len(mat_params))
+        # # print(len(mat_params))
         if len(mat_params)>=2 :
             tol = 1E-14
             number_zones = len(mat_params)
@@ -50,12 +51,15 @@ def RivlinCube_PoroHyperelasticity(
             domains_mf = dolfin.MeshFunction('size_t', mesh, mesh.topology().dim())
             if number_zones == 2:
                 domains_mf.set_all(0)
+                domains_mf.set_all(0)
                 subdomain_0 = dolfin.CompiledSubDomain("x[1] <= y1 + tol",  y1=mid_point, tol=tol)
                 subdomain_1 = dolfin.CompiledSubDomain(" x[1] >= y1 - tol",  y1=mid_point, tol=tol)
                 subdomain_0.mark(domains_mf, 0)
                 mat_params[0]["subdomain_id"] = 0
                 subdomain_1.mark(domains_mf, 1)
                 mat_params[1]["subdomain_id"] = 1
+                # boundary_file = dolfin.File("/Users/peyrault/Documents/Gravity/Gravity_cluster/Tests/boundaries.pvd") 
+                # boundary_file << domains_mf
                 # boundary_file = dolfin.File("/Users/peyrault/Documents/Gravity/Gravity_cluster/Tests/boundaries.pvd") 
                 # boundary_file << domains_mf
             elif number_zones == 3 :
@@ -73,8 +77,8 @@ def RivlinCube_PoroHyperelasticity(
                 mat_params[1]["subdomain_id"] = 1
                 subdomain_2.mark(domains_mf, 2)
                 mat_params[2]["subdomain_id"] = 2
-                # boundary_file = dolfin.File("/Users/peyrault/Documents/Gravity/Gravity_cluster/Tests/boundaries.pvd") 
-                # boundary_file << domains_mf
+                # # boundary_file = dolfin.File("/Users/peyrault/Documents/Gravity/Gravity_cluster/Tests/boundaries.pvd") 
+                # # boundary_file << domains_mf
             else:
                 domains_mf.set_all(0)
                 subdomain_lst = []
@@ -84,8 +88,8 @@ def RivlinCube_PoroHyperelasticity(
                     mat_params[mat_id]["subdomain_id"] = mat_id
                     subdomain_lst[mat_id].mark(domains_mf, mat_id)
                     subdomain_lst[mat_id+1].mark(domains_mf, mat_id+1)
-                # boundary_file = dolfin.File("/Users/peyrault/Documents/Gravity/Gravity_cluster/Tests/boundaries.pvd") 
-                # boundary_file << domains_mf
+                # # boundary_file = dolfin.File("/Users/peyrault/Documents/Gravity/Gravity_cluster/Tests/boundaries.pvd") 
+                # # boundary_file << domains_mf
 
     
     
@@ -101,12 +105,17 @@ def RivlinCube_PoroHyperelasticity(
 
 
 
+    
+
     if (porosity_type == "constant"):
         porosity_fun = None
         # print("constant")
+        # print("constant")
     elif (porosity_type.startswith("mesh_function")):
         # print("mesh_function")
+        # print("mesh_function")
         if (porosity_type == "mesh_function_constant"):
+            # print("mesh_function constant")
             # print("mesh_function constant")
             porosity_mf = dolfin.MeshFunction(
                 value_type="double",
@@ -114,6 +123,7 @@ def RivlinCube_PoroHyperelasticity(
                 dim=dim,
                 value=porosity_val)
         elif (porosity_type == "mesh_function_xml"):
+            # print("mesh_function xml")
             # print("mesh_function xml")
             porosity_filename = res_basename+"-poro.xml"
             n_cells = len(mesh.cells())
@@ -131,6 +141,7 @@ def RivlinCube_PoroHyperelasticity(
                 mesh,
                 porosity_filename)
         elif (porosity_type == "mesh_function_xml_custom"):
+            # print("mesh_function xml custom")
             # print("mesh_function xml custom")
             porosity_filename = res_basename+"-poro.xml"
             n_cells = len(mesh.cells())
@@ -153,12 +164,15 @@ def RivlinCube_PoroHyperelasticity(
         porosity_val = None
     elif (porosity_type.startswith("function")):
         # print("function")
+        # print("function")
         porosity_fs = dolfin.FunctionSpace(mesh, 'DG', 0)
         if (porosity_type == "function_constant"):
+            # print("function constant")
             # print("function constant")
             porosity_fun = dolfin.Function(porosity_fs)
             porosity_fun.vector()[:] = porosity_val
         elif (porosity_type == "function_xml"):
+            # print("function xml")
             # print("function xml")
             porosity_filename = res_basename+"-poro.xml"
             n_cells = len(mesh.cells())
@@ -215,6 +229,7 @@ def RivlinCube_PoroHyperelasticity(
                 domains_mf = domains_mf,
                 displacement_degree=1,
                 # quadrature_degree = 10,
+                # quadrature_degree = 10,
                 porosity_init_val=porosity_val,
                 porosity_init_fun=porosity_fun,
                 # skel_behavior=mat_params,
@@ -232,6 +247,7 @@ def RivlinCube_PoroHyperelasticity(
                 domains_mf = domains_mf,
                 displacement_degree=1,
                 # quadrature_degree = "default",
+                # quadrature_degree = 10,
                 porosity_init_val=porosity_val,
                 porosity_init_fun=porosity_fun,
                 # skel_behavior=mat_params,
@@ -247,8 +263,9 @@ def RivlinCube_PoroHyperelasticity(
                 mesh=mesh,
                 define_facet_normals=1,
                 boundaries_mf=boundaries_mf,
-                # domains_mf = domains_mf,
+                domains_mf = domains_mf,
                 displacement_degree=1,
+                quadrature_degree = "default",
                 quadrature_degree = "default",
                 porosity_init_val=porosity_val,
                 porosity_init_fun=porosity_fun,
@@ -261,11 +278,13 @@ def RivlinCube_PoroHyperelasticity(
         else:
             problem = dmech.PoroHyperelasticityProblem(
                 inverse=0,
+                inverse=0,
                 mesh=mesh,
                 define_facet_normals=1,
                 boundaries_mf=boundaries_mf,
-                # domains_mf = domains_mf,
+                # # domains_mf = domains_mf,
                 displacement_degree=1,
+                quadrature_degree = "default",
                 quadrature_degree = "default",
                 porosity_init_val=porosity_val,
                 porosity_init_fun=porosity_fun,
@@ -281,6 +300,8 @@ def RivlinCube_PoroHyperelasticity(
     # problem.add_constraint(V=problem.get_displacement_function_space().sub(0), sub_domains=boundaries_mf, sub_domain_id=xmin_id, val=0.)
     # problem.add_constraint(V=problem.get_displacement_function_space().sub(1), sub_domains=boundaries_mf, sub_domain_id=ymin_id, val=0.)
     # if (dim==3):
+    #     problem.add_constraint(V=problem.get_displacement_function_space().sub(0), sub_domains=boundaries_mf, sub_domain_id=zmin_id, val=0.)
+    #     problem.add_constraint(V=problem.get_displacement_function_space().sub(1), sub_domains=boundaries_mf, sub_domain_id=zmin_id, val=0.)
     #     problem.add_constraint(V=problem.get_displacement_function_space().sub(0), sub_domains=boundaries_mf, sub_domain_id=zmin_id, val=0.)
     #     problem.add_constraint(V=problem.get_displacement_function_space().sub(1), sub_domains=boundaries_mf, sub_domain_id=zmin_id, val=0.)
     #     problem.add_constraint(V=problem.get_displacement_function_space().sub(2), sub_domains=boundaries_mf, sub_domain_id=zmin_id, val=0.)
@@ -348,6 +369,7 @@ def RivlinCube_PoroHyperelasticity(
             sub_domain=pinpoint_sd,
             method='pointwise')
     
+    
 
     Deltat = step_params.get("Deltat", 1.)
     dt_ini = step_params.get("dt_ini", 1.)
@@ -358,6 +380,8 @@ def RivlinCube_PoroHyperelasticity(
         dt_ini=dt_ini,
         dt_min=dt_min,
         dt_max=dt_max)
+
+    rho_solid = mat_params.get("parameters").get("rho_solid", 1e-6)
 
     rho_solid = mat_params.get("parameters").get("rho_solid", 1e-6)
 
@@ -455,7 +479,6 @@ def RivlinCube_PoroHyperelasticity(
             F_ini=[0.]*dim,
             F_fin=[0.]*(dim-1) + [f],
             k_step=k_step)
-    elif(load_type=="surface_pressure"):
         problem.add_pf_operator(
             measure=problem.dV,
             pf_ini=0.,

@@ -464,25 +464,13 @@ class Problem():
     def add_operator(self,
             operator,
             k_step=None):
-            
+
         if (k_step is None):
             self.operators += [operator]
         else:
-            # print("k_step", k_step)
-            # print("operator", operator)
-            # print("self.steps", self.steps)
-            # print("len(self.steps)", len(self.steps))
-            # print("self.steps[k_step]", self.steps[k_step])
-            # print("self.steps[k_step].operators", self.steps[k_step].operators)
             self.steps[k_step].operators += [operator]
         return operator
 
-    def get_x0_mass(self):
-        X0 = numpy.empty(self.dim)
-        rho_solid = 1e-6
-        for k_dim in range(self.dim):
-            X0[k_dim] = dolfin.assemble(rho_solid*self.X[k_dim]*self.dV)/dolfin.assemble(rho_solid*self.dV)
-        return(X0)
 
 
     def add_volume_force0_loading_operator(self,
@@ -505,7 +493,6 @@ class Problem():
             kinematics=self.kinematics,
             **kwargs)
         return self.add_operator(operator=operator, k_step=k_step)
-
 
 
 
@@ -678,15 +665,6 @@ class Problem():
             self.steps[k_step].constraints += [constraint]
         return constraint
 
-    def call_before_assembly(self,
-            k_iter,
-            **kwargs):
-        return
-
-    def call_before_solve(self,
-            k_step,
-            **kwargs):
-        return
 ###################################################################### steps ###
 
     def add_step(self,
@@ -718,8 +696,8 @@ class Problem():
         # print (self.res_form)
         # for operator in self.operators:
         #     if (operator.measure.integral_type() != "vertex"):
-                # print (type(operator))
-                # print (operator.res_form)
+        #         print (type(operator))
+        #         print (operator.res_form)
 
         self.jac_form = dolfin.derivative(
             self.res_form,
