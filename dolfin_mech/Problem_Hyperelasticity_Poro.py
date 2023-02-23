@@ -219,12 +219,12 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
             porosity_init_val=None,
             porosity_init_fun=None,
             inverse=None):
-
+        
         self.add_displacement_subsol(
             degree=displacement_degree)
 
         if (porosity_degree is None):
-            porosity_degree = displacement_degree-1
+            porosity_degree = 0 # displacement_degree-1
         self.add_porosity_subsol(
             degree=porosity_degree,
             init_val=porosity_init_val,
@@ -236,11 +236,6 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
             # self.add_deformed_volume_subsol()
             self.add_x0_direct_subsol()
             pass
-
-        
-
-        
-
 
 
     def init_known_porosity(self,
@@ -393,78 +388,12 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
             k_step=k_step)
 
 
-    # def add_lbda_operator(self,
-    #         k_step=None):
-
-    #     operator1 = dmech.CoefficientLambdaOperator1(
-    #         X = self.X,
-    #         x0 = self.get_x0_direct_subsol().subfunc,
-    #         U=self.get_displacement_subsol().subfunc,
-    #         N = self.mesh_normals,
-    #         kinematics = self.kinematics,
-    #         lbda = self.get_lbda_subsol().subfunc,
-    #         lbda_test = self.get_lbda_subsol().dsubtest,
-    #         mu = self.get_mu_subsol().subfunc,
-    #         P0 = -0.55/2,
-    #         measure=self.dS)
-    #     # print("rhog=", dolfin.assemble(self.Phis0*9.81e-3*self.dV) )
-    #     print("rhog2=", dolfin.assemble(self.Phis0*9.81e-3*self.dV)/self.mesh_V0)
-    #     operator2 = dmech.CoefficientLambdaOperator2(
-    #         lbda = self.get_lbda_subsol().subfunc,
-    #         lbda_test = self.get_lbda_subsol().dsubtest,
-    #         rhog= [0., 0., dolfin.assemble(2*self.Phis0*9.81e-3*self.dV)/self.mesh_V0],#[0,0,dolfin.assemble(self.sign*self.Phis0*9.81e-3*self.dV)],
-    #         measure=self.dV)
-    #     self.add_operator(
-    #         operator=operator1,
-    #         k_step=k_step)
-    #     self.add_operator(
-    #         operator=operator2,
-    #         k_step=k_step)
-
-
-
-    # def add_mu_operator(self,
-    #         k_step=None):
-
-    #     operator = dmech.CoefficientMuOperator(
-    #         X = self.X,
-    #         x0 = self.get_x0_direct_subsol().subfunc,
-    #         U=self.get_displacement_subsol().subfunc,
-    #         N = self.mesh_normals,
-    #         kinematics = self.kinematics,
-    #         lbda = self.get_lbda_subsol().subfunc,
-    #         mu = self.get_mu_subsol().subfunc,
-    #         mu_test= self.get_mu_subsol().dsubtest,
-    #         P0 = -0.55/2,
-    #         measure=self.dS)
-    #     self.add_operator(
-    #         operator=operator,
-    #         k_step=k_step)
-
-
-    # def add_x0_direct_operator(self,
-    #         k_step=None):
-
-    #     operator = dmech.x0DirectOperator(
-    #         x0=self.get_x0_direct_subsol().subfunc,
-    #         x0_test=self.get_x0_direct_subsol().dsubtest,
-    #         X=self.X,
-    #         kinematics=self.kinematics,
-    #         U=self.get_displacement_subsol().subfunc,
-    #         Phis0 = self.Phis0,
-    #         V0=self.mesh_V0,
-    #         rho0=dolfin.assemble(self.Phis0*self.dV),
-    #         measure=self.dV)
-    #     self.add_operator(
-    #         operator=operator,
-    #         k_step=k_step)
-
     def add_surface_pressure_gradient_loading_operator(self,
             k_step=None,
             **kwargs):
-        
+
         operator = dmech.SurfacePressureGradientLoadingOperator(
-            X=dolfin.SpatialCoordinate(self.mesh),
+            X=self.X,
             x0=self.get_x0_direct_subsol().subfunc,
             x0_test=self.get_x0_direct_subsol().dsubtest,
             lbda=self.get_lbda_subsol().subfunc,
@@ -479,11 +408,6 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
             N=self.mesh_normals,
             **kwargs)
         return self.add_operator(operator=operator, k_step=k_step)
-
-
-
-
-
 
 
     def add_surface_pressure_gradient0_loading_operator(self,

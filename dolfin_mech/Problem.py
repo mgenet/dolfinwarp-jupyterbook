@@ -53,7 +53,6 @@ class Problem():
             "dx",
             domain=self.mesh)
         self.mesh_V0 = dolfin.assemble(dolfin.Constant(1) * self.dV)
-        # print(self.mesh_V0)
 
         if (define_spatial_coordinates):
             self.X = dolfin.SpatialCoordinate(self.mesh)
@@ -111,7 +110,7 @@ class Problem():
         self.X0_geo = numpy.empty(self.dim)
         for k_dim in range(self.dim):
             self.X0_geo[k_dim] = dolfin.assemble(self.X[k_dim]*self.dV)/self.mesh_V0
-        # print("X0geo", self.X0_geo)
+
         self.X0_geo = dolfin.Constant(self.X0_geo)
 
 
@@ -573,6 +572,10 @@ class Problem():
             x0 = self.get_x0_mass(),
             n = self.mesh_normals,
             u_test = self.get_displacement_subsol().dsubtest,
+            lbda=self.get_lbda_subsol().subfunc,
+            lbda_test=self.get_lbda_subsol().dsubtest,
+            mu=self.get_mu_subsol().subfunc,
+            mu_test=self.get_mu_subsol().dsubtest,
             **kwargs)
         return self.add_operator(operator=operator, k_step=k_step)
 
@@ -582,20 +585,21 @@ class Problem():
             k_step=None,
             **kwargs):
         
-        # self.Phis0 = 1.
-
+        
         operator = dmech.SurfacePressureGradientLoadingOperator(
             X=dolfin.SpatialCoordinate(self.mesh),
             x0=self.get_x0_direct_subsol().subfunc,
             x0_test=self.get_x0_direct_subsol().dsubtest,
-            lbda=self.get_lbda0_subsol().subfunc,
-            lbda_test=self.get_lbda0_subsol().dsubtest,
             kinematics=self.kinematics,
+            lbda=self.get_lbda_subsol().subfunc,
+            lbda_test=self.get_lbda_subsol().dsubtest,
             U=self.get_displacement_subsol().subfunc,
             U_test=self.get_displacement_subsol().dsubtest,
-            Phis0=self.Phis0,
+            # Phis0=self.Phis0,
             V0=dolfin.assemble(dolfin.Constant(1)*self.dV),
             N=self.mesh_normals,
+            mu=self.get_mu_subsol().subfunc,
+            mu_test=self.get_mu_subsol().dsubtest,
             **kwargs)
         return self.add_operator(operator=operator, k_step=k_step)
 

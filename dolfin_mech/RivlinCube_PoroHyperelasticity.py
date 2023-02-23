@@ -28,8 +28,9 @@ def RivlinCube_PoroHyperelasticity(
         res_basename="RivlinCube_PoroHyperelasticity",
         plot_curves=False,
         verbose=0,
-        inertia_val = 0,
-        multimaterial = 1,
+        inertia_val = 1e-8,
+        multimaterial = 0,
+        get_results_fields = 0,
         BC=1):
 
     ################################################################### Mesh ###
@@ -138,9 +139,7 @@ def RivlinCube_PoroHyperelasticity(
                 file.write('<dolfin xmlns:dolfin="http://fenicsproject.org">\n')
                 file.write('  <mesh_function type="double" dim="'+str(dim)+'" size="'+str(n_cells)+'">\n')
                 for k_cell in range(n_cells):
-                    # file.write('    <entity index="'+str(k_cell)+'" value="'+str(0.9)+'"/>\n')
                     file.write('    <entity index="'+str(k_cell)+'" value="'+str(porosity_val[k_cell])+'"/>\n')
-                # print("average", mean/c)
                 file.write('  </mesh_function>\n')
                 file.write('</dolfin>\n')
                 file.close()
@@ -152,7 +151,6 @@ def RivlinCube_PoroHyperelasticity(
         porosity_fs = dolfin.FunctionSpace(mesh, 'DG', 0)
         porosity_fun = dolfin.interpolate(porosity_expr, porosity_fs)
         porosity_val = None
-        # print("porosity_filename,", porosity_filename)
     elif (porosity_type.startswith("function")):
         # print("function")
         porosity_fs = dolfin.FunctionSpace(mesh, 'DG', 0)
@@ -176,7 +174,26 @@ def RivlinCube_PoroHyperelasticity(
             porosity_fun = dolfin.Function(
                 porosity_fs,
                 porosity_filename)
-    
+        elif (porosity_type == "function_xml_custom"):
+            # print("function xml")
+            porosity_filename = res_basename+"-poro.xml"
+            # print("porosity_filename=", porosity_filename)
+            n_cells = len(mesh.cells())
+            with open(porosity_filename, "w") as file:
+                file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+                file.write('<dolfin xmlns:dolfin="http://fenicsproject.org">\n')
+                file.write('  <function_data size="'+str(n_cells)+'">\n')
+                for k_cell in range(n_cells):
+                    # print("kcell=", k_cell)
+                    # print("porosity for kcell", porosity_val[k_cell])
+                    file.write('    <dof index="'+str(k_cell)+'" value="'+str(porosity_val[k_cell])+'" cell_index="'+str(k_cell)+'" cell_dof_index="0"/>\n')
+                file.write('  </function_data>\n')
+                file.write('</dolfin>\n')
+                file.close()
+            porosity_fun = dolfin.Function(
+                porosity_fs,
+                porosity_filename)
+            porosity_val = None
     if move.get("move", False) == True :
         Umove = move.get("U")
         dolfin.ALE.move(mesh, Umove)
@@ -232,6 +249,7 @@ def RivlinCube_PoroHyperelasticity(
                 boundaries_mf=boundaries_mf,
                 # domains_mf = domains_mf,
                 displacement_degree=1,
+                quadrature_degree = "default",
                 porosity_init_val=porosity_val,
                 porosity_init_fun=porosity_fun,
                 skel_behavior=mat_params,
@@ -248,6 +266,7 @@ def RivlinCube_PoroHyperelasticity(
                 boundaries_mf=boundaries_mf,
                 # domains_mf = domains_mf,
                 displacement_degree=1,
+                quadrature_degree = "default",
                 porosity_init_val=porosity_val,
                 porosity_init_fun=porosity_fun,
                 skel_behavior=mat_params,
@@ -266,12 +285,8 @@ def RivlinCube_PoroHyperelasticity(
     #     problem.add_constraint(V=problem.get_displacement_function_space().sub(1), sub_domains=boundaries_mf, sub_domain_id=zmin_id, val=0.)
     #     problem.add_constraint(V=problem.get_displacement_function_space().sub(2), sub_domains=boundaries_mf, sub_domain_id=zmin_id, val=0.)
     
-    BC=2
+    BC=0
     if BC == 1:
-        print("implementing boundary conditions 1")
-        # if move.get("move", False) == True:
-        #     pinpoint_sd = dmech.PinpointSubDomain(coords=[0.,0.,0.], tol=1e-3)
-        # else :
         pinpoint_sd = dmech.PinpointSubDomain(coords=[0.,0.,0.], tol=1e-4)
         problem.add_constraint(
                 V=problem.get_displacement_function_space(), 
@@ -282,7 +297,6 @@ def RivlinCube_PoroHyperelasticity(
             pinpoint_sd = dmech.PinpointSubDomain(coords=[cube_params["X1"],0.,0.], tol=1e-4)
         else :
             pinpoint_sd = dmech.PinpointSubDomain(coords=[cube_params["X1"] + Umove([cube_params["X1"], 0., 0.])[0], Umove([cube_params["X1"], 0., 0.])[1], Umove([cube_params["X1"], 0., 0.])[2]], tol=1e-4)
-        # pinpoint_sd = dmech.PinpointSubDomain(coords=[cube_params["X1"],0.,0.], tol=1e-3)
         problem.add_constraint(
                 V=problem.get_displacement_function_space().sub(1), 
                 val=0.,
@@ -297,14 +311,12 @@ def RivlinCube_PoroHyperelasticity(
             pinpoint_sd = dmech.PinpointSubDomain(coords=[0.,cube_params["Y1"],0.], tol=1e-4)
         else :
             pinpoint_sd = dmech.PinpointSubDomain(coords=[0. + Umove([0., cube_params["Y1"], 0.])[0],cube_params["Y1"] + Umove([0., cube_params["Y1"], 0. ])[1], Umove([cube_params["X1"], 0., 0.])[2]], tol=1e-3)
-    #     # pinpoint_sd = dmech.PinpointSubDomain(coords=[0.,cube_params["Y1"],0.], tol=1e-3)
         problem.add_constraint(
                 V=problem.get_displacement_function_space().sub(2), 
                 val=0.,
                 sub_domain=pinpoint_sd,
                 method='pointwise')
     elif BC ==2:
-        print("implementing boundary conditions 2")
         pinpoint_sd = dmech.PinpointSubDomain(coords=[0., 0., cube_params["Z1"]], tol=1e-3)
         problem.add_constraint(
             V=problem.get_displacement_function_space(), 
@@ -335,24 +347,7 @@ def RivlinCube_PoroHyperelasticity(
             val=0.,
             sub_domain=pinpoint_sd,
             method='pointwise')
-    # elif BC ==3:
-    #     print("implementing boundary conditions 2")
-    #     pinpoint_sd = dmech.PinpointSubDomain(coords=[0., 0., 0.], tol=1e-3)
-    #     problem.add_constraint(
-    #         V=problem.get_displacement_function_space(), 
-    #         val=[0.]*dim,
-    #         sub_domain=pinpoint_sd,
-    #         method='pointwise')
-    #     if move.get("move", False) == False:
-    #         pinpoint_sd = dmech.PinpointSubDomain(coords=[cube_params["X1"],0.,0.], tol=1e-4)
-    #     else :
-    #         pinpoint_sd = dmech.PinpointSubDomain(coords=[cube_params["X1"] + Umove([cube_params["X1"], 0., 0.])[0], Umove([cube_params["X1"], 0., 0.])[1], Umove([cube_params["X1"], 0., 0.])[2]], tol=1e-4)
-    #     # pinpoint_sd = dmech.PinpointSubDomain(coords=[cube_params["X1"],0.,0.], tol=1e-3)
-    #     problem.add_constraint(
-    #             V=problem.get_displacement_function_space().sub(1), 
-    #             val=0.,
-    #             sub_domain=pinpoint_sd,
-    #             method='pointwise')
+    
 
     Deltat = step_params.get("Deltat", 1.)
     dt_ini = step_params.get("dt_ini", 1.)
@@ -364,15 +359,14 @@ def RivlinCube_PoroHyperelasticity(
         dt_min=dt_min,
         dt_max=dt_max)
 
-    rho_solid = mat_params[0].get("parameters").get("rho_solid", 1e-6)
+    rho_solid = mat_params.get("parameters").get("rho_solid", 1e-6)
 
     load_type = load_params.get("type", "internal")
-    print("load_type", load_type)
 
-    # problem.add_inertia_operator(
-    #     measure=problem.dV,
-    #     rho_val=float(inertia_val),
-    #     k_step=k_step)
+    problem.add_inertia_operator(
+        measure=problem.dV,
+        rho_val=float(inertia_val),
+        k_step=k_step)
 
     if (load_type == "internal"):
         pf = load_params.get("pf", +0.5)
@@ -489,30 +483,17 @@ def RivlinCube_PoroHyperelasticity(
             pf_ini=0.,
             pf_fin=0.,
             k_step=k_step)
-        f = load_params.get("f", 1.)
-        f *= dolfin.assemble(rho_solid*problem.phis*problem.dV)/problem.mesh_V0
-        # problem.G = f
-        # print("f=", f)
-        # problem.add_volume_force0_loading_operator(
-        #     measure=problem.dV,
-        #     F_ini=[0.]*dim,
-        #     F_fin=[0.]*(dim-1)+[f],
-        #     k_step=k_step)
-        # X0_mass = load_params.get("X0", problem.get_x0_mass())
-        # N0 = load_params.get("N0", [0.]*(dim-1)+[1.])
+        f = load_params.get("f", 1e4)
         P0 = load_params.get("P0", -0.5)
-        problem.sign = load_params.get("sign", 1)
         problem.add_surface_pressure_gradient0_loading_operator(
             dV=problem.dV,
             dS=problem.dS,
             f_ini=[0.]*dim,
             f_fin=[0.]*(dim-1)+[f],
-            # X0_val=X0_mass,
-            # N0_val=N0,
+            rho_solid=rho_solid,
+            phis=problem.phis,
             P0_ini=0.,
             P0_fin=P0,
-            # DP_ini=0.,
-            # DP_fin=DP*problem.get_density(),
             k_step=k_step)
     elif (load_type == "pgra"):
         problem.add_pf_operator(
@@ -521,15 +502,14 @@ def RivlinCube_PoroHyperelasticity(
             pf_fin=0.,
             k_step=k_step)
         f = load_params.get("f", 1e4)
-        f *= dolfin.assemble(problem.Phis0*rho_solid*problem.dV)/problem.mesh_V0
         P0 = load_params.get("P0", -0.5)
-        problem.sign = load_params.get("sign", 1)
         problem.add_surface_pressure_gradient_loading_operator(
             dV=problem.dV,
             dS=problem.dS,
             f_ini=[0.]*dim,
             f_fin=[0.]*(dim-1)+[f],
             # f_fin=[0.]*(dim-1)+[f*rho_solid],
+            rho_solid=rho_solid,
             P0_ini=0.,
             P0_fin=P0,
             k_step=k_step)
@@ -628,8 +608,8 @@ def RivlinCube_PoroHyperelasticity(
 
     print ("green-lagrange tensor", (dolfin.assemble(dolfin.inner(green_lagrange_tensor,green_lagrange_tensor)*V)/2/dolfin.assemble(dolfin.Constant(1)*V)))
     # print (problem.get_lbda0_subsol().func.vector().get_local())
+    if get_results_fields:
+        return(problem.get_subsols_func_lst()[0],  phi, V)
+    else:
+        return
 
-    return(problem.get_subsols_func_lst()[0],  phi, phi0, V)
-    # mesh_old = copy.deepcopy(mesh.coordinates())
-    # dolfin.ALE.move(mesh, problem.get_subsols_func_lst()[0])
-    # return(problem.get_subsols_func_lst()[0],  phi, phi0, V, mesh_old, mesh)
