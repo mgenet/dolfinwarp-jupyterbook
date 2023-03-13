@@ -28,7 +28,6 @@ from .Material_Elastic import ElasticMaterial
 class WporeLungElasticMaterial(ElasticMaterial):
 
 
-
     def __init__(self,
             Phif,
             Phif0,
