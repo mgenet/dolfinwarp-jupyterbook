@@ -29,7 +29,14 @@ class CiarletGeymonatElasticMaterial(ElasticMaterial):
 
         self.Psi = (self.lmbda/4) * (self.kinematics.J**2 - 1 - 2*dolfin.ln(self.kinematics.J)) # MG20180516: In 2d, plane strain
 
-        self.Sigma = (self.lmbda/2) * (self.kinematics.J**2 - 1) * self.kinematics.C_inv # MG20200206: Cannot differentiate Psi wrt to C because J is not defined as a function of C
+        self.checkJ = parameters.get("checkJ", False)
+        if (self.checkJ):
+            self.Sigma = dolfin.conditional( # MG20230320: Otherwise Sigma is well defined for J < 0…
+                dolfin.gt(self.kinematics.J, 0.),
+                (self.lmbda/2) * (self.kinematics.J**2 - 1) * self.kinematics.C_inv, # MG20200206: Cannot differentiate Psi wrt to C because J is not defined as a function of C
+                self.kinematics.C_inv/dolfin.Constant(0.))
+        else:
+            self.Sigma = (self.lmbda/2) * (self.kinematics.J**2 - 1) * self.kinematics.C_inv # MG20200206: Cannot differentiate Psi wrt to C because J is not defined as a function of C
 
         # self.P = dolfin.diff(self.Psi, self.kinematics.F) # MG20220426: Cannot do that for micromechanics problems
         # self.P = (self.lmbda/2) * (self.kinematics.J**2 - 1) * self.kinematics.F_inv.T
