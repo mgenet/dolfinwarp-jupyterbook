@@ -29,6 +29,7 @@ class TimeIntegrator():
             write_qois_limited_precision=False,
             write_sol=True,
             write_vtus=False,
+            write_vtus_with_preserved_connectivity=False,
             write_xmls=False):
 
         self.problem = problem
@@ -95,12 +96,14 @@ class TimeIntegrator():
             self.problem.update_fois()
             self.xdmf_file_sol.write(0.)
 
-            self.write_vtus = bool(write_vtus)
+            self.write_vtus                             = bool(write_vtus)
+            self.write_vtus_with_preserved_connectivity = bool(write_vtus_with_preserved_connectivity)
             if (self.write_vtus):
                 dmech.write_VTU_file(
                     filebasename=self.write_sol_filebasename,
                     function=self.problem.get_displacement_subsol().subfunc,
-                    time=0)
+                    time=0,
+                    preserve_connectivity=self.write_vtus_with_preserved_connectivity)
 
             self.write_xmls = bool(write_xmls)
             if (self.write_xmls):
@@ -192,7 +195,8 @@ class TimeIntegrator():
                             dmech.write_VTU_file(
                                 filebasename=self.write_sol_filebasename,
                                 function=self.problem.get_displacement_subsol().subfunc,
-                                time=k_t_tot)
+                                time=k_t_tot,
+                                preserve_connectivity=self.write_vtus_with_preserved_connectivity)
 
                         if (self.write_xmls):
                             dolfin.File(self.write_sol_filebasename+"_"+str(k_t_tot).zfill(3)+".xml") << self.problem.get_displacement_subsol().subfunc
