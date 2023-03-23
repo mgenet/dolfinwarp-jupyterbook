@@ -28,7 +28,6 @@ from .Material_Elastic import ElasticMaterial
 class WporeLungElasticMaterial(ElasticMaterial):
 
 
-
     def __init__(self,
             Phif,
             Phif0,
@@ -44,6 +43,9 @@ class WporeLungElasticMaterial(ElasticMaterial):
         Phif = dolfin.variable(Phif)
         r = Phif/Phif0
         r_inf = Phif0**(self.p-1)
-        r_sup = Phif0**(1/self.q-1)
-        self.Psi = self.eta * dolfin.conditional(dolfin.lt(r, r_inf), (r_inf/r - 1)**(self.n+1), dolfin.conditional(dolfin.gt(r, r_sup), (r/r_sup - 1)**(self.n+1), 0))
-        self.dWporedPhif = dolfin.diff(self.Psi, Phif)
+        r_sup = Phif0**(1/self.q-1) 
+        # self.Psi = self.eta * (Phif/Phif0)**(self.n+1)
+        self.Psi = self.eta * dolfin.conditional(dolfin.lt(r, 0.), r/dolfin.Constant(0.), dolfin.conditional(dolfin.lt(r, r_inf), (r_inf/r - 1)**(self.n+1), dolfin.conditional(dolfin.lt(r, r_sup), 0, (r/r_sup - 1)**(self.n+1))))
+        # self.Psi = self.eta * dolfin.conditional(dolfin.lt(r, 0), r/dolfin.Constant(0.), dolfin.conditional(dolfin.lt(r, r_inf), (r_inf/r - 1)**(self.n+1), dolfin.conditional(dolfin.gt(r, r_sup), (r/r_sup - 1)**(self.n+1), 0)))
+        self.dWporedPhif = dolfin.diff(self.Psi, Phif) #* dolfin.conditional(dolfin.lt(r, 0.), 1/dolfin.Constant(0), 1.)
+    

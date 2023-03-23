@@ -98,7 +98,7 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
                 pore_behaviors = [pore_behavior]
             self.add_Wpore_operators(pore_behaviors)
 
-            # self.add_deformed_volume_operator()    
+            self.add_deformed_volume_operator()    
 
     def get_porosity_name(self):
         return "Phis"
@@ -178,6 +178,7 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
             family="R",
             degree=0,
             init_val=init_val)
+            
     def add_x0_direct_subsol(self,
             init_val=None):
 
@@ -232,8 +233,8 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
 
         self.add_lbda_subsol()
         self.add_mu_subsol()
+        self.add_deformed_volume_subsol()
         if not inverse:
-            # self.add_deformed_volume_subsol()
             self.add_x0_direct_subsol()
             pass
 

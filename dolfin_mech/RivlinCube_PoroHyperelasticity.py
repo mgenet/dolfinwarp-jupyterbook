@@ -29,10 +29,10 @@ def RivlinCube_PoroHyperelasticity(
         res_basename="RivlinCube_PoroHyperelasticity",
         plot_curves=False,
         verbose=0,
-        inertia_val = 1e-6,
+        inertia_val = 1e-5,
         multimaterial = 0,
         get_results_fields = 0,
-        mesh_from_file=1,
+        mesh_from_file=0,
         BC=1):
 
     ################################################################### Mesh ###
@@ -51,20 +51,20 @@ def RivlinCube_PoroHyperelasticity(
 
     if mesh_from_file:
         if multimaterial :
-            zmin = mesh.coordinates()[:, 2].min()
-            zmax = mesh.coordinates()[:, 2].max()
-            delta_z = zmax - zmin
+            ymin = mesh.coordinates()[:, 1].min()
+            ymax = mesh.coordinates()[:, 1].max()
+            delta_y = ymax - ymin
             domains_mf = None
             tol = 1E-14
             number_zones = len(mat_params)
-            length_zone = delta_z*0.1
+            length_zone = delta_y*0.1
             domains_mf = dolfin.MeshFunction('size_t', mesh, mesh.topology().dim())
             domains_mf.set_all(0)
             subdomain_lst = []
-            subdomain_lst.append(dolfin.CompiledSubDomain("x[2] <= z1 + tol",  z1=zmin+length_zone, tol=tol))
+            subdomain_lst.append(dolfin.CompiledSubDomain("x[1] <= y1 + tol",  y1=ymin+length_zone, tol=tol))
             subdomain_lst[0].mark(domains_mf, 0)
             for mat_id in range(0, number_zones):
-                subdomain_lst.append(dolfin.CompiledSubDomain(" x[2] >= z1 - tol",  z1=zmin+length_zone*(mat_id+1), tol=tol))
+                subdomain_lst.append(dolfin.CompiledSubDomain(" x[1] >= y1 - tol",  y1=ymin+length_zone*(mat_id+1), tol=tol))
                 subdomain_lst[mat_id].mark(domains_mf, mat_id)
                 mat_params[mat_id]["subdomain_id"] = mat_id
             # boundary_file = dolfin.File("/Users/peyrault/Documents/Gravity/Gravity_cluster/Tests/boundaries.pvd") 
@@ -121,7 +121,7 @@ def RivlinCube_PoroHyperelasticity(
     
     
     
-    # print("mesh coordinates are", mesh.coordinates())
+    
 
 
     
@@ -130,8 +130,16 @@ def RivlinCube_PoroHyperelasticity(
     porosity_type = porosity_params.get("type", "constant")
     porosity_val  = porosity_params.get("val", 0.5)
 
-
-
+    if (porosity_type=="from_file"):
+        porosity_filename = porosity_val
+        porosity_mf = dolfin.MeshFunction(
+            "double",
+            mesh,
+            porosity_filename)
+        porosity_expr = dolfin.CompiledExpression(getattr(dolfin.compile_cpp_code(dmech.get_ExprMeshFunction_cpp_pybind()), "MeshExpr")(), mf=porosity_mf, degree=0)
+        porosity_fs = dolfin.FunctionSpace(mesh, 'DG', 0)
+        porosity_fun = dolfin.interpolate(porosity_expr, porosity_fs)
+        porosity_val = None
     if (porosity_type == "constant"):
         porosity_fun = None
         # print("constant")
@@ -170,7 +178,12 @@ def RivlinCube_PoroHyperelasticity(
                 file.write('<dolfin xmlns:dolfin="http://fenicsproject.org">\n')
                 file.write('  <mesh_function type="double" dim="'+str(dim)+'" size="'+str(n_cells)+'">\n')
                 for k_cell in range(n_cells):
-                    value = float(numpy.random.normal(loc=0.5, scale=0.13, size=1)[0])
+                    value = numpy.random.uniform(low=0.4, high=0.6)
+                    # positive_value = False
+                    # while not positive_value:
+                        # value = float(numpy.random.normal(loc=0.5, scale=0.13, size=1)[0])
+                        # if value >0 and value<1:
+                            # positive_value = True
                     file.write('    <entity index="'+str(k_cell)+'" value="'+str(value)+'"/>\n')
                 file.write('  </mesh_function>\n')
                 file.write('</dolfin>\n')
@@ -550,7 +563,7 @@ def RivlinCube_PoroHyperelasticity(
             dV=problem.dV,
             dS=problem.dS,
             f_ini=[0.]*dim,
-            f_fin=[0.]*(dim-1)+[f],
+            f_fin=[0., f, 0.],
             rho_solid=rho_solid,
             phis=problem.phis,
             P0_ini=0.,
@@ -568,7 +581,7 @@ def RivlinCube_PoroHyperelasticity(
             dV=problem.dV,
             dS=problem.dS,
             f_ini=[0.]*dim,
-            f_fin=[0.]*(dim-1)+[f],
+            f_fin=[0., f, 0.],
             # f_fin=[0.]*(dim-1)+[f*rho_solid],
             rho_solid=rho_solid,
             P0_ini=0.,
@@ -615,6 +628,7 @@ def RivlinCube_PoroHyperelasticity(
     integrator.close()
 
     ################################################################## Plots ###
+    # print("mesh coordinates are", mesh.coordinates())
 
     if (plot_curves):
         qois_data = pandas.read_csv(
@@ -656,9 +670,7 @@ def RivlinCube_PoroHyperelasticity(
     for foi in problem.fois:
         if foi.name == "Phis0":
             phi = foi.func.vector().get_local()
-            phi_test = foi.func
-        if foi.name == "Phif0":
-            Phif0 = foi.func.vector().get_local()
+            Phis0 = foi.func.vector().get_local()
         if foi.name == "E":
             green_lagrange_tensor = foi.func
  
@@ -682,7 +694,9 @@ def RivlinCube_PoroHyperelasticity(
     # print("phi0=", phi0)
     # print("phi average", dolfin.assemble(phi_test*V)/dolfin.assemble(1*V))
     # print(problem.get_displacement_subsol().func.vector()[:])
+    get_J = False
     if get_results_fields:
+        # phis0 = problem.get_porosity_subsol().func.vector().get_local()
         porosity_filename = res_basename+"-poro_final.xml"
         n_cells = len(mesh.cells())
         with open(porosity_filename, "w") as file:
@@ -690,11 +704,14 @@ def RivlinCube_PoroHyperelasticity(
             file.write('<dolfin xmlns:dolfin="http://fenicsproject.org">\n')
             file.write('  <mesh_function type="double" dim="'+str(dim)+'" size="'+str(n_cells)+'">\n')
             for k_cell in range(n_cells):
-                file.write('    <entity index="'+str(k_cell)+'" value="'+str(Phif0[k_cell])+'"/>\n')
+                file.write('    <entity index="'+str(k_cell)+'" value="'+str(Phis0[k_cell])+'"/>\n')
             file.write('  </mesh_function>\n')
             file.write('</dolfin>\n')
             file.close()
-        return(problem.get_displacement_subsol().func,  phi, V)
+        if get_J:
+            return(problem.get_displacement_subsol().func,  phi, V, problem.get_deformed_volume_subsol().func.vector()[0])
+        else:
+            return(problem.get_displacement_subsol().func,  phi, V)
     else:
         return
 

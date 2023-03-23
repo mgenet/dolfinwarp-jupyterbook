@@ -29,7 +29,7 @@ class WporePoroOperator(Operator):
         self.kinematics = kinematics
         self.solid_material = dmech.WporeLungElasticMaterial(
             Phif=self.kinematics.J - Phis,
-            Phif0=Phis0,
+            Phif0=1-Phis0,
             parameters=material_parameters)
         self.material = dmech.PorousElasticMaterial(
             solid_material=self.solid_material,
@@ -52,6 +52,9 @@ class InverseWporePoroOperator(Operator):
             material_scaling,
             measure):
 
+        # print("type phis0", type(phis0))
+        # print(" phis", phis.vector()[0])
+        # print(" phis0", phis0.sub(0))
         self.kinematics = kinematics
         self.solid_material = dmech.WporeLungElasticMaterial(
             Phif=self.kinematics.J * (1 - phis),
