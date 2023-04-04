@@ -96,9 +96,13 @@ class NonlinearSolver():
 
         if (relax_type == "constant"):
             self.compute_relax = self.compute_relax_constant
-            self.relax_val = relax_parameters.get("relax", 1.)
+            self.relax_val = relax_parameters.get("relax", 0.25)
         elif (relax_type == "aitken"):
             self.compute_relax = self.compute_relax_aitken
+        elif (relax_type == "backtracking"):
+            self.compute_relax = self.compute_relax_backtracking
+            self.relax_backtracking_factor = parameters["relax_backtracking_factor"] if ("relax_backtracking_factor" in parameters) and (parameters["relax_backtracking_factor"] is not None) else 2.
+            self.relax_n_iter_max          = parameters["relax_n_iter_max"]          if ("relax_n_iter_max"          in parameters) and (parameters["relax_n_iter_max"]          is not None) else 8
         elif (relax_type == "gss"):
             self.compute_relax = self.compute_relax_gss
             self.relax_n_iter_max = relax_parameters.get("relax_n_iter_max", 9)
@@ -137,6 +141,7 @@ class NonlinearSolver():
             dt=None,
             t=None):
 
+
         # write
         if (self.write_iter):
             xdmf_file_iter = dmech.XDMFFile(
@@ -153,7 +158,7 @@ class NonlinearSolver():
             self.printer.print_var("k_iter",self.k_iter,-1)
 
             # linear problem
-            linear_success = self.linear_solve(
+            linear_success = self.assemble_and_linear_solve(
                 k_step=k_step,
                 k_t=k_t)
             if not (linear_success):
@@ -167,6 +172,8 @@ class NonlinearSolver():
 
             # solution update
             self.compute_relax()
+            if (self.relax == 0.):
+                break
             self.update_sol()
             self.compute_sol_norm()
 
@@ -204,9 +211,24 @@ class NonlinearSolver():
 
 
 
-    def linear_solve(self,
+    def assemble_and_linear_solve(self,
             k_step=None,
             k_t=None):
+
+
+        self.assemble_linear_system()
+
+        # eigen problem
+        if (k_step == 1) and (k_t == 1) and (self.k_iter == 1) and (0):
+            self.eigen_solve()
+
+        test = self.linear_solve()
+
+        return test
+
+
+
+    def assemble_linear_system(self):
 
         # res_old
         if (self.k_iter > 1):
@@ -238,7 +260,7 @@ class NonlinearSolver():
                 if (operator.measure.integral_type() == "vertex"):
                     self.printer.print_str("Assembly (vertex integrals)…",newline=False)
                     timer = time.time()
-                    dolfin.assemble( # MG20190513: However, vertex integrals only work if solution only has dofs on vertices…
+                    dolfin.assemble_linear_system( # MG20190513: However, vertex integrals only work if solution only has dofs on vertices…
                        -operator.res_form,
                         tensor=self.res_vec,
                         add_values=True,
@@ -248,7 +270,7 @@ class NonlinearSolver():
                         operator.res_form,
                         self.problem.sol_func,
                         self.problem.dsol_tria)
-                    dolfin.assemble(
+                    dolfin.assemble_linear_system(
                         operator.jac_form,
                         tensor=self.jac_mat,
                         add_values=True,
@@ -276,6 +298,7 @@ class NonlinearSolver():
             # self.printer.print_var("jac_mat",self.jac_mat.array())
 
         if not (numpy.isfinite(self.res_vec).all()):
+            print("Warning! Residual is NaN")
             self.printer.print_str("Warning! Residual is NaN!")
             return False
 
@@ -316,9 +339,9 @@ class NonlinearSolver():
                 ref=self.res_old_norm)
             self.printer.print_sci("res_err_rel",self.res_err_rel)
 
-        # eigen problem
-        if (k_step == 1) and (k_t == 1) and (self.k_iter == 1) and (0):
-            self.eigen_solve()
+
+
+    def linear_solve(self):
 
         # linear system: solve
         try:
@@ -441,6 +464,27 @@ class NonlinearSolver():
         self.printer.print_sci("relax",self.relax)
 
 
+    def compute_relax_backtracking(self):
+        k_relax = 1
+        self.printer.inc()
+        while (True):
+            relax = 1./self.relax_backtracking_factor**(k_relax-1)
+            self.problem.sol_func.vector().axpy(relax, self.problem.dsol_func.vector())
+            self.assemble_linear_system()
+            res_is_finite = numpy.isfinite(self.res_vec).all()
+            print("numpy.isfinite(self.res_vec).all()", res_is_finite)
+            self.problem.sol_func.vector().axpy(-relax, self.problem.dsol_func.vector())
+            if (res_is_finite):
+                self.relax = relax
+                break
+            if (k_relax == self.relax_n_iter_max):
+                self.relax = 0.
+                self.printer.print_str("Warning! Optimal relaxation is null…")
+                break
+            k_relax += 1
+        self.printer.dec()
+
+
 
     def compute_relax_gss(self):
 
@@ -473,7 +517,7 @@ class NonlinearSolver():
                             self.problem.get_subsols_func_lst(),
                             self.problem.sol_func)
                     cur = c
-                    relax_fc  = dolfin.assemble(
+                    relax_fc  = dolfin.assemble_linear_system(
                         self.problem.Pi_expr,
                         form_compiler_parameters=self.problem.form_compiler_parameters)
                     #self.printer.print_sci("relax_fc",relax_fc)
@@ -496,7 +540,7 @@ class NonlinearSolver():
                             self.problem.get_subsols_func_lst(),
                             self.problem.sol_func)
                     cur = d
-                    relax_fd  = dolfin.assemble(
+                    relax_fd  = dolfin.assemble_linear_system(
                         self.problem.Pi_expr,
                         form_compiler_parameters=self.problem.form_compiler_parameters)
                     if (numpy.isnan(relax_fd)):
@@ -546,6 +590,7 @@ class NonlinearSolver():
 
         # for constraint in self.problem.constraints+self.problem.steps[k_step-1].constraints:
         #     print(constraint.bc.get_boundary_values())
+        print("relax is", self.relax)
         self.problem.sol_func.vector().axpy(
             self.relax,
             self.problem.dsol_func.vector())
