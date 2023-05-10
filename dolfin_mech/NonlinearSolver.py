@@ -96,7 +96,7 @@ class NonlinearSolver():
 
         if (relax_type == "constant"):
             self.compute_relax = self.compute_relax_constant
-            self.relax_val = relax_parameters.get("relax", 0.25)
+            self.relax_val = relax_parameters.get("relax", 1.)
         elif (relax_type == "aitken"):
             self.compute_relax = self.compute_relax_aitken
         elif (relax_type == "backtracking"):
@@ -298,7 +298,7 @@ class NonlinearSolver():
             # self.printer.print_var("jac_mat",self.jac_mat.array())
 
         if not (numpy.isfinite(self.res_vec).all()):
-            print("Warning! Residual is NaN")
+            # print("Warning! Residual is NaN")
             self.printer.print_str("Warning! Residual is NaN!")
             return False
 
@@ -472,7 +472,7 @@ class NonlinearSolver():
             self.problem.sol_func.vector().axpy(relax, self.problem.dsol_func.vector())
             self.assemble_linear_system()
             res_is_finite = numpy.isfinite(self.res_vec).all()
-            print("numpy.isfinite(self.res_vec).all()", res_is_finite)
+            # print("numpy.isfinite(self.res_vec).all()", res_is_finite)
             self.problem.sol_func.vector().axpy(-relax, self.problem.dsol_func.vector())
             if (res_is_finite):
                 self.relax = relax
@@ -590,7 +590,7 @@ class NonlinearSolver():
 
         # for constraint in self.problem.constraints+self.problem.steps[k_step-1].constraints:
         #     print(constraint.bc.get_boundary_values())
-        print("relax is", self.relax)
+        # print("relax is", self.relax)
         self.problem.sol_func.vector().axpy(
             self.relax,
             self.problem.dsol_func.vector())

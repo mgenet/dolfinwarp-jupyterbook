@@ -41,6 +41,7 @@ class Problem():
 
     def set_mesh(self,
             mesh,
+            # boundary_mesh,
             define_spatial_coordinates=True,
             define_facet_normals=False,
             compute_bbox=True,
@@ -49,6 +50,7 @@ class Problem():
         self.dim = mesh.ufl_domain().geometric_dimension()
 
         self.mesh = mesh
+        # self.boundary_mesh = boundary_mesh
         self.dV = dolfin.Measure(
             "dx",
             domain=self.mesh)
@@ -59,6 +61,7 @@ class Problem():
 
         if (define_facet_normals):
             self.mesh_normals = dolfin.FacetNormal(mesh)
+            self.proj_op = dolfin.Identity(self.dim) - dolfin.outer(self.mesh_normals, self.mesh_normals)
 
         if (compute_bbox):
             coord = self.mesh.coordinates()
@@ -111,14 +114,23 @@ class Problem():
 
     def set_measures(self,
             domains=None,
+            domains_dirichlet=None,
             boundaries=None,
             points=None):
 
         self.domains = domains
+        self.domains_dirichlet = domains_dirichlet
+        self.boundaries = boundaries
+
+
         self.dV = dolfin.Measure(
             "cell",
             domain=self.mesh,
             subdomain_data=self.domains)
+        # self.dS_bord = dolfin.Measure(
+        #     "dx",
+        #     domain=self.mesh,
+        #     subdomain_data=self.domains_dirichlet)
         # if (domains is not None):
         #     self.dV = dolfin.Measure(
         #         "dx",
@@ -129,7 +141,7 @@ class Problem():
         #         "dx",
         #         domain=self.mesh)
 
-        self.boundaries = boundaries
+        
         self.dS = dolfin.Measure(
             "exterior_facet",
             domain=self.mesh,
@@ -266,6 +278,23 @@ class Problem():
         index = list(self.subsols.keys()).index(name)
         # print(str(name)+" index = "+str(index))
         return self.sol_fs.sub(index)
+    
+
+
+    def get_subsol_boundary_function_space(self,
+            name):
+
+        index = list(self.subsols.keys()).index(name)
+        # print(str(name)+" index = "+str(index))
+        return self.sol_bc_fs.sub(index)
+    
+    def set_solution_boundary_function_space(self,
+            constrained_domain=None):
+
+        self.sol_bc_fs = dolfin.FunctionSpace(
+            self.boundary_mesh,
+            self.sol_fe,
+            constrained_domain=constrained_domain) # MG: element keyword don't work here…
 
 
 
@@ -477,11 +506,11 @@ class Problem():
             self.steps[k_step].operators += [operator]
         return operator
 
-    def get_x0_mass(self):
+    def get_x0_mass(self, phis):
         X0 = numpy.empty(self.dim)
         rho_solid = 1e-6
         for k_dim in range(self.dim):
-            X0[k_dim] = dolfin.assemble(rho_solid*self.X[k_dim]*self.dV)/dolfin.assemble(rho_solid*self.dV)
+            X0[k_dim] = dolfin.assemble(phis*self.X[k_dim]*self.dV)/dolfin.assemble(phis*self.dV)
         return(X0)
 
 
@@ -571,6 +600,11 @@ class Problem():
             lbda_test=self.get_lbda_subsol().dsubtest,
             mu=self.get_mu_subsol().subfunc,
             mu_test=self.get_mu_subsol().dsubtest,
+            p=self.get_p_subsol().subfunc,
+            p_test=self.get_p_subsol().dsubtest,
+            proj_op=self.proj_op, 
+            gamma = self.get_gamma_subsol().subfunc,
+            gamma_test = self.get_gamma_subsol().dsubtest,
             **kwargs)
         return self.add_operator(operator=operator, k_step=k_step)
 
@@ -583,18 +617,22 @@ class Problem():
         
         operator = dmech.SurfacePressureGradientLoadingOperator(
             X=dolfin.SpatialCoordinate(self.mesh),
-            x0=self.get_x0_direct_subsol().subfunc,
-            x0_test=self.get_x0_direct_subsol().dsubtest,
+            x0 = self.get_x0_mass(),
             kinematics=self.kinematics,
             lbda=self.get_lbda_subsol().subfunc,
             lbda_test=self.get_lbda_subsol().dsubtest,
             U=self.get_displacement_subsol().subfunc,
             U_test=self.get_displacement_subsol().dsubtest,
-            Phis0=self.Phis0,
+            # Phis0=self.Phis0,
             V0=dolfin.assemble(dolfin.Constant(1)*self.dV),
             N=self.mesh_normals,
             mu=self.get_mu_subsol().subfunc,
             mu_test=self.get_mu_subsol().dsubtest,
+            gamma = self.get_gamma_subsol().subfunc,
+            gamma_test = self.get_gamma_subsol().dsubtest,
+            p=self.get_p_subsol().subfunc,
+            p_test=self.get_p_subsol().dsubtest,
+            proj_op=self.proj_op, 
             **kwargs)
         return self.add_operator(operator=operator, k_step=k_step)
 

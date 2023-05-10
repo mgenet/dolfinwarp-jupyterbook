@@ -22,7 +22,9 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
     def __init__(self,
             inverse=0,
             mesh=None,
+            # boundary_mesh=None,
             define_facet_normals=False,
+            domains_dirichlet=None,
             domains_mf=None,
             boundaries_mf=None,
             points_mf=None,
@@ -44,10 +46,12 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
         if (mesh is not None):
             self.set_mesh(
                 mesh=mesh,
+                # boundary_mesh=boundary_mesh,
                 define_facet_normals=define_facet_normals)
 
             self.set_measures(
                 domains=domains_mf,
+                domains_dirichlet=domains_dirichlet,
                 boundaries=boundaries_mf,
                 points=points_mf)
 
@@ -100,10 +104,12 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
 
             self.add_deformed_volume_operator()    
 
+
+
     def get_porosity_name(self):
         return "Phis"
-
-
+    
+    
 
     def add_porosity_subsol(self,
             degree,
@@ -125,32 +131,65 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
                 init_val=init_val,
                 init_fun=init_fun)
 
-
-
     def get_porosity_subsol(self):
 
         return self.get_subsol(self.get_porosity_name())
 
-
-
     def get_porosity_function_space(self):
 
         return self.get_subsol_function_space(name=self.get_porosity_name())
+    
+
+
+    def get_p_name(self):
+        return "p_surface"
+
+    def add_p_subsol(self):
+
+        self.add_scalar_subsol(
+            name=self.get_p_name(),
+            family="CG",
+            degree=2)
+        
+
+    def get_p_subsol(self):
+
+        return self.get_subsol(self.get_p_name())
+
+
+    def get_p_function_space(self):
+
+        return self.get_subsol_function_space(name=self.get_p_name())
+    
+
+    
+    def get_gamma_name(self):
+        return "gamma"
+
+    def add_gamma_subsol(self):
+
+        self.add_scalar_subsol(
+            name=self.get_gamma_name(),
+            family="R",
+            degree=0)
+        
+
+    def get_gamma_subsol(self):
+
+        return self.get_subsol(self.get_gamma_name())
+
+
+    def get_gamma_function_space(self):
+
+        return self.get_subsol_function_space(name=self.get_gamma_name())
+    
+
 
 
 
     def get_deformed_volume_name(self):
+
         return "v"
-
-    def get_lbda_name(self):
-        return "lbda"
-    
-    def get_mu_name(self):
-        return "mu"
-
-    def get_x0_direct_name(self):
-        return "x0"
-
 
     def add_deformed_volume_subsol(self,
             init_val=None):
@@ -160,6 +199,16 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
             family="R",
             degree=0,
             init_val=self.mesh_V0)
+        
+    def get_deformed_volume_subsol(self):
+
+        return self.get_subsol(self.get_deformed_volume_name())
+        
+
+        
+    def get_lbda_name(self):
+
+        return "lbda"
 
     def add_lbda_subsol(self,
             init_val=None):
@@ -169,7 +218,17 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
             family="R",
             degree=0,
             init_val=init_val)
+    
+    def get_lbda_subsol(self):
 
+        return self.get_subsol(self.get_lbda_name())
+
+
+
+    def get_mu_name(self):
+
+        return "mu"
+    
     def add_mu_subsol(self,
             init_val=None):
 
@@ -178,6 +237,16 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
             family="R",
             degree=0,
             init_val=init_val)
+        
+    def get_mu_subsol(self):
+
+        return self.get_subsol(self.get_mu_name())
+        
+
+        
+    def get_x0_direct_name(self):
+
+        return "x0"
             
     def add_x0_direct_subsol(self,
             init_val=None):
@@ -186,32 +255,19 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
             name=self.get_x0_direct_name(),
             family="R",
             degree=0,
-            init_val=init_val) #[dolfin.assemble(self.X[0]*self.dV)/self.mesh_V0, dolfin.assemble(self.X[1]*self.dV)/self.mesh_V0, dolfin.assemble(self.X[2]*self.dV)/self.mesh_V0])
-
-
-    def get_deformed_volume_subsol(self):
-        return self.get_subsol(self.get_deformed_volume_name())
-
-    def get_lbda_subsol(self):
-        return self.get_subsol(self.get_lbda_name())
-
-    def get_mu_subsol(self):
-        return self.get_subsol(self.get_mu_name())
+            init_val=init_val) #[dolfin.assemble(self.X[0]*self.dV)/self.mesh_V0, dolfin.assemble(self.X[1]*self.dV)/self.mesh_V0, dolfin.assemble(self.X[2]*self.dV)/self.mesh_V0])    
 
     def get_x0_direct_subsol(self):
         return self.get_subsol(self.get_x0_direct_name())
 
-    def get_density_direct(self):
-        self.density = self.Phis0*1e-6
-        # print("density=", self.density)
-        return(self.density)
     
-    def get_X0_mass_direct(self):
-        self.X0_mass_direct = numpy.empty(self.dim)
-        for k_dim in range(self.dim):
-            self.X0_mass_direct[k_dim] = dolfin.assemble((self.Phis0*(self.X[k_dim]+self.get_displacement_subsol().subfunc[k_dim]))*self.dV)/dolfin.assemble(self.Phis0*self.dV)
-        self.X0_mass_direct = dolfin.Constant(self.X0_mass_direct)
-        return(self.X0_mass_direct)
+
+
+
+    # def get_density_direct(self):
+    #     self.density = self.Phis0*1e-6
+    #     # print("density=", self.density)
+    #     return(self.density)
 
 
     def set_subsols(self,
@@ -230,10 +286,17 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
             degree=porosity_degree,
             init_val=porosity_init_val,
             init_fun=porosity_init_fun)
+    
+        self.add_p_subsol()
+
+        self.add_gamma_subsol()
 
         self.add_lbda_subsol()
+
         self.add_mu_subsol()
+
         self.add_deformed_volume_subsol()
+
         if not inverse:
             self.add_x0_direct_subsol()
             pass
@@ -392,6 +455,11 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
     def add_surface_pressure_gradient_loading_operator(self,
             k_step=None,
             **kwargs):
+        
+        nf = dolfin.dot(self.mesh_normals, dolfin.inv(self.kinematics.F))
+        nf_norm = (1/2 * dolfin.inner(nf,nf))**(1/2)
+        n = nf/nf_norm
+        self.proj_op_direct = dolfin.Identity(self.dim) - dolfin.outer(n, n)
 
         operator = dmech.SurfacePressureGradientLoadingOperator(
             X=self.X,
@@ -401,28 +469,39 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
             lbda_test=self.get_lbda_subsol().dsubtest,
             mu=self.get_mu_subsol().subfunc,
             mu_test=self.get_mu_subsol().dsubtest,
+            p = self.get_p_subsol().subfunc,
+            p_test = self.get_p_subsol().dsubtest,
+            gamma = self.get_gamma_subsol().subfunc,
+            gamma_test = self.get_gamma_subsol().dsubtest,
             kinematics=self.kinematics,
             U=self.get_displacement_subsol().subfunc,
             U_test=self.get_displacement_subsol().dsubtest,
             Phis0=self.Phis0,
             V0=dolfin.assemble(dolfin.Constant(1)*self.dV),
             N=self.mesh_normals,
+            proj_op=self.proj_op_direct,
             **kwargs)
         return self.add_operator(operator=operator, k_step=k_step)
 
 
+    
     def add_surface_pressure_gradient0_loading_operator(self,
             k_step=None,
             **kwargs):
-
+        
 
         operator = dmech.SurfacePressureGradient0LoadingOperator(
             x = self.X,
-            x0 = self.get_x0_mass(),
+            x0 = self.get_x0_mass(self.phis),
             n = self.mesh_normals,
             u_test = self.get_displacement_subsol().dsubtest, 
             lbda = self.get_lbda_subsol().subfunc,
             lbda_test = self.get_lbda_subsol().dsubtest,
+            p = self.get_p_subsol().subfunc,
+            p_test = self.get_p_subsol().dsubtest,
+            gamma = self.get_gamma_subsol().subfunc,
+            gamma_test = self.get_gamma_subsol().dsubtest,
+            proj_op=self.proj_op,
             mu = self.get_mu_subsol().subfunc,
             mu_test= self.get_mu_subsol().dsubtest,
             **kwargs)
