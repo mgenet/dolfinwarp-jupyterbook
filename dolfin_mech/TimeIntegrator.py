@@ -30,6 +30,8 @@ class TimeIntegrator():
             write_sol=True,
             write_vtus=False,
             write_xmls=True):
+        
+        # dolfin.set_log_level(dolfin.LogLevel.ERROR)
 
         self.problem = problem
 

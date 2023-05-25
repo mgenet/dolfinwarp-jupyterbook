@@ -44,6 +44,8 @@ class InversePoroHyperelasticityProblem(PoroHyperelasticityProblem):
             u_old=self.get_displacement_subsol().func_old)
 
         self.add_foi(expr=self.kinematics.F, fs=self.mfoi_fs, name="F")
+        self.add_foi(expr=self.kinematics.IC, fs=self.sfoi_fs, name="Ic")
+        self.add_foi(expr=self.kinematics.IIC, fs=self.sfoi_fs, name="IIc")
         self.add_foi(expr=self.kinematics.J, fs=self.sfoi_fs, name="J")
         self.add_foi(expr=self.kinematics.C, fs=self.mfoi_fs, name="C")
         self.add_foi(expr=self.kinematics.E, fs=self.mfoi_fs, name="E")

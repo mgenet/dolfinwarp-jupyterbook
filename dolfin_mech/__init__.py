@@ -75,3 +75,4 @@ from .TimeVaryingConstant import *
 from .XDMFFile import *
 from .compute_error import *
 from .write_VTU_file import *
+from .EquilibriumGap import *

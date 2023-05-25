@@ -24,7 +24,6 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
             mesh=None,
             # boundary_mesh=None,
             define_facet_normals=False,
-            domains_dirichlet=None,
             domains_mf=None,
             boundaries_mf=None,
             points_mf=None,
@@ -51,7 +50,6 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
 
             self.set_measures(
                 domains=domains_mf,
-                domains_dirichlet=domains_dirichlet,
                 boundaries=boundaries_mf,
                 points=points_mf)
 
@@ -149,7 +147,7 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
         self.add_scalar_subsol(
             name=self.get_p_name(),
             family="CG",
-            degree=2)
+            degree=1)
         
 
     def get_p_subsol(self):
@@ -455,11 +453,6 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
     def add_surface_pressure_gradient_loading_operator(self,
             k_step=None,
             **kwargs):
-        
-        nf = dolfin.dot(self.mesh_normals, dolfin.inv(self.kinematics.F))
-        nf_norm = (1/2 * dolfin.inner(nf,nf))**(1/2)
-        n = nf/nf_norm
-        self.proj_op_direct = dolfin.Identity(self.dim) - dolfin.outer(n, n)
 
         operator = dmech.SurfacePressureGradientLoadingOperator(
             X=self.X,
@@ -477,9 +470,9 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
             U=self.get_displacement_subsol().subfunc,
             U_test=self.get_displacement_subsol().dsubtest,
             Phis0=self.Phis0,
+            v = self.get_deformed_volume_subsol().subfunc,
             V0=dolfin.assemble(dolfin.Constant(1)*self.dV),
             N=self.mesh_normals,
-            proj_op=self.proj_op_direct,
             **kwargs)
         return self.add_operator(operator=operator, k_step=k_step)
 
@@ -501,7 +494,6 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
             p_test = self.get_p_subsol().dsubtest,
             gamma = self.get_gamma_subsol().subfunc,
             gamma_test = self.get_gamma_subsol().dsubtest,
-            proj_op=self.proj_op,
             mu = self.get_mu_subsol().subfunc,
             mu_test= self.get_mu_subsol().dsubtest,
             **kwargs)

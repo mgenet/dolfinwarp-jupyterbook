@@ -28,6 +28,7 @@ class SurfacePressureGradientLoadingOperator(Operator):
             U_test,
             Phis0,
             V0, 
+            v,
             N,
             lbda,
             lbda_test,
@@ -61,7 +62,7 @@ class SurfacePressureGradientLoadingOperator(Operator):
 
 
         nf = dolfin.dot(N, dolfin.inv(kinematics.F))
-        nf_norm = (1/2 * dolfin.inner(nf,nf))**(1/2)
+        nf_norm = dolfin.sqrt(dolfin.inner(nf,nf))
         n = nf/nf_norm
 
         self.V0 = dolfin.Constant(V0)
@@ -70,10 +71,7 @@ class SurfacePressureGradientLoadingOperator(Operator):
         x = X + U
         x_tilde = x-x0
 
-    
-        phis_average = dolfin.Constant(dolfin.assemble(Phis0 * self.measure))/dolfin.assemble(kinematics.J*self.measure)
-
-        P_tilde = P0 - phis_average*rho_solid * fy * ( x[1]- x0[1])
+        P_tilde = P0 - rho_solid * fy * ( x[0]- x0[0])
 
     
         grads_p = dolfin.dot(dolfin.grad(p-P_tilde), dolfin.inv(kinematics.F)) - n*(dolfin.dot(n,dolfin.dot(dolfin.grad(p-P_tilde), dolfin.inv(kinematics.F))))
@@ -143,9 +141,7 @@ class SurfacePressureGradient0LoadingOperator(Operator):
 
         x_tilde = x-dolfin.Constant(x0)
 
-        phis_average = dolfin.assemble(phis * self.measure)/dolfin.assemble(dolfin.Constant(1)*self.measure)
-
-        P_tilde = P0 - phis_average * rho_solid * fy * ( x[1]- dolfin.Constant(x0[1]))
+        P_tilde = P0 - rho_solid * fy * ( x[0]- dolfin.Constant(x0[0]))
         
         grads_p = dolfin.grad(p-P_tilde) - n*(dolfin.dot(n,dolfin.grad(p-P_tilde)))
         grads_p_test = dolfin.grad(p_test) - n*(dolfin.dot(n,dolfin.grad(p_test)))

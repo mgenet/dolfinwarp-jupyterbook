@@ -14,9 +14,6 @@ import pandas
 import numpy
 import copy
 
-from FIAT.reference_element import UFCTetrahedron, UFCTriangle
-from FIAT import ufc_simplex, Lagrange
-
 import dolfin_mech as dmech
 
 ################################################################################
@@ -33,19 +30,21 @@ def RivlinCube_PoroHyperelasticity(
         res_basename="RivlinCube_PoroHyperelasticity",
         plot_curves=False,
         verbose=0,
-        inertia_val = 1e-5,
+        inertia_val = 1e-6,
         multimaterial = 0,
         get_results_fields = 0,
         mesh_from_file=0,
+        get_J =False,
         BC=1):
 
     ################################################################### Mesh ###
 
+
     if mesh_from_file:
         mesh = dolfin.Mesh()
         dolfin.XDMFFile("/Users/peyrault/Documents/Gravity/Tests/Meshes_and_poro_files/Zygot.xdmf").read(mesh)
-        # mesh = dolfin.refine(mesh)
-        # mesh = dolfin.refine(mesh)
+        mesh = dolfin.refine(mesh)
+        mesh = dolfin.refine(mesh)
         boundaries_mf = dolfin.MeshFunction("size_t", mesh, mesh.topology().dim()-1) # MG20180418: size_t looks like unisgned int, but more robust wrt architecture and os
         boundaries_mf.set_all(0)
     else:
@@ -53,6 +52,63 @@ def RivlinCube_PoroHyperelasticity(
             mesh, boundaries_mf, xmin_id, xmax_id, ymin_id, ymax_id = dmech.RivlinCube_Mesh(dim=dim, params=cube_params)
         elif (dim==3):
             mesh, boundaries_mf, xmin_id, xmax_id, ymin_id, ymax_id, zmin_id, zmax_id = dmech.RivlinCube_Mesh(dim=dim, params=cube_params)
+
+    get_subsdomains = True
+
+    # coord_ref = mesh.coordinates()[0][0]
+    # for coord in mesh.coordinates():
+    #     if coord[0] < coord_ref:
+    #         coord_ref = coord[0]
+    #         print(coord)
+    # print("coord xmin", coord_ref)
+
+    if get_subsdomains:
+        domains_mf = dolfin.MeshFunction('size_t', mesh, mesh.topology().dim())
+        domains_mf.set_all(0)
+        tol =1e-14
+        # print("mesh.coordinates()[:].min()", mesh.coordinates())
+        xmin = mesh.coordinates()[:, 0].min()
+        xmax = mesh.coordinates()[:, 0].max()
+        zones = 10
+        delta_x = (xmax-xmin)/(zones+1)
+        # print(xmin, xmax, delta_x)
+        # test1 = dolfin.CompiledSubDomain("x[0] <= x1 - tol",  x1=xmin+9*delta_x, tol=tol)
+        # test1.mark(domains_mf, 10)
+        # test2 = dolfin.CompiledSubDomain("x[0] <= x1 - tol",  x1=xmin+8*delta_x, tol=tol)
+        # test2.mark(domains_mf, 9)
+        # test3 = dolfin.CompiledSubDomain("x[0] <= x1 - tol",  x1=xmin+7*delta_x, tol=tol)
+        # test3.mark(domains_mf, 8)
+        # test4 = dolfin.CompiledSubDomain("x[0] <= x1 - tol",  x1=xmin+6*delta_x, tol=tol)
+        # test4.mark(domains_mf, 7)
+        # test5 = dolfin.CompiledSubDomain("x[0] <= x1 - tol",  x1=xmin+5*delta_x, tol=tol)
+        # test5.mark(domains_mf, 6)
+        # test6 = dolfin.CompiledSubDomain("x[0] <= x1 - tol",  x1=xmin+4*delta_x, tol=tol)
+        # test6.mark(domains_mf, 5)
+        # test7 = dolfin.CompiledSubDomain("x[0] <= x1 - tol",  x1=xmin+3*delta_x, tol=tol)
+        # test7.mark(domains_mf, 4)
+        # test8 = dolfin.CompiledSubDomain("x[0] <= x1 - tol",  x1=xmin+2*delta_x, tol=tol)
+        # test8.mark(domains_mf, 3)
+        # test9 = dolfin.CompiledSubDomain("x[0] <= x1 - tol",  x1=xmin+1*delta_x, tol=tol)
+        # test9.mark(domains_mf, 2)
+        # print("xmin, xmax, deltax", xmin, xmax, delta_x)
+        subdomain_lst = []
+        # xmin += delta_x/2
+        subdomain_lst.append(dolfin.CompiledSubDomain("x[0] <= x1 + tol",  x1=xmin+delta_x, tol=tol))
+        subdomain_lst[0].mark(domains_mf, 0)
+        for zone_ in range(0, zones-1):
+            subdomain_lst.append(dolfin.CompiledSubDomain(" x[0] >= x1 - tol",  x1=xmin+delta_x*(zone_+1), tol=tol))
+            # print("x1=xmin+delta_x*(zone_+1)", xmin+delta_x*(zone_+1))
+            subdomain_lst[zone_+1].mark(domains_mf, zone_+1)  
+            # print("id", zone_+1)
+        # for i in range(0, zones): 
+            # marked_cells = dolfin.SubsetIterator(domains_mf, i)
+            # compteur = 0
+            # for cell in marked_cells:     
+                # compteur += 1
+            # print("compteur", compteur, "for i=", i)
+    boundary_file = dolfin.File("/Users/peyrault/Documents/Gravity/Tests/Article/boundaries.pvd") 
+    boundary_file << domains_mf
+
 
 
     if mesh_from_file:
@@ -126,7 +182,7 @@ def RivlinCube_PoroHyperelasticity(
 
   
     
-    mesh.init()
+    # mesh.init()
     # bmesh = dolfin.BoundaryMesh(mesh, 'exterior')
     # dolfin.XDMFFile("/Users/peyrault/Documents/Gravity/Tests/Article/boundary_mesh.xdmf").write(bmesh)
     # facet_domains = dolfin.MeshFunction('size_t', mesh, mesh.topology().dim()-1)
@@ -161,8 +217,8 @@ def RivlinCube_PoroHyperelasticity(
     # print("vertex_coords", vertex_coords)
     
 
-    boundary_file = dolfin.File("/Users/peyrault/Documents/Gravity/Tests/Article/boundaries_facets.pvd") 
-    boundary_file << facet_domains
+    # boundary_file = dolfin.File("/Users/peyrault/Documents/Gravity/Tests/Article/boundaries_facets.pvd") 
+    # boundary_file << facet_domains
 
     
 
@@ -189,8 +245,8 @@ def RivlinCube_PoroHyperelasticity(
     # internal_id = 1
     # internal.mark(domains_dirichlet, internal_id)
     # internal.mark(boundaries_mf, internal_id)
-    boundary_file = dolfin.File("/Users/peyrault/Documents/Gravity/Tests/Article/boundaries.pvd") 
-    boundary_file << domains_dirichlet
+    # boundary_file = dolfin.File("/Users/peyrault/Documents/Gravity/Tests/Article/boundaries.pvd") 
+    # boundary_file << domains_dirichlet
 
    
 
@@ -390,9 +446,9 @@ def RivlinCube_PoroHyperelasticity(
                 # boundary_mesh=boundary_mesh,
                 define_facet_normals=1,
                 boundaries_mf=boundaries_mf,
-                # domains_mf = domains_mf,
+                domains_mf = domains_mf,
                 # domains_dirichlet=domains_dirichlet,
-                displacement_degree=2,
+                displacement_degree=1,
                 quadrature_degree = "default",
                 porosity_init_val=porosity_val,
                 porosity_init_fun=porosity_fun,
@@ -409,8 +465,8 @@ def RivlinCube_PoroHyperelasticity(
                 # boundary_mesh=boundary_mesh,
                 define_facet_normals=1,
                 boundaries_mf=boundaries_mf,
-                # domains_mf = domains_mf,
-                displacement_degree=2,
+                domains_mf = domains_mf,
+                displacement_degree=1,
                 quadrature_degree = "default",
                 porosity_init_val=porosity_val,
                 porosity_init_fun=porosity_fun,
@@ -639,12 +695,12 @@ def RivlinCube_PoroHyperelasticity(
             k_step=k_step)
         f = load_params.get("f", 1e4)
         P0 = load_params.get("P0", -0.5)
-        Xm = load_params.get("Xm", mesh.coordinates()[:, 1].min() - mesh.coordinates()[:, 1].max())
         problem.add_surface_pressure_gradient0_loading_operator(
             dV=problem.dV,
             dS=problem.dS,
             f_ini=[0.]*dim,
-            f_fin=[0., f, 0.],
+            # f_fin=[0., f, 0.],
+            f_fin=[f, 0., 0.],
             rho_solid=rho_solid,
             phis=problem.phis,
             P0_ini=0.,
@@ -659,12 +715,12 @@ def RivlinCube_PoroHyperelasticity(
             k_step=k_step)
         f = load_params.get("f", 1e4)
         P0 = load_params.get("P0", -0.5)
-        Xm = load_params.get("Xm", mesh.coordinates()[:, 1].min() - mesh.coordinates()[:, 1].max())
         problem.add_surface_pressure_gradient_loading_operator(
             dV=problem.dV,
             dS=problem.dS,
             f_ini=[0.]*dim,
-            f_fin=[0., f, 0.],
+            f_fin=[f, 0., 0.],
+            # f_fin=[0., f, 0.],
             rho_solid=rho_solid,
             P0_ini=0.,
             P0_fin=P0,
@@ -753,6 +809,15 @@ def RivlinCube_PoroHyperelasticity(
 
     for foi in problem.fois:
         # print(foi.name)
+        if foi.name == "Ic":
+            ICfun = foi
+            IC = foi.func.vector().get_local()
+        if foi.name == "IIc":
+            IIC = foi.func.vector().get_local()
+            IICfun = foi
+        if foi.name == "J":
+            J = foi.func.vector().get_local()
+            Jfun = foi
         if foi.name == "Phis0":
             phi = foi.func.vector().get_local()
             Phis0 = foi.func.vector().get_local()
@@ -762,9 +827,17 @@ def RivlinCube_PoroHyperelasticity(
             phis_func = foi.func
         if foi.name == "E":
             green_lagrange_tensor = foi.func
- 
+
+    # print("C=", C)
+    # print("len(C)", len(C))
+    print("J=", J)
+    print("lenJ", len(J))
+    print("IC1", len(IC))
+    print("IIC", len(IIC))
+
     phi0 = 0.
     for qoi in problem.qois:
+        # print(qoi.name)
         if qoi.name == "Phis0":
             phi0 = qoi.value
     
@@ -778,110 +851,16 @@ def RivlinCube_PoroHyperelasticity(
     if not inverse:
         print(problem.get_x0_direct_subsol().func.vector().get_local())
         # print(problem.get_porosity_subsol().func.vector().get_local())
+        print("Phis0", dolfin.assemble(problem.Phis0*problem.dV)/dolfin.assemble(problem.kinematics.J*problem.dV))
+        # print("x0=", dolfin.assemble(problem.Phis0 * (problem.X[0] + problem.get_displacement_subsol().func[0]) * problem.dV) / dolfin.assemble(problem.Phis0 * problem.dV) )
+
+        # print("x0=", dolfin.assemble(problem.Phis0 * (problem.X[1] + problem.get_displacement_subsol().func[1])* problem.dV) / dolfin.assemble(problem.Phis0 * problem.dV) )
+
+        # print("x0=", dolfin.assemble(problem.Phis0 * (problem.X[2] + problem.get_displacement_subsol().func[2])* problem.dV) / dolfin.assemble(problem.Phis0 * problem.dV) )
+    else:
+        print("phis", dolfin.assemble(problem.phis*problem.dV)/problem.mesh_V0)
         
-    # print("phi=", phi)
 
-    # if inverse:
-
-        # print("force equilibrium")
-        # print("rhog", dolfin.assemble(rho_solid*phis_func*f*problem.dV))
-
-        # p = dolfin.dot(problem.get_lbda_subsol().func.vector().get_local(), problem.mesh_normals) + dolfin.dot(problem.get_mu_subsol().func.vector().get_local(), dolfin.cross( problem.X + problem.get_x0_mass(), problem.mesh_normals) )
-        # print("p=", p)
-        
-        # print("pnx equation", dolfin.assemble(-problem.get_p_subsol().func*problem.mesh_normals[0] * problem.dS ))
-        # print("pny equation", dolfin.assemble(-problem.get_p_subsol().func*problem.mesh_normals[1] * problem.dS ))
-        # print("pnz equation", dolfin.assemble(-problem.get_p_subsol().func*problem.mesh_normals[2] * problem.dS ))
-
-        # print("momentum equilibrium")
-        # print("momentum rhog x",  - dolfin.assemble( (problem.X[2]-problem.get_x0_mass()[2])* rho_solid*phis_func*f*problem.dV)) 
-        # print("momentum rhog z",   dolfin.assemble( (problem.X[1]-problem.get_x0_mass()[0])* rho_solid*phis_func*f*problem.dV)) 
-
-        # print("momentum x pn",   dolfin.assemble( ((problem.X[1]-problem.get_x0_mass()[1]) * problem.mesh_normals[2] - (problem.X[2]-problem.get_x0_mass()[2]) * problem.mesh_normals[1])* problem.get_p_subsol().func *problem.dS)) 
-        # print("momentum y pn",   dolfin.assemble( ((problem.X[0]-problem.get_x0_mass()[0]) * problem.mesh_normals[2] - (problem.X[2]-problem.get_x0_mass()[2]) * problem.mesh_normals[0])* problem.get_p_subsol().func *problem.dS)) 
-        # print("momentum z pn",   dolfin.assemble( ((problem.X[0]-problem.get_x0_mass()[0]) * problem.mesh_normals[1] - (problem.X[1]-problem.get_x0_mass()[1]) * problem.mesh_normals[0])* problem.get_p_subsol().func *problem.dS)) 
-
-        # print("---> p = p0 + lmda.n + mu . x x n", dolfin.assemble(((problem.get_p_subsol().func - dolfin.Constant(P0) - dolfin.dot(dolfin.Constant(problem.get_lbda_subsol().func.vector().get_local()), problem.mesh_normals) - dolfin.dot(dolfin.Constant(problem.get_mu_subsol().func.vector().get_local()), dolfin.cross(problem.X - dolfin.Constant( problem.get_x0_mass()), problem.mesh_normals)))*(problem.get_p_subsol().func - dolfin.Constant(P0) - dolfin.dot(dolfin.Constant(problem.get_lbda_subsol().func.vector().get_local()), problem.mesh_normals) - dolfin.dot(dolfin.Constant(problem.get_mu_subsol().func.vector().get_local()), dolfin.cross(problem.X - dolfin.Constant( problem.get_x0_mass()), problem.mesh_normals))) )* problem.dS ) )
-
-        # print("lbda.n",  dolfin.dot(dolfin.Constant(problem.get_lbda_subsol().func.vector().get_local()), problem.mesh_normals))
-
-        # print("integral p0=", dolfin.assemble(dolfin.Constant(P0)*problem.dS))
-        # print("integral lbda.n=", dolfin.assemble(dolfin.dot(dolfin.Constant(problem.get_lbda_subsol().func.vector().get_local()), problem.mesh_normals)*problem.dS))
-        # print("integral  mu . x x n", dolfin.assemble(dolfin.dot(dolfin.Constant(problem.get_mu_subsol().func.vector().get_local()), dolfin.cross(problem.X - dolfin.Constant( problem.get_x0_mass()), problem.mesh_normals)) *problem.dS))
-        # print("integral p=", dolfin.assemble(problem.get_p_subsol().func*problem.dS))
-
-
-        # n = get_real_n_ext(mesh)
-        # print("n_glob",  n)
-        # Interpolate mesh values into boundary function
-
-        # n = dolfin.FacetNormal(mesh)
-
-        # Approximate facet normal in a suitable space using projection
-        # V = dolfin.VectorFunctionSpace(mesh, "RT", 1)
-        # u_ = dolfin.TrialFunction(V)
-        # v_ = dolfin.TestFunction(V)
-        # a = dolfin.inner(u_,v_)*dolfin.ds
-        # l = dolfin.inner(n, v_)*dolfin.ds
-        # A = dolfin.assemble(a, keep_diagonal=True)
-        # L = dolfin.assemble(l)
-
-        # A.ident_zeros()
-        # nh = dolfin.Function(V)
-
-        # dolfin.solve(A, nh.vector(), L)
-        # dolfin.solve(A, nh.vector(), L)
-        # dolfin.File("nh.pvd") << nh
-    # else:
-        # print("forces equilibrium")
-        # print("rhog", dolfin.assemble(rho_solid * Phis0_func * f * problem.dV))
-        # nf = dolfin.dot(problem.mesh_normals, dolfin.inv(problem.kinematics.F))
-        # nf_norm = (1/2 * dolfin.inner(nf,nf))**(1/2)
-        # n = nf/nf_norm
-        # x = problem.X + problem.get_displacement_subsol().func
-        # x_tilde = x-dolfin.Constant(problem.get_x0_direct_subsol().func.vector().get_local())
-        # F = dolfin.Constant([0,f,0])
-
-        # print("x0=", problem.get_x0_direct_subsol().func.vector().get_local() )
-        # print("lbda=", problem.get_lbda_subsol().func.vector().get_local() )
-
-        # print("mu=", problem.get_x0_direct_subsol().func.vector().get_local() )
-
-
-        # print("integral of rho x", dolfin.assemble(phis_func * x[0] * problem.dV)/dolfin.assemble(phis_func * problem.dV))
-        # print("integral of rho y", dolfin.assemble(phis_func * x[1] * problem.dV)/dolfin.assemble(phis_func * problem.dV))
-        # print("integral of rho z", dolfin.assemble(phis_func * x[2] * problem.dV)/dolfin.assemble(phis_func * problem.dV))
-
-        # print("pnx equation", dolfin.assemble(-problem.get_p_subsol().func*n[0] * problem.kinematics.J * nf_norm *problem.dS ))
-        # print("pny equation", dolfin.assemble(-problem.get_p_subsol().func*n[1] * problem.kinematics.J * nf_norm *problem.dS ))
-        # print("pnz equation", dolfin.assemble(-problem.get_p_subsol().func*n[2] * problem.kinematics.J * nf_norm *problem.dS ))
-
-        # print("momentum equilibrium")
-        # print("momentum rhog x",  dolfin.assemble( dolfin.cross(x_tilde,F)[0] * rho_solid * phis_func * problem.dV)) 
-        # print("momentum rhog y",  dolfin.assemble( dolfin.cross(x_tilde,F)[1] * rho_solid * phis_func * problem.dV)) 
-        # print("momentum rhog z",  dolfin.assemble( dolfin.cross(x_tilde,F)[2] * rho_solid * phis_func * problem.dV)) 
-
-        # print("momentum pn x",   dolfin.assemble( (x_tilde[1] * n[2] - x_tilde[2] * n[1])* problem.get_p_subsol().func * problem.kinematics.J * nf_norm * problem.dS)) 
-        # print("momentum pn y",   dolfin.assemble( (x_tilde[0] * n[2] - x_tilde[2] * n[0])* problem.get_p_subsol().func * problem.kinematics.J * nf_norm * problem.dS)) 
-        # print("momentum pn z",   dolfin.assemble( (x_tilde[0] * n[1] - x_tilde[1] * n[0]) * problem.get_p_subsol().func * problem.kinematics.J * nf_norm * problem.dS)) 
-        
-        # print("p = p0 + lmda.n + mu . x x n", dolfin.assemble((problem.get_p_subsol().func - dolfin.Constant(P0) - dolfin.dot(dolfin.Constant(problem.get_lbda_subsol().func.vector().get_local()), n) - dolfin.dot(dolfin.Constant(problem.get_mu_subsol().func.vector().get_local()), dolfin.cross(x_tilde, n)) )* problem.kinematics.J * nf_norm* problem.dS ) )
-
-
-        # P = dolfin.dot(dolfin.Constant(problem.get_lbda_subsol().func.vector().get_local()), n) + dolfin.dot(dolfin.Constant(problem.get_mu_subsol().func.vector().get_local()), dolfin.cross(x_tilde, n))
-        # # print("P", P)
-        # print("pn=", dolfin.assemble((P*n[0])*problem.kinematics.J * nf_norm *problem.dS))
-        # print("pn=", dolfin.assemble((P*n[1])*problem.kinematics.J * nf_norm*problem.dS))
-        # print("pn=", dolfin.assemble((P*n[2])*problem.kinematics.J * nf_norm*problem.dS))
-
-    # print("lbda=", problem.get_lbda_subsol().func.vector().get_local())
-    # print("mu=", problem.get_mu_subsol().func.vector().get_local())
-    
-
-    # print("phi0=", phi0)
-    # print("phi average", dolfin.assemble(phi_test*V)/dolfin.assemble(1*V))
-    # print(problem.get_displacement_subsol().func.vector()[:])
-    get_J = False
     if get_results_fields:
         # phis0 = problem.get_porosity_subsol().func.vector().get_local()
         porosity_filename = res_basename+"-poro_final.xml"
@@ -906,10 +885,71 @@ def RivlinCube_PoroHyperelasticity(
                 file.write('  </mesh_function>\n')
                 file.write('</dolfin>\n')
                 file.close()
+            results_zones = {}
+            results_zones["zone"] = []
+            results_zones["average_phi"] = []
+            results_zones["std+_phi"] = []
+            results_zones["std-_phi"] = []
+            results_zones["average_J"] = []
+            results_zones["std+_J"] = []
+            results_zones["std-_J"] = []
+            results_zones["average_I1"] = []
+            results_zones["std+_I1"] = []
+            results_zones["std-_I1"] = []
+            results_zones["average_I2"] = []
+            results_zones["std+_I2"] = []
+            results_zones["std-_I2"] = []
+            for i in range(0, zones):
+                results_zones["zone"].append(i)
+                marked_cells = dolfin.SubsetIterator(domains_mf, i)
+                phi_lst = []
+                J_lst = []
+                I1_lst = []
+                I2_lst = []
+                # print("phis=", phis)
+                for cell in marked_cells:
+                    # print("cell index", cell.index())
+                    # print("type(cell index)", cell.index())
+                    # print("J(cell index)", Jfun[cell.index])
+                    # cell_index = int(cell.index())
+                    phi_lst.append(phis[cell.index()])
+                    J_lst.append(J[cell.index()])
+                    I1_lst.append(IC[cell.index()])
+                    I2_lst.append(IIC[cell.index()])
+                phi_average = numpy.average(phi_lst)
+                phi_std =numpy.std(phi_lst)
+                results_zones["average_phi"].append(phi_average)
+                results_zones["std+_phi"].append(phi_average + phi_std)
+                results_zones["std-_phi"].append(phi_average - phi_std)
+                J_average = numpy.average(J_lst)
+                J_std =numpy.std(J_lst)
+                results_zones["average_J"].append(J_average)
+                results_zones["std+_J"].append(J_average + J_std)
+                results_zones["std-_J"].append(J_average - J_std)
+                I1_average = numpy.average(I1_lst)
+                I1_std =numpy.std(I1_lst)
+                results_zones["average_I1"].append(I1_average)
+                results_zones["std+_I1"].append(I1_average + I1_std)
+                results_zones["std-_I1"].append(I1_average - I1_std)
+                I2_average = numpy.average(I2_lst)
+                I2_std =numpy.std(I2_lst)
+                results_zones["average_I2"].append(I2_average)
+                results_zones["std+_I2"].append(I2_average + I2_std)
+                results_zones["std-_I2"].append(I2_average - I2_std)
+            print("results", results_zones)
+            df = pandas.DataFrame(results_zones)
+            myfile= open(res_basename+"/distribution_zones.dat", 'w')
+            myfile.write(df.to_string(index=False))
+            myfile.close()
+        # print("get_J", get_J)
         if get_J:
             return(problem.get_displacement_subsol().func,  phi, V, problem.get_deformed_volume_subsol().func.vector()[0])
         else:
-            return(problem.get_displacement_subsol().func,  phi, V)
+            # print("in this function")
+            if inverse:
+                return(problem.get_displacement_subsol().func,  phi, V)
+            else:
+                return(problem.get_displacement_subsol().func,  phis, V)
     else:
         return
     

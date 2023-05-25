@@ -114,12 +114,10 @@ class Problem():
 
     def set_measures(self,
             domains=None,
-            domains_dirichlet=None,
             boundaries=None,
             points=None):
 
         self.domains = domains
-        self.domains_dirichlet = domains_dirichlet
         self.boundaries = boundaries
 
 

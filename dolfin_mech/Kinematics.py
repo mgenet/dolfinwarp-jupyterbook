@@ -26,6 +26,9 @@ class Kinematics():
 
         self.U = U
 
+        self.epsilon = dolfin.sym(dolfin.grad(self.U))
+        self.epsilon = dolfin.variable(self.epsilon)
+
         self.dim = self.U.ufl_shape[0]
         self.I = dolfin.Identity(self.dim)
 
