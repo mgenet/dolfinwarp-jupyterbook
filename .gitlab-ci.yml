@@ -5,6 +5,8 @@ stages:
 jupyter-build:
   stage: build
   image: python:slim
+  tags:
+    - ci.inria.fr
   script:
     - pip install -U jupyter-book
     - jupyter-book clean .
@@ -16,6 +18,8 @@ jupyter-build:
 pages:
   stage: deploy
   image: busybox:latest
+  tags:
+    - ci.inria.fr
   script:
     - mv _build/html public
   artifacts:
