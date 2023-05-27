@@ -1,32 +1,46 @@
 # Book settings
 # Learn more at https://jupyterbook.org/customize/config.html
-
-title: My sample book
-author: The Jupyter Book Community
+title: Welcome to the dolfin_warp tutorials!
+author: Martin Genet
 logo: logo.png
 
 # Force re-execution of notebooks on each build.
 # See https://jupyterbook.org/content/execute.html
 execute:
-  execute_notebooks: force
+  execute_notebooks: "off"
+  # execute_notebooks: force
 
 # Define the name of the latex output file for PDF builds
 latex:
   latex_documents:
-    targetname: book.tex
+    targetname: "book.tex"
 
 # Add a bibtex file so that we can create citations
 bibtex_bibfiles:
-  - references.bib
+  - "references.bib"
 
 # Information about where the book exists on the web
+# Somehow only GitHub works, cf. https://github.com/orgs/executablebooks/discussions/1018
 repository:
-  url: https://github.com/executablebooks/jupyter-book  # Online location of your book
-  path_to_book: docs  # Optional path to your book, relative to the repository root
+  url: https://github.com/mgenet/dolfin_warp-tutorials
+  # url: gitlab.inria.fr/mgenet/dolfin_warp-tutorials
+  # url: "https%3A%2F%2Fgitlab.inria.fr%2Fmgenet%2Fdolfin_warp-tutorials.git"
+  # url: https%3A%2F%2Fgitlab.inria.fr%2Fmgenet%2Fdolfin_warp-tutorials/HEAD
+  # url: https%3A%2F%2Fgitlab.inria.fr%2Fmgenet%2Fdolfin_warp-tutorials.git
+  # url: https://gitlab.inria.fr/mgenet/dolfin_warp-tutorials.git
+  # url: https://gitlab.inria.fr/mgenet/dolfin_warp-tutorials  # Online location of your book
+  path_to_book: .  # Optional path to your book, relative to the repository root
   branch: master  # Which branch of the repository should be used when creating links (optional)
 
 # Add GitHub buttons to your book
 # See https://jupyterbook.org/customize/config.html#add-a-link-to-your-repository
 html:
-  use_issues_button: true
   use_repository_button: true
+  use_issues_button: false
+
+# Add Binder buttons
+launch_buttons:
+  notebook_interface: "classic"  # "jupyterlab" or "classic"
+  binderhub_url: "https://mybinder.org"  # The URL for your BinderHub (e.g., https://mybinder.org)
+  # colab_url: "https://colab.research.google.com"
+  # jupyterhub_url: "https://jupytercloud.idcs.polytechnique.fr/jupyter"  # The URL for your JupyterHub. (e.g., https://datahub.berkeley.edu)
