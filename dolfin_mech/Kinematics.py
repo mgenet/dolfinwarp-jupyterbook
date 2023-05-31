@@ -43,7 +43,7 @@ class Kinematics():
         self.E_sph = dolfin.tr(self.E)/self.dim * self.I
         self.E_dev = self.E - self.E_sph
 
-        self.F_bar     = self.J**(-1./3) * self.F
+        self.F_bar     = self.J**(-1/self.dim) * self.F
         self.C_bar     = self.F_bar.T * self.F_bar
         self.C_bar_inv = dolfin.inv(self.C_bar)
         self.IC_bar    = dolfin.tr(self.C_bar)
@@ -58,7 +58,7 @@ class Kinematics():
             self.C_old = self.F_old.T * self.F_old
             self.E_old = (self.C_old - self.I)/2
 
-            self.F_bar_old = self.J_old**(-1./3) * self.F_old
+            self.F_bar_old = self.J_old**(-1/self.dim) * self.F_old
             self.C_bar_old = self.F_bar_old.T * self.F_bar_old
             self.E_bar_old = (self.C_bar_old - self.I)/2
 

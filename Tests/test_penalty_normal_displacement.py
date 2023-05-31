@@ -36,7 +36,6 @@ def test_normal_displacement_penalty(
     material_parameters = {
         "E":1.,
         "nu":0.5*(incomp)+0.3*(1-incomp),
-        "dim":dim, # MG20220322: Necessary to compute correct bulk modulus
         "PS":0}
 
     if (incomp):

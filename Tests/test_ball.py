@@ -35,8 +35,7 @@ for incomp in incomp_lst:
         mat_model = "CGNH"
     mat_params = {
         "E":1.,
-        "nu":0.5*(incomp)+0.3*(1-incomp),
-        "dim":2} # MG20220322: Necessary to compute correct bulk modulus
+        "nu":0.5*(incomp)+0.3*(1-incomp)}
 
     load_lst  = []
     load_lst += ["disp"]

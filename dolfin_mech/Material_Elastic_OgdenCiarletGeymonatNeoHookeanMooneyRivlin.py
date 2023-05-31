@@ -8,14 +8,12 @@
 ###                                                                          ###
 ################################################################################
 
-import dolfin
-
 import dolfin_mech as dmech
 from .Material_Elastic import ElasticMaterial
 
 ################################################################################
 
-class CiarletGeymonatNeoHookeanElasticMaterial(ElasticMaterial):
+class OgdenCiarletGeymonatNeoHookeanMooneyRivlinElasticMaterial(ElasticMaterial):
 
 
 
@@ -26,11 +24,13 @@ class CiarletGeymonatNeoHookeanElasticMaterial(ElasticMaterial):
 
         self.kinematics = kinematics
 
-        self.bulk = dmech.CiarletGeymonatElasticMaterial(kinematics, parameters)
-        self.dev  = dmech.NeoHookeanElasticMaterial(kinematics, parameters, decoup)
+        self.bulk = dmech.OgdenCiarletGeymonatElasticMaterial(kinematics, parameters, decoup)
+        self.dev  = dmech.NeoHookeanMooneyRivlinElasticMaterial(kinematics, parameters, decoup)
 
         self.Psi   = self.bulk.Psi   + self.dev.Psi
         self.Sigma = self.bulk.Sigma + self.dev.Sigma
+        if (self.kinematics.dim == 2):
+            self.Sigma_33 = self.bulk.Sigma_33 + self.dev.Sigma_33
         self.P     = self.bulk.P     + self.dev.P
         self.sigma = self.bulk.sigma + self.dev.sigma
 

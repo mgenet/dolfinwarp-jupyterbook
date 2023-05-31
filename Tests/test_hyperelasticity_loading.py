@@ -51,7 +51,7 @@ for dim in dim_lst:
 
         dmech.RivlinCube_Hyperelasticity(
             dim=dim,
-            mat_params={"model":"CGNHMR", "parameters":{"E":1., "nu":0.3, "dim":dim}},
+            mat_params={"model":"CGNHMR", "parameters":{"E":1., "nu":0.3}},
             step_params={"dt_min":0.1},
             load_params={"type":load},
             res_basename=res_folder+"/"+res_basename,

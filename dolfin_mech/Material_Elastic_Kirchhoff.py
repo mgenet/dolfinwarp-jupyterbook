@@ -70,7 +70,13 @@ class KirchhoffBulkElasticMaterial(ElasticMaterial):
 
         self.kinematics = kinematics
 
-        self.K = self.get_K_from_parameters(parameters)
+        # self.K = self.get_K_from_parameters(parameters)
+        self.lmbda, self.mu = self.get_lambda_and_mu_from_parameters(parameters)
+
+        if   (self.kinematics.dim == 2):
+            self.K = (2*self.lmbda + 2*self.mu)/2
+        elif (self.kinematics.dim == 3):
+            self.K = (3*self.lmbda + 2*self.mu)/3
 
         self.Psi   = (self.kinematics.dim*self.K/2) * dolfin.tr(self.kinematics.E_sph)**2
         self.Sigma =  self.kinematics.dim*self.K    *           self.kinematics.E_sph

@@ -319,11 +319,11 @@ class SphericalProblem(Problem):
 
         if nb_subdomain == 0:
             basename = "P_"
-            P = -1./3. * dolfin.tr(self.sigma)
+            P = -1/3 * dolfin.tr(self.sigma)
         elif nb_subdomain == 1:
             basename = "P_"
-            P = -1./3. * dolfin.tr(self.subdomains[0].sigma)
+            P = -1/3 * dolfin.tr(self.subdomains[0].sigma)
 
         self.add_qoi(
             name=basename,
-            expr=P * 4 * math.pi * self.R**2 * self.dR)
+            expr=P * 4*math.pi * self.R**2 * self.dR)

@@ -36,21 +36,20 @@ for dim in dim_lst:
 
         mat_params = {
             "E":1.,
-            "nu":0.5*(incomp)+0.3*(1-incomp),
-            "dim":dim} # MG20220322: Necessary to compute correct bulk modulus in 2D
+            "nu":0.5*(incomp)+0.3*(1-incomp)}
 
         mat_lst  = []
         if (incomp):
             mat_lst += ["NH"]
-            # if (dim == 3): mat_lst += ["NH_bar"]
+            mat_lst += ["NH_bar"]
             mat_lst += ["NHMR"]
-            # if (dim == 3): mat_lst += ["NHMR_bar"]
+            mat_lst += ["NHMR_bar"]
             mat_lst += ["SVK_dev"]
         else:
             mat_lst += ["CGNH"]
-            # if (dim == 3): mat_lst += ["CGNH_bar"]
+            mat_lst += ["CGNH_bar"]
             mat_lst += ["CGNHMR"]
-            # if (dim == 3): mat_lst += ["CGNHMR_bar"]
+            mat_lst += ["CGNHMR_bar"]
             mat_lst += ["SVK"]
         for mat in mat_lst:
 
