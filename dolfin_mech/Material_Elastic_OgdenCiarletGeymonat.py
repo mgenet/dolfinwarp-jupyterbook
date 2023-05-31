@@ -40,7 +40,7 @@ class OgdenCiarletGeymonatElasticMaterial(ElasticMaterial):
             self.Sigma = 2*self.C0 * (self.kinematics.J**2 - 1) * self.kinematics.C_inv # MG20200206: Cannot differentiate Psi wrt to C because J is not defined as a function of C
 
         if (self.kinematics.dim == 2):
-            self.Sigma_33 = 2*self.C0 * (self.kinematics.J**2 - 1)
+            self.Sigma_ZZ = 2*self.C0 * (self.kinematics.J**2 - 1)
 
         # self.P = dolfin.diff(self.Psi, self.kinematics.F) # MG20220426: Cannot do that for micromechanics problems
         # self.P = 2*self.C0 * (self.kinematics.J**2 - 1) * self.kinematics.F_inv.T

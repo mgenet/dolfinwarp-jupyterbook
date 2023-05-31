@@ -36,7 +36,7 @@ class NeoHookeanMooneyRivlinElasticMaterial(ElasticMaterial):
         self.Psi   = self.nh.Psi   + self.mr.Psi
         self.Sigma = self.nh.Sigma + self.mr.Sigma
         if (self.kinematics.dim == 2):
-            self.Sigma_33 = self.nh.Sigma_33 + self.mr.Sigma_33
+            self.Sigma_ZZ = self.nh.Sigma_ZZ + self.mr.Sigma_ZZ
         self.P     = self.nh.P     + self.mr.P
         self.sigma = self.nh.sigma + self.mr.sigma
 

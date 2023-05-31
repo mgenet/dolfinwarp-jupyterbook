@@ -366,6 +366,23 @@ class HyperelasticityProblem(Problem):
 
 
 
+    def add_global_out_of_plane_stress_qois(self,
+            stress_type="PK2"):
+
+        if (stress_type in ("Cauchy", "cauchy", "sigma")):
+            assert (0), "To do. Aborting."
+        elif (stress_type in ("Piola", "piola", "PK2", "Sigma")):
+            basename = "S_ZZ"
+            stress = "Sigma_ZZ"
+        elif (stress_type in ("Boussinesq", "boussinesq", "PK1", "P")):
+            assert (0), "To do. Aborting."
+
+        self.add_qoi(
+            name=basename,
+            expr=sum([getattr(operator.material, stress)*operator.measure for operator in self.operators if (hasattr(operator, "material") and hasattr(operator.material, stress))]))
+
+
+
     def add_global_pressure_qoi(self):
 
         self.add_qoi(

@@ -30,7 +30,7 @@ class OgdenCiarletGeymonatNeoHookeanElasticMaterial(ElasticMaterial):
         self.Psi   = self.bulk.Psi   + self.dev.Psi
         self.Sigma = self.bulk.Sigma + self.dev.Sigma
         if (self.kinematics.dim == 2):
-            self.Sigma_33 = self.bulk.Sigma_33 + self.dev.Sigma_33
+            self.Sigma_ZZ = self.bulk.Sigma_ZZ + self.dev.Sigma_ZZ
         self.P     = self.bulk.P     + self.dev.P
         self.sigma = self.bulk.sigma + self.dev.sigma
 

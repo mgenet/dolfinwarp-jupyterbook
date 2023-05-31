@@ -36,6 +36,9 @@ class HookeElasticMaterial(ElasticMaterial):
         self.Sigma = self.sigma
         self.P     = self.sigma
 
+        if (self.kinematics.dim == 2):
+            self.sigma_ZZ = self.lmbda * dolfin.tr(self.kinematics.epsilon)
+
 
 
     # def get_free_energy(self,
@@ -69,17 +72,16 @@ class HookeBulkElasticMaterial(ElasticMaterial):
 
         # self.K = self.get_K_from_parameters(parameters)
         self.lmbda, self.mu = self.get_lambda_and_mu_from_parameters(parameters)
-
-        if   (self.kinematics.dim == 2):
-            self.K = (2*self.lmbda + 2*self.mu)/2
-        elif (self.kinematics.dim == 3):
-            self.K = (3*self.lmbda + 2*self.mu)/3
+        self.K = (self.kinematics.dim*self.lmbda + 2*self.mu)/self.kinematics.dim
 
         self.psi   = (self.kinematics.dim*self.K/2) * dolfin.tr(self.kinematics.epsilon_sph)**2
         self.sigma =  self.kinematics.dim*self.K    *           self.kinematics.epsilon_sph
 
         self.Sigma = self.sigma
         self.P     = self.sigma
+
+        if (self.kinematics.dim == 2):
+            self.sigma_ZZ = self.K * dolfin.tr(self.kinematics.epsilon)
 
 
 
@@ -133,6 +135,9 @@ class HookeDevElasticMaterial(ElasticMaterial):
 
         self.Sigma = self.sigma
         self.P     = self.sigma
+
+        if (self.kinematics.dim == 2):
+            self.sigma_ZZ = -2*self.G/3 * dolfin.tr(self.kinematics.epsilon)
 
 
 

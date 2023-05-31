@@ -33,7 +33,7 @@ class NeoHookeanElasticMaterial(ElasticMaterial):
                 # self.Psi      =   self.C1 * (self.kinematics.J**(-2/3) * (self.kinematics.J * self.kinematics.IC_bar + 1) - 3) # MG20200206: Plane strain, written with IC_bar_2D (I prefer the expression with IC_2D)
                 self.Psi      =   self.C1 * (self.kinematics.J**(-2/3) * (self.kinematics.IC + 1) - 3) # MG20200206: Plane strain, written with IC_2D
                 self.Sigma    = 2*self.C1 * self.kinematics.J**(-2/3) * (self.kinematics.I - (self.kinematics.IC + 1)/3 * self.kinematics.C_inv) # MG20200206: Cannot differentiate Psi wrt to C because J is not defined as a function of C
-                self.Sigma_33 = 2*self.C1 * self.kinematics.J**(-2/3) * (1 - (self.kinematics.IC + 1)/3)
+                self.Sigma_ZZ = 2*self.C1 * self.kinematics.J**(-2/3) * (1 - (self.kinematics.IC + 1)/3)
             elif (self.kinematics.dim == 3):
                 self.Psi   =   self.C1 * (self.kinematics.IC_bar - 3)
                 self.Sigma = 2*self.C1 * self.kinematics.J**(-2/3) * (self.kinematics.I - self.kinematics.IC/3 * self.kinematics.C_inv) # MG20200206: Cannot differentiate Psi wrt to C because J is not defined as a function of C
@@ -41,7 +41,7 @@ class NeoHookeanElasticMaterial(ElasticMaterial):
             if   (self.kinematics.dim == 2):
                 self.Psi      =   self.C1 * (self.kinematics.IC - 2 - 2*dolfin.ln(self.kinematics.J)) # MG20200206: Plane strain
                 self.Sigma    = 2*self.C1 * (self.kinematics.I - self.kinematics.C_inv) # MG20200206: Cannot differentiate Psi wrt to C because J is not defined as a function of C
-                self.Sigma_33 = dolfin.Constant(0.)
+                self.Sigma_ZZ = dolfin.Constant(0.)
             elif (self.kinematics.dim == 3):
                 self.Psi   =   self.C1 * (self.kinematics.IC - 3 - 2*dolfin.ln(self.kinematics.J))
                 self.Sigma = 2*self.C1 * (self.kinematics.I - self.kinematics.C_inv) # MG20200206: Cannot differentiate Psi wrt to C because J is not defined as a function of C

@@ -35,6 +35,9 @@ class KirchhoffElasticMaterial(ElasticMaterial):
         self.Sigma = dolfin.diff(self.Psi, self.kinematics.E)
         # self.Sigma = self.lmbda * dolfin.tr(self.kinematics.E) * self.kinematics.I + 2 * self.mu * self.kinematics.E
 
+        if (self.kinematics.dim == 2):
+            self.Sigma_ZZ = self.lmbda * dolfin.tr(self.kinematics.E)
+
         self.P = self.kinematics.F * self.Sigma
         
         self.sigma = self.P * self.kinematics.F.T / self.kinematics.J
@@ -72,14 +75,13 @@ class KirchhoffBulkElasticMaterial(ElasticMaterial):
 
         # self.K = self.get_K_from_parameters(parameters)
         self.lmbda, self.mu = self.get_lambda_and_mu_from_parameters(parameters)
-
-        if   (self.kinematics.dim == 2):
-            self.K = (2*self.lmbda + 2*self.mu)/2
-        elif (self.kinematics.dim == 3):
-            self.K = (3*self.lmbda + 2*self.mu)/3
+        self.K = (self.kinematics.dim*self.lmbda + 2*self.mu)/self.kinematics.dim
 
         self.Psi   = (self.kinematics.dim*self.K/2) * dolfin.tr(self.kinematics.E_sph)**2
         self.Sigma =  self.kinematics.dim*self.K    *           self.kinematics.E_sph
+
+        if (self.kinematics.dim == 2):
+            self.Sigma_ZZ = self.K * dolfin.tr(self.kinematics.E)
 
         # self.P = dolfin.diff(self.Psi, self.kinematics.F) # MG20220426: Cannot do that for micromechanics problems
         self.P     = self.kinematics.F * self.Sigma
@@ -137,6 +139,9 @@ class KirchhoffDevElasticMaterial(ElasticMaterial):
 
         self.Psi   =   self.G * dolfin.inner(self.kinematics.E_dev, self.kinematics.E_dev)
         self.Sigma = 2*self.G *              self.kinematics.E_dev
+
+        if (self.kinematics.dim == 2):
+            self.Sigma_ZZ = -2*self.G/3 * dolfin.tr(self.kinematics.E)
 
         # self.P     = dolfin.diff(self.Psi, self.kinematics.F)
         self.P     = self.kinematics.F * self.Sigma
