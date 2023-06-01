@@ -39,9 +39,12 @@ class ExponentialCiarletGeymonat(ElasticMaterial):
 
         self.Psi = (self.alpha) * (dolfin.exp(self.gamma*(self.kinematics.J**2 - 1 - 2*dolfin.ln(self.kinematics.J))) - 1)
 
+
         self.Sigma = (self.alpha) * dolfin.exp(self.gamma*(self.kinematics.J**2 - 1 - 2*dolfin.ln(self.kinematics.J))) * (2*self.gamma) * (self.kinematics.J**2 - 1) * self.kinematics.C_inv
 
-        # self.P = dolfin.diff(self.Psi, self.kinematics.F) # MG20220426: Cannot do that for micromechanics problems
-        self.P = self.kinematics.F * self.Sigma
+        # self.Sigma = dolfin.diff(self.Psi, self.kinematics.E)
+
+        self.P = dolfin.diff(self.Psi, self.kinematics.F) # MG20220426: Cannot do that for micromechanics problems
+        # self.P = self.kinematics.F * self.Sigma
 
         self.sigma = self.P * self.kinematics.F.T / self.kinematics.J

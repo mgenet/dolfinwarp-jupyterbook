@@ -52,7 +52,7 @@ def RivlinCube_Elasticity(
     ################################################################ Problem ###
 
     if (incomp):
-        displacement_degree = 2 # MG20211219: Incompressibility requires displacement_degree >= 2 ?!
+        displacement_degree = 1 # MG20211219: Incompressibility requires displacement_degree >= 2 ?!
         w_incompressibility = 1
     else:
         displacement_degree = 1

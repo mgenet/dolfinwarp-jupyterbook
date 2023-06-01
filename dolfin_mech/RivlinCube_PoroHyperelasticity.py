@@ -26,6 +26,7 @@ def RivlinCube_PoroHyperelasticity(
         mat_params={},
         step_params={},
         load_params={},
+        initialisation_estimation={},
         move = {},
         res_basename="RivlinCube_PoroHyperelasticity",
         plot_curves=False,
@@ -35,6 +36,8 @@ def RivlinCube_PoroHyperelasticity(
         get_results_fields = 0,
         mesh_from_file=0,
         get_J =False,
+        estimation_gap=False,
+        get_invariants = None,
         BC=1):
 
     ################################################################### Mesh ###
@@ -44,7 +47,7 @@ def RivlinCube_PoroHyperelasticity(
         mesh = dolfin.Mesh()
         dolfin.XDMFFile("/Users/peyrault/Documents/Gravity/Tests/Meshes_and_poro_files/Zygot.xdmf").read(mesh)
         mesh = dolfin.refine(mesh)
-        mesh = dolfin.refine(mesh)
+        # mesh = dolfin.refine(mesh)
         boundaries_mf = dolfin.MeshFunction("size_t", mesh, mesh.topology().dim()-1) # MG20180418: size_t looks like unisgned int, but more robust wrt architecture and os
         boundaries_mf.set_all(0)
     else:
@@ -449,7 +452,8 @@ def RivlinCube_PoroHyperelasticity(
                 domains_mf = domains_mf,
                 # domains_dirichlet=domains_dirichlet,
                 displacement_degree=1,
-                quadrature_degree = "default",
+                # quadrature_degree = "default",
+                # quadrature_degree = 1,
                 porosity_init_val=porosity_val,
                 porosity_init_fun=porosity_fun,
                 skel_behavior=mat_params,
@@ -467,7 +471,8 @@ def RivlinCube_PoroHyperelasticity(
                 boundaries_mf=boundaries_mf,
                 domains_mf = domains_mf,
                 displacement_degree=1,
-                quadrature_degree = "default",
+                # quadrature_degree = 1,
+                # quadrature_degree = "default",
                 porosity_init_val=porosity_val,
                 porosity_init_fun=porosity_fun,
                 skel_behavior=mat_params,
@@ -577,6 +582,10 @@ def RivlinCube_PoroHyperelasticity(
         measure=problem.dV,
         rho_val=float(inertia_val),
         k_step=k_step)
+    
+    surface_forces = []
+    volume_forces = []
+    boundary_conditions = []
 
     if (load_type == "internal"):
         pf = load_params.get("pf", +0.5)
@@ -603,23 +612,26 @@ def RivlinCube_PoroHyperelasticity(
             P_ini=0., P_fin=P,
             k_step=k_step)
     elif (load_type == "external0"):
+        # print("adding external 0 op")
         problem.add_pf_operator(
             measure=problem.dV,
             pf_ini=0., pf_fin=0.,
             k_step=k_step)
         P = load_params.get("P", -0.5)
         problem.add_surface_pressure0_loading_operator(
-            measure=problem.dS(xmax_id),
+            # measure=problem.dS(xmax_id),
+            measure=problem.dS,
             P_ini=0., P_fin=P,
             k_step=k_step)
-        problem.add_surface_pressure0_loading_operator(
-            measure=problem.dS(ymax_id),
-            P_ini=0., P_fin=P,
-            k_step=k_step)
-        if (dim==3): problem.add_surface_pressure0_loading_operator(
-            measure=problem.dS(zmax_id),
-            P_ini=0., P_fin=P,
-            k_step=k_step)
+        surface_forces.append([P, problem.dS])
+        # problem.add_surface_pressure0_loading_operator(
+        #     measure=problem.dS(ymax_id),
+        #     P_ini=0., P_fin=P,
+        #     k_step=k_step)
+        # if (dim==3): problem.add_surface_pressure0_loading_operator(
+        #     measure=problem.dS(zmax_id),
+        #     P_ini=0., P_fin=P,
+        #     k_step=k_step)
     elif (load_type == "volu0"):
         problem.add_pf_operator(
             measure=problem.dV,
@@ -705,8 +717,8 @@ def RivlinCube_PoroHyperelasticity(
             phis=problem.phis,
             P0_ini=0.,
             P0_fin=P0,
-            # Xm=Xm,
             k_step=k_step)
+        volume_forces.append([[f, 0., 0.], problem.dV])
     elif (load_type == "pgra"):
         problem.add_pf_operator(
             measure=problem.dV,
@@ -724,8 +736,8 @@ def RivlinCube_PoroHyperelasticity(
             rho_solid=rho_solid,
             P0_ini=0.,
             P0_fin=P0,
-            # Xm=Xm,
             k_step=k_step)
+        volume_forces.append([[f, 0., 0.], problem.dV])
 
     ################################################# Quantities of Interest ###
 
@@ -807,6 +819,7 @@ def RivlinCube_PoroHyperelasticity(
         qois_data.plot(x="pf", y=all_porosities, ax=qois_axes, ylim=[0,1], ylabel="porosity")
         qois_fig.savefig(res_basename+"-porosities-vs-pressure.pdf")
 
+
     for foi in problem.fois:
         # print(foi.name)
         if foi.name == "Ic":
@@ -830,10 +843,10 @@ def RivlinCube_PoroHyperelasticity(
 
     # print("C=", C)
     # print("len(C)", len(C))
-    print("J=", J)
-    print("lenJ", len(J))
-    print("IC1", len(IC))
-    print("IIC", len(IIC))
+    # print("J=", J)
+    # print("lenJ", len(J))
+    # print("IC1", len(IC))
+    # print("IIC", len(IIC))
 
     phi0 = 0.
     for qoi in problem.qois:
@@ -859,6 +872,12 @@ def RivlinCube_PoroHyperelasticity(
         # print("x0=", dolfin.assemble(problem.Phis0 * (problem.X[2] + problem.get_displacement_subsol().func[2])* problem.dV) / dolfin.assemble(problem.Phis0 * problem.dV) )
     else:
         print("phis", dolfin.assemble(problem.phis*problem.dV)/problem.mesh_V0)
+
+    
+    if estimation_gap:
+        kinematics = dmech.Kinematics(U=problem.get_displacement_subsol().subfunc)
+        surface_forces.append([problem.get_p_subsol().subfunc, problem.dS])
+        dmech.EquilibriumGap(problem=problem, kinematics=kinematics, material_model=None, material_parameters=mat_params["parameters"], initialisation_estimation=initialisation_estimation, surface_forces=surface_forces, volume_forces=volume_forces, boundary_conditions=boundary_conditions)
         
 
     if get_results_fields:
@@ -885,62 +904,159 @@ def RivlinCube_PoroHyperelasticity(
                 file.write('  </mesh_function>\n')
                 file.write('</dolfin>\n')
                 file.close()
-            results_zones = {}
-            results_zones["zone"] = []
-            results_zones["average_phi"] = []
-            results_zones["std+_phi"] = []
-            results_zones["std-_phi"] = []
-            results_zones["average_J"] = []
-            results_zones["std+_J"] = []
-            results_zones["std-_J"] = []
-            results_zones["average_I1"] = []
-            results_zones["std+_I1"] = []
-            results_zones["std-_I1"] = []
-            results_zones["average_I2"] = []
-            results_zones["std+_I2"] = []
-            results_zones["std-_I2"] = []
-            for i in range(0, zones):
-                results_zones["zone"].append(i)
-                marked_cells = dolfin.SubsetIterator(domains_mf, i)
-                phi_lst = []
-                J_lst = []
-                I1_lst = []
-                I2_lst = []
-                # print("phis=", phis)
-                for cell in marked_cells:
-                    # print("cell index", cell.index())
-                    # print("type(cell index)", cell.index())
-                    # print("J(cell index)", Jfun[cell.index])
-                    # cell_index = int(cell.index())
-                    phi_lst.append(phis[cell.index()])
-                    J_lst.append(J[cell.index()])
-                    I1_lst.append(IC[cell.index()])
-                    I2_lst.append(IIC[cell.index()])
-                phi_average = numpy.average(phi_lst)
-                phi_std =numpy.std(phi_lst)
-                results_zones["average_phi"].append(phi_average)
-                results_zones["std+_phi"].append(phi_average + phi_std)
-                results_zones["std-_phi"].append(phi_average - phi_std)
-                J_average = numpy.average(J_lst)
-                J_std =numpy.std(J_lst)
-                results_zones["average_J"].append(J_average)
-                results_zones["std+_J"].append(J_average + J_std)
-                results_zones["std-_J"].append(J_average - J_std)
-                I1_average = numpy.average(I1_lst)
-                I1_std =numpy.std(I1_lst)
-                results_zones["average_I1"].append(I1_average)
-                results_zones["std+_I1"].append(I1_average + I1_std)
-                results_zones["std-_I1"].append(I1_average - I1_std)
-                I2_average = numpy.average(I2_lst)
-                I2_std =numpy.std(I2_lst)
-                results_zones["average_I2"].append(I2_average)
-                results_zones["std+_I2"].append(I2_average + I2_std)
-                results_zones["std-_I2"].append(I2_average - I2_std)
-            print("results", results_zones)
-            df = pandas.DataFrame(results_zones)
-            myfile= open(res_basename+"/distribution_zones.dat", 'w')
-            myfile.write(df.to_string(index=False))
-            myfile.close()
+            if get_invariants:
+                U_inspi = problem.get_displacement_subsol().func
+                Uexpi = get_invariants["Uexpi"]
+                Utot = U_inspi.copy(deepcopy=True)
+                Utot.vector()[:] -= Uexpi.vector()[:]
+                kinematics_new = dmech.Kinematics(U=Utot, U_old=None, Q_expr=None)
+
+                # sfoi_fe = dolfin.TensorElement(
+                #     family="DG",
+                #     cell=mesh.ufl_cell(),
+                #     degree=0)
+                # sfoi_fs = dolfin.FunctionSpace(
+                #     mesh,
+                #     sfoi_fe)
+
+                sfoi_fe = dolfin.FiniteElement(
+                    family="DG",
+                    cell=mesh.ufl_cell(),
+                    degree=0)
+                sfoi_fs = dolfin.FunctionSpace(
+                    mesh,
+                    sfoi_fe)
+            
+
+                J_tot = kinematics_new.J
+                J_tot_proj = dolfin.project(J_tot, sfoi_fs)
+                J_tot_proj = J_tot_proj.vector().get_local()
+
+                Ic_tot = kinematics_new.IC
+                Ic_tot_proj = dolfin.project(Ic_tot, sfoi_fs)
+                Ic_tot_proj = Ic_tot_proj.vector().get_local()
+
+
+                IIc_tot = kinematics_new.IIC
+                IIc_tot_proj = dolfin.project(IIc_tot, sfoi_fs)
+                IIc_tot_proj = IIc_tot_proj.vector().get_local()
+                
+
+
+                # Jnew = kinematics_new.F
+                # J_projected = dolfin.project(Jnew, V)
+                # print("interpolation=success")
+                # print("Jnew", J_tot_proj.vector()[:])
+                # print("IC", Ic_tot_proj)
+                # print("IC", Ic_tot_proj.vector())
+                # print("Ic", IIc_tot_proj.vector()[:])
+                # print("IIC", IIc_tot_proj.vector()[:])
+
+                print("len", len(J_tot_proj), len(Ic_tot_proj), len(IIc_tot_proj))
+
+                mu_J, mu_Ic, mu_IIc = 0, 0, 0
+                sigma_J, sigma_Ic, sigma_IIc = 0, 0, 0
+                number_cells = 0
+
+                for cell in range(mesh.num_cells()):
+                    number_cells += 1
+                    mu_J += numpy.log(J_tot_proj[cell])
+                    mu_Ic += numpy.log(Ic_tot_proj[cell])
+                    mu_IIc += numpy.log(IIc_tot_proj[cell])
+
+                mu_J /= number_cells
+                mu_Ic /= number_cells
+                mu_IIc /= number_cells
+
+                for cell in range(mesh.num_cells()):
+                    sigma_J += (numpy.log(J_tot_proj[cell])-mu_J)*(numpy.log(J_tot_proj[cell])-mu_J)
+                    sigma_Ic += (numpy.log(Ic_tot_proj[cell])-mu_Ic)*(numpy.log(Ic_tot_proj[cell])-mu_Ic)
+                    sigma_IIc += (numpy.log(IIc_tot_proj[cell])-mu_IIc)*(numpy.log(IIc_tot_proj[cell])-mu_IIc)
+
+                sigma_J /= number_cells
+                sigma_J = sigma_J**(1/2)
+                sigma_Ic /= number_cells
+                sigma_Ic = sigma_Ic**(1/2)
+                sigma_IIc /= number_cells
+                sigma_IIc = sigma_IIc**(1/2)
+
+                print(" J_tot_proj.vector()[:]",  J_tot_proj)
+                print("sigma, mu J", sigma_J, mu_J)
+                print("sigma, mu Ic", sigma_Ic, mu_Ic)
+                print("sigma, mu IIc", sigma_IIc, mu_IIc)
+
+
+                results_zones = {}
+                results_zones["zone"] = []
+                # results_zones["average_phi"] = []
+                # results_zones["std+_phi"] = []
+                # results_zones["std-_phi"] = []
+                
+
+                results_zones["average_J"] = []
+                results_zones["std+_J"] = []
+                results_zones["std-_J"] = []
+                results_zones["J^"] = []
+                results_zones["average_I1"] = []
+                results_zones["std+_I1"] = []
+                results_zones["std-_I1"] = []
+                results_zones["I1^"] = []
+                results_zones["average_I2"] = []
+                results_zones["std+_I2"] = []
+                results_zones["std-_I2"] = []
+                results_zones["I2^"] = []
+                for i in range(0, zones):
+                    results_zones["zone"].append(i)
+                    marked_cells = dolfin.SubsetIterator(domains_mf, i)
+                    phi_lst = []
+                    J_lst = []
+                    I1_lst = []
+                    I2_lst = []
+                    J_chapeau = []
+                    I1_chapeau = []
+                    I2_chapeau = []
+                    # print("phis=", phis)
+                    for cell in marked_cells:
+                        # print("cell index", cell.index())
+                        # print("type(cell index)", cell.index())
+                        # print("J(cell index)", Jfun[cell.index])
+                        # cell_index = int(cell.index())
+                        phi_lst.append(phis[cell.index()])
+                        J_lst.append(J[cell.index()])
+                        I1_lst.append(IC[cell.index()])
+                        I2_lst.append(IIC[cell.index()])
+                    # phi_average = numpy.average(phi_lst)
+                    # phi_std =numpy.std(phi_lst)
+                    # results_zones["average_phi"].append(phi_average)
+                    # results_zones["std+_phi"].append(phi_average + phi_std)
+                    # results_zones["std-_phi"].append(phi_average - phi_std)
+                    J_average = numpy.average(J_lst)
+                    print("J_average", J_average)
+                    J_chapeau = ((numpy.log(J_average)-mu_J)/sigma_J)
+                    J_std =numpy.std(J_lst)
+                    results_zones["average_J"].append(J_average)
+                    results_zones["std+_J"].append(J_average + J_std)
+                    results_zones["std-_J"].append(J_average - J_std)
+                    I1_average = numpy.average(I1_lst)
+                    I1_chapeau = ((numpy.log(I1_average)-mu_Ic)/sigma_Ic)
+                    I1_std =numpy.std(I1_lst)
+                    results_zones["average_I1"].append(I1_average)
+                    results_zones["std+_I1"].append(I1_average + I1_std)
+                    results_zones["std-_I1"].append(I1_average - I1_std)
+                    I2_average = numpy.average(I2_lst)
+                    I2_chapeau = ((numpy.log(I2_average)-mu_IIc)/sigma_IIc)
+                    I2_std =numpy.std(I2_lst)
+                    results_zones["average_I2"].append(I2_average)
+                    results_zones["std+_I2"].append(I2_average + I2_std)
+                    results_zones["std-_I2"].append(I2_average - I2_std)
+                    results_zones["J^"].append(J_chapeau)
+                    results_zones["I1^"].append(I1_chapeau)
+                    results_zones["I2^"].append(I2_chapeau)
+                print("results", results_zones)
+                df = pandas.DataFrame(results_zones)
+                myfile= open("/Users/peyrault/Documents/Gravity/Tests/Article/distribution_zones"+str(load_params)+".dat", 'w')
+                myfile.write(df.to_string(index=False))
+                myfile.close()
         # print("get_J", get_J)
         if get_J:
             return(problem.get_displacement_subsol().func,  phi, V, problem.get_deformed_volume_subsol().func.vector()[0])

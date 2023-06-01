@@ -31,7 +31,8 @@ class WbulkPoroOperator(Operator):
         self.solid_material = dmech.WbulkLungElasticMaterial(
             Phis=Phis,
             Phis0=Phis0,
-            parameters=material_parameters)
+            parameters=material_parameters,
+            kinematics=self.kinematics)
         self.material = dmech.PorousElasticMaterial(
             solid_material=self.solid_material,
             scaling=material_scaling,
@@ -64,7 +65,8 @@ class InverseWbulkPoroOperator(Operator):
         self.solid_material = dmech.WbulkLungElasticMaterial(
             Phis=self.kinematics.J * phis,
             Phis0=self.kinematics.J * phis0,
-            parameters=material_parameters)
+            parameters=material_parameters,
+            kinematics=self.kinematics)
         self.material = dmech.PorousElasticMaterial(
             solid_material=self.solid_material,
             scaling=material_scaling,

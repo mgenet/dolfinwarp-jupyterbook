@@ -27,11 +27,19 @@ class WbulkLungElasticMaterial(ElasticMaterial):
     def __init__(self,
             Phis,
             Phis0,
-            parameters):
+            parameters,
+            kinematics):
 
+        self.kinematics = kinematics
         assert ('kappa' in parameters)
         self.kappa = dolfin.Constant(parameters['kappa'])
 
         Phis = dolfin.variable(Phis)
         self.Psi = self.kappa * (Phis/Phis0 - 1 - dolfin.ln(Phis/Phis0))
         self.dWbulkdPhis = dolfin.diff(self.Psi, Phis)
+
+        self.Sigma = self.dWbulkdPhis * kinematics.J * dolfin.inv(kinematics.C)
+
+        self.P = self.kinematics.F * self.Sigma
+
+        self.sigma = self.P * self.kinematics.F.T / self.kinematics.J
