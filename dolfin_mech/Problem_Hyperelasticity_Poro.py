@@ -36,7 +36,8 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
             bulk_behavior=None,
             bulk_behaviors=[],
             pore_behavior=None,
-            pore_behaviors=[]):
+            pore_behaviors=[],
+            gradient_operators=None):
 
         HyperelasticityProblem.__init__(self)
 
@@ -55,6 +56,10 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
                 porosity_degree=porosity_degree,
                 porosity_init_val=porosity_init_val,
                 porosity_init_fun=porosity_init_fun)
+            if gradient_operators=="direct":
+                self.set_subsols_gradient_direct()
+            elif gradient_operators=="inverse":
+                self.set_subsols_gradient_inverse()
             self.set_solution_finite_element()
             self.set_solution_function_space()
             self.set_solution_functions()
@@ -100,8 +105,6 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
     def get_porosity_name(self):
         return "Phis"
 
-
-
     def add_porosity_subsol(self,
             degree,
             init_val=None,
@@ -122,13 +125,9 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
                 init_val=init_val,
                 init_fun=init_fun)
 
-
-
     def get_porosity_subsol(self):
 
         return self.get_subsol(self.get_porosity_name())
-
-
 
     def get_porosity_function_space(self):
 
@@ -136,6 +135,102 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
 
 
 
+    def get_p_name(self):
+            return "p_surface"
+
+    def add_p_subsol(self):
+
+        self.add_scalar_subsol(
+            name=self.get_p_name(),
+            family="CG",
+            degree=1)
+        
+    def get_p_subsol(self):
+
+        return self.get_subsol(self.get_p_name())
+
+    def get_p_function_space(self):
+
+        return self.get_subsol_function_space(name=self.get_p_name())
+    
+
+
+    def get_lbda_name(self):
+
+        return "lbda"
+
+    def add_lbda_subsol(self,
+            init_val=None):
+
+        self.add_vector_subsol(
+            name=self.get_lbda_name(),
+            family="R",
+            degree=0,
+            init_val=init_val)
+    
+    def get_lbda_subsol(self):
+
+        return self.get_subsol(self.get_lbda_name())
+
+
+
+    def get_mu_name(self):
+
+        return "mu"
+    
+    def add_mu_subsol(self,
+            init_val=None):
+
+        self.add_vector_subsol(
+            name=self.get_mu_name(),
+            family="R",
+            degree=0,
+            init_val=init_val)
+        
+    def get_mu_subsol(self):
+
+        return self.get_subsol(self.get_mu_name())
+    
+
+    
+    def get_gamma_name(self):
+        return "gamma"
+
+    def add_gamma_subsol(self):
+
+        self.add_scalar_subsol(
+            name=self.get_gamma_name(),
+            family="R",
+            degree=0)
+        
+    def get_gamma_subsol(self):
+
+        return self.get_subsol(self.get_gamma_name())
+
+    def get_gamma_function_space(self):
+
+        return self.get_subsol_function_space(name=self.get_gamma_name())
+    
+
+
+    def get_x0_direct_name(self):
+
+        return "x0"
+            
+    def add_x0_direct_subsol(self,
+            init_val=None):
+
+        self.add_vector_subsol(
+            name=self.get_x0_direct_name(),
+            family="R",
+            degree=0,
+            init_val=init_val)
+
+    def get_x0_direct_subsol(self):
+        return self.get_subsol(self.get_x0_direct_name())
+    
+
+    
     def set_subsols(self,
             displacement_degree=1,
             porosity_degree=None,
@@ -151,6 +246,23 @@ class PoroHyperelasticityProblem(HyperelasticityProblem):
             degree=porosity_degree,
             init_val=porosity_init_val,
             init_fun=porosity_init_fun)
+        
+    
+    def set_subsols_gradient_direct(self):
+        
+            self.add_p_subsol()
+            self.add_gamma_subsol()
+            self.add_lbda_subsol()
+            self.add_mu_subsol()
+            self.add_x0_direct_subsol()
+
+
+    def set_subsols_gradient_inverse(self):
+        
+            self.add_p_subsol()
+            self.add_gamma_subsol()
+            self.add_lbda_subsol()
+            self.add_mu_subsol()
 
 
 

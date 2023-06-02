@@ -10,6 +10,7 @@
 
 import collections
 import dolfin
+import numpy
 
 import dolfin_mech as dmech
 
@@ -40,7 +41,7 @@ class Problem():
 
     def set_mesh(self,
             mesh,
-            define_spatial_coordinates=False,
+            define_spatial_coordinates=True,
             define_facet_normals=False,
             compute_bbox=False,
             compute_local_cylindrical_basis=False):
@@ -552,9 +553,18 @@ class Problem():
             **kwargs):
 
         operator = dmech.SurfacePressureGradient0LoadingOperator(
-            X=dolfin.SpatialCoordinate(self.mesh),
-            U_test=self.get_displacement_subsol().dsubtest,
-            N=self.mesh_normals,
+            x = self.X,
+            x0 = self.get_x0_mass(self.phis),
+            n = self.mesh_normals,
+            u_test = self.get_displacement_subsol().dsubtest, 
+            lbda = self.get_lbda_subsol().subfunc,
+            lbda_test = self.get_lbda_subsol().dsubtest,
+            p = self.get_p_subsol().subfunc,
+            p_test = self.get_p_subsol().dsubtest,
+            gamma = self.get_gamma_subsol().subfunc,
+            gamma_test = self.get_gamma_subsol().dsubtest,
+            mu = self.get_mu_subsol().subfunc,
+            mu_test= self.get_mu_subsol().dsubtest,
             **kwargs)
         return self.add_operator(operator=operator, k_step=k_step)
 
@@ -565,10 +575,21 @@ class Problem():
             **kwargs):
 
         operator = dmech.SurfacePressureGradientLoadingOperator(
-            X=dolfin.SpatialCoordinate(self.mesh),
+            X=self.X,
+            x0=self.get_x0_direct_subsol().subfunc,
+            x0_test=self.get_x0_direct_subsol().dsubtest,
+            lbda=self.get_lbda_subsol().subfunc,
+            lbda_test=self.get_lbda_subsol().dsubtest,
+            mu=self.get_mu_subsol().subfunc,
+            mu_test=self.get_mu_subsol().dsubtest,
+            p = self.get_p_subsol().subfunc,
+            p_test = self.get_p_subsol().dsubtest,
+            gamma = self.get_gamma_subsol().subfunc,
+            gamma_test = self.get_gamma_subsol().dsubtest,
+            kinematics=self.kinematics,
             U=self.get_displacement_subsol().subfunc,
             U_test=self.get_displacement_subsol().dsubtest,
-            kinematics=self.kinematics,
+            Phis0=self.Phis0,
             N=self.mesh_normals,
             **kwargs)
         return self.add_operator(operator=operator, k_step=k_step)
@@ -693,3 +714,9 @@ class Problem():
             self.dsol_tria)
 
         # print (self.jac_form)
+
+    def get_x0_mass(self, phis):
+        X0 = numpy.empty(self.dim)
+        for k_dim in range(self.dim):
+            X0[k_dim] = dolfin.assemble(phis*self.X[k_dim]*self.dV)/dolfin.assemble(phis*self.dV)
+        return(X0)
