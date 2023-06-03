@@ -6,31 +6,18 @@
 ###                                                                          ###
 ################################################################################
 
-name: notebook
+jupyter nbextension enable collapsible_headings/main
+jupyter nbextension enable freeze/main
+jupyter nbextension enable highlight_selected_word/main
+jupyter nbextension enable livemdpreview/livemdpreview
+jupyter nbextension enable scratchpad/main
+jupyter nbextension enable spellchecker/main
+jupyter nbextension enable toc2/main
+jupyter nbextension enable varInspector/main
 
-channels:
-  - conda-forge
-  - defaults
+echo "alias ll=\"ls -l\"" >> ~/.bash_aliases
+echo "alias la=\"ls -la\"" >> ~/.bash_aliases
 
-dependencies:
-  - fenics=2019.1.0
-  - git
-  - gnuplot
-  - itkwidgets=0.32.6
-  - jupyter
-  - jupyter_contrib_nbextensions
-  - jupyter_nbextensions_configurator
-  - jupyterlab
-  - matplotlib
-  - numpy=1.21.5 # MG20221220: later numpy versions seem incompatible with itkwidgets 0.32
-  - python
-  - vtk=9.0
-
-  - pip
-  - pip:
-    - dolfin_mech
-    - dolfin_warp
-    - gmsh
-
-variables:
-  CPATH: /srv/conda/envs/notebook/include/vtk-9.0
+rm -rf ~/apt.txt
+rm -rf ~/environment.yml
+rm -rf ~/postBuild

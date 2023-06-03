@@ -6,11 +6,10 @@
 ###                                                                          ###
 ################################################################################
 
-jupyter nbextension enable collapsible_headings/main
-jupyter nbextension enable freeze/main
-jupyter nbextension enable highlight_selected_word/main
-jupyter nbextension enable livemdpreview/livemdpreview
-jupyter nbextension enable scratchpad/main
-jupyter nbextension enable spellchecker/main
-jupyter nbextension enable toc2/main
-jupyter nbextension enable varInspector/main
+FROM registry.gitlab.inria.fr/mgenet/dolfin_warp-tutorials:latest
+
+# Copy repo into the image, cf. https://mybinder.readthedocs.io/en/latest/tutorials/dockerfile.html. MG20230531: OMG this copies from the "build context", cf. https://stackoverflow.com/questions/73156067/where-does-the-copy-command-in-docker-copy-from; here it seems to be the repo itself.
+ARG NB_USER=jovyan
+ARG NB_UID=1000
+ENV HOME /home/${NB_USER}
+COPY --chown=${NB_UID} . ${HOME}
