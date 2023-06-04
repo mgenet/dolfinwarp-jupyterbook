@@ -21,12 +21,14 @@ def RivlinCube_PoroHyperelasticity(
         inverse=0,
         cube_params={},
         porosity_params={},
+        move={},
         mat_params={},
         step_params={},
         load_params={},
-        inertia=1,
+        inertia=0,
         res_basename="RivlinCube_PoroHyperelasticity",
         plot_curves=False,
+        get_results=0,
         verbose=0):
 
     ################################################################### Mesh ###
@@ -35,6 +37,10 @@ def RivlinCube_PoroHyperelasticity(
         mesh, boundaries_mf, xmin_id, xmax_id, ymin_id, ymax_id = dmech.RivlinCube_Mesh(dim=dim, params=cube_params)
     elif (dim==3):
         mesh, boundaries_mf, xmin_id, xmax_id, ymin_id, ymax_id, zmin_id, zmax_id = dmech.RivlinCube_Mesh(dim=dim, params=cube_params)
+
+    if move.get("move", False) == True :
+        Umove = move.get("U")
+        dolfin.ALE.move(mesh, Umove)
 
     ################################################################ Porosity ###
 
@@ -84,6 +90,25 @@ def RivlinCube_PoroHyperelasticity(
                 file.write('  <function_data size="'+str(n_cells)+'">\n')
                 for k_cell in range(n_cells):
                     file.write('    <dof index="'+str(k_cell)+'" value="'+str(porosity_val)+'" cell_index="'+str(k_cell)+'" cell_dof_index="0"/>\n')
+                file.write('  </function_data>\n')
+                file.write('</dolfin>\n')
+                file.close()
+            porosity_fun = dolfin.Function(
+                porosity_fs,
+                porosity_filename)
+        elif (porosity_type == "function_xml_custom"):
+            # print("function xml")
+            porosity_filename = res_basename+"-poro.xml"
+            # print("porosity_filename=", porosity_filename)
+            n_cells = len(mesh.cells())
+            with open(porosity_filename, "w") as file:
+                file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+                file.write('<dolfin xmlns:dolfin="http://fenicsproject.org">\n')
+                file.write('  <function_data size="'+str(n_cells)+'">\n')
+                for k_cell in range(n_cells):
+                    # print("kcell=", k_cell)
+                    # print("porosity for kcell", porosity_val[k_cell])
+                    file.write('    <dof index="'+str(k_cell)+'" value="'+str(porosity_val[k_cell])+'" cell_index="'+str(k_cell)+'" cell_dof_index="0"/>\n')
                 file.write('  </function_data>\n')
                 file.write('</dolfin>\n')
                 file.close()
@@ -306,3 +331,10 @@ def RivlinCube_PoroHyperelasticity(
         qois_fig, qois_axes = mpl.subplots()
         qois_data.plot(x="pf", y=all_porosities, ax=qois_axes, ylim=[0,1], ylabel="porosity")
         qois_fig.savefig(res_basename+"-porosities-vs-pressure.pdf")
+    
+    if get_results:
+        if inverse:
+            phi=problem.get_foi(name="Phis0").func.vector().get_local()
+        else:
+            phi=problem.get_foi(name="phis").func.vector().get_local()
+        return(problem.get_displacement_subsol().func,  phi, dolfin.Measure("dx", domain=mesh))
