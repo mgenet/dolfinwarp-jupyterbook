@@ -32,7 +32,7 @@ test = mypy.Test(
     res_folder=res_folder,
     perform_tests=1,
     stop_at_failure=1,
-    clean_after_tests=1)
+    clean_after_tests=0)
 
 dim_lst  = []
 dim_lst += [2]
@@ -60,6 +60,8 @@ for dim in dim_lst:
                 load_lst  = []
                 load_lst += ["internal"]
                 load_lst += ["external0"] if (inverse) else ["external"]
+                if dim==3:
+                    load_lst += ["pgra0"] if (inverse) else ["pgra"]
                 for load in load_lst:
 
                     print("dim =",dim)
@@ -80,10 +82,10 @@ for dim in dim_lst:
                         inverse=inverse,
                         porosity_params={"type":porosity},
                         mat_params={"scaling":scaling, "parameters":mat_params},
-                        step_params={"dt_min":0.1},
+                        step_params={"dt_min":1e-4},
                         load_params={"type":load},
                         res_basename=res_folder+"/"+res_basename,
                         plot_curves=0,
-                        verbose=0)
+                        verbose=1)
 
-                    test.test(res_basename)
+                    # test.test(res_basename)

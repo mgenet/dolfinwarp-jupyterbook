@@ -1,0 +1,66 @@
+k_step = 1
+ |  k_t = 1
+ |   |  dt = 1.0
+ |   |  t = 1.0
+ |   |  t_step = 1.0
+ |   |  k_iter = 1
+ |   |   |  Assembly… 0.006373882293701172 s
+ |   |   |  res_norm      = 2.1794e-01
+ |   |   |  Solve… 0.029369115829467773 s
+ |   |   |  dU_norm       = 2.3466e+00
+ |   |   |  dPhis_norm    = 0.0000e+00
+ |   |   |  U_norm        = 2.3466e+00
+ |   |   |  U_norm_old    = 0.0000e+00
+ |   |   |  Phis_norm     = 1.0000e+01
+ |   |   |  Phis_norm_old = 1.0000e+01
+ |   |   |  U_err         = 1.0000e+00
+ |   |   |  Phis_err      = 0.0000e+00
+ |   |  k_iter = 2
+ |   |   |  Assembly… 0.003632068634033203 s
+ |   |   |  res_norm      = 1.4921e-02
+ |   |   |  res_err       = 6.8464e-02
+ |   |   |  dres_norm     = 2.3287e-01
+ |   |   |  res_err_rel   = 1.0685e+00
+ |   |   |  Solve… 0.029619932174682617 s
+ |   |   |  dU_norm       = 1.3561e-01
+ |   |   |  dPhis_norm    = 1.5673e-06
+ |   |   |  relax         = 1.0000e+00
+ |   |   |  U_norm        = 2.2110e+00
+ |   |   |  U_norm_old    = 0.0000e+00
+ |   |   |  Phis_norm     = 1.0000e+01
+ |   |   |  Phis_norm_old = 1.0000e+01
+ |   |   |  U_err         = 6.1336e-02
+ |   |   |  Phis_err      = 1.5673e-07
+ |   |  k_iter = 3
+ |   |   |  Assembly… 0.003972768783569336 s
+ |   |   |  res_norm      = 1.2469e-04
+ |   |   |  res_err       = 5.7212e-04
+ |   |   |  dres_norm     = 1.4797e-02
+ |   |   |  res_err_rel   = 9.9164e-01
+ |   |   |  Solve… 0.02939009666442871 s
+ |   |   |  dU_norm       = 1.1516e-03
+ |   |   |  dPhis_norm    = 3.9719e-10
+ |   |   |  relax         = 1.0000e+00
+ |   |   |  U_norm        = 2.2099e+00
+ |   |   |  U_norm_old    = 0.0000e+00
+ |   |   |  Phis_norm     = 1.0000e+01
+ |   |   |  Phis_norm_old = 1.0000e+01
+ |   |   |  U_err         = 5.2114e-04
+ |   |   |  Phis_err      = 3.9719e-11
+ |   |  k_iter = 4
+ |   |   |  Assembly… 0.003762960433959961 s
+ |   |   |  res_norm      = 8.5621e-09
+ |   |   |  res_err       = 3.9285e-08
+ |   |   |  dres_norm     = 1.2468e-04
+ |   |   |  res_err_rel   = 9.9993e-01
+ |   |   |  Solve… 0.03055405616760254 s
+ |   |   |  dU_norm       = 7.9090e-08
+ |   |   |  dPhis_norm    = 2.4562e-14
+ |   |   |  relax         = 1.0000e+00
+ |   |   |  U_norm        = 2.2099e+00
+ |   |   |  U_norm_old    = 0.0000e+00
+ |   |   |  Phis_norm     = 1.0000e+01
+ |   |   |  Phis_norm_old = 1.0000e+01
+ |   |   |  U_err         = 3.5790e-08
+ |   |   |  Phis_err      = 2.4562e-15
+ |   |   |  Nonlinear solver converged…
