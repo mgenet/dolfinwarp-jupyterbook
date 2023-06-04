@@ -102,6 +102,10 @@ class NonlinearSolver():
         elif (relax_type == "gss"):
             self.compute_relax = self.compute_relax_gss
             self.relax_n_iter_max = relax_parameters.get("relax_n_iter_max", 9)
+        elif (relax_type == "backtracking"):
+            self.compute_relax = self.compute_relax_backtracking
+            self.relax_backtracking_factor = parameters["relax_backtracking_factor"] if ("relax_backtracking_factor" in parameters) and (parameters["relax_backtracking_factor"] is not None) else 2.
+            self.relax_n_iter_max          = parameters["relax_n_iter_max"]          if ("relax_n_iter_max"          in parameters) and (parameters["relax_n_iter_max"]          is not None) else 8
 
         self.sol_tol    = parameters.get("sol_tol"   , [1e-6]*len(self.problem.subsols))
         self.n_iter_max = parameters.get("n_iter_max", 32)
@@ -539,6 +543,137 @@ class NonlinearSolver():
             self.printer.print_sci("relax",self.relax)
             if (self.relax == 0.):
                 self.printer.print_str("Warning! Optimal relaxation is null…")
+
+    def compute_relax_backtracking(self):
+        k_relax = 1
+        self.printer.inc()
+        while (True):
+            relax = 1./self.relax_backtracking_factor**(k_relax-1)
+            self.problem.sol_func.vector().axpy(relax, self.problem.dsol_func.vector())
+            self.assemble_linear_system()
+            res_is_finite = numpy.isfinite(self.res_vec).all()
+            # print("numpy.isfinite(self.res_vec).all()", res_is_finite)
+            self.problem.sol_func.vector().axpy(-relax, self.problem.dsol_func.vector())
+            if (res_is_finite):
+                self.relax = relax
+                break
+            if (k_relax == self.relax_n_iter_max):
+                self.relax = 0.
+                self.printer.print_str("Warning! Optimal relaxation is null…")
+                break
+            k_relax += 1
+        self.printer.dec()
+
+    def assemble_linear_system(self):
+
+        # res_old
+        if (self.k_iter > 1):
+            if (hasattr(self, "res_old_vec")):
+                self.res_old_vec[:] = self.res_vec[:]
+            else:
+                self.res_old_vec = self.res_vec.copy()
+            self.res_old_norm = self.res_norm
+
+        # linear system: Assembly
+        if any([(operator.measure.integral_type() == "vertex") for operator in self.problem.operators]): # MG20190513: Cannot use point integral within assemble_system
+            self.printer.print_str("Assembly (without vertex integrals)…",newline=False)
+            timer = time.time()
+            dolfin.assemble_system(
+                self.problem.jac_form,
+               -self.problem.res_form,
+                bcs=[constraint.bc for constraint in self.constraints],
+                A_tensor=self.jac_mat,
+                b_tensor=self.res_vec,
+                add_values=False,
+                finalize_tensor=False,
+                form_compiler_parameters=self.problem.form_compiler_parameters)
+            timer = time.time() - timer
+            self.printer.print_str(" "+str(timer)+" s",tab=False)
+            # self.printer.print_var("res_vec",self.res_vec.get_local())
+            # self.printer.print_var("jac_mat",self.jac_mat.array())
+
+            for operator in self.problem.operators:
+                if (operator.measure.integral_type() == "vertex"):
+                    self.printer.print_str("Assembly (vertex integrals)…",newline=False)
+                    timer = time.time()
+                    dolfin.assemble_linear_system( # MG20190513: However, vertex integrals only work if solution only has dofs on vertices…
+                       -operator.res_form,
+                        tensor=self.res_vec,
+                        add_values=True,
+                        finalize_tensor=True,
+                        form_compiler_parameters=self.problem.form_compiler_parameters)
+                    operator.jac_form = dolfin.derivative(
+                        operator.res_form,
+                        self.problem.sol_func,
+                        self.problem.dsol_tria)
+                    dolfin.assemble_linear_system(
+                        operator.jac_form,
+                        tensor=self.jac_mat,
+                        add_values=True,
+                        finalize_tensor=True,
+                        form_compiler_parameters=self.problem.form_compiler_parameters)
+                    timer = time.time() - timer
+                    self.printer.print_str(" "+str(timer)+" s",tab=False)
+                    # self.printer.print_var("res_vec",self.res_vec.get_local())
+                    # self.printer.print_var("jac_mat",self.jac_mat.array())
+        else:
+            self.printer.print_str("Assembly…",newline=False)
+            timer = time.time()
+            dolfin.assemble_system(
+                self.problem.jac_form,
+               -self.problem.res_form,
+                bcs=[constraint.bc for constraint in self.constraints],
+                A_tensor=self.jac_mat,
+                b_tensor=self.res_vec,
+                add_values=False,
+                finalize_tensor=True,
+                form_compiler_parameters=self.problem.form_compiler_parameters)
+            timer = time.time() - timer
+            self.printer.print_str(" "+str(timer)+" s",tab=False)
+            # self.printer.print_var("res_vec",self.res_vec.get_local())
+            # self.printer.print_var("jac_mat",self.jac_mat.array())
+
+        if not (numpy.isfinite(self.res_vec).all()):
+            # print("Warning! Residual is NaN")
+            self.printer.print_str("Warning! Residual is NaN!")
+            return False
+
+        # res_norm
+        self.res_norm = self.res_vec.norm("l2")
+        self.printer.print_sci("res_norm",self.res_norm)
+
+        if (self.res_norm > 1e9):
+            self.printer.print_str("Warning! Residual is too large!")
+            return False
+
+        # res_err
+        if (self.k_iter == 1):
+            self.res_norm0 = self.res_norm
+        else:
+            self.res_err = dmech.compute_error(
+                val=self.res_norm,
+                ref=self.res_norm0)
+            self.printer.print_sci("res_err",self.res_err)
+
+            if (self.res_err > 1e3):
+                self.printer.print_str("Warning! Residual is increasing too much!")
+                return False
+
+        # dres
+        if (self.k_iter > 1):
+            if (hasattr(self, "dres_vec")):
+                self.dres_vec[:] = self.res_vec[:] - self.res_old_vec[:]
+            else:
+                self.dres_vec = self.res_vec - self.res_old_vec
+            self.dres_norm = self.dres_vec.norm("l2")
+            self.printer.print_sci("dres_norm",self.dres_norm)
+
+        # res_err_rel
+        if (self.k_iter > 1):
+            self.res_err_rel = dmech.compute_error(
+                val=self.dres_norm,
+                ref=self.res_old_norm)
+            self.printer.print_sci("res_err_rel",self.res_err_rel)
 
 
 
