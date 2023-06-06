@@ -40,7 +40,7 @@ latex:
 ############################################################# Launch settings ###
 
 repository:
-  url: https://github.com/mgenet/dolfin_warp-tutorials #MG20230527: Somehow only GitHub works, cf. https://github.com/orgs/executablebooks/discussions/1018
+  url: https://github.com/mgenet/dolfin_warp-tutorials # MG20230527: Somehow only GitHub works, cf. https://github.com/orgs/executablebooks/discussions/1018
   # url: gitlab.inria.fr/mgenet/dolfin_warp-tutorials
   # url: "https%3A%2F%2Fgitlab.inria.fr%2Fmgenet%2Fdolfin_warp-tutorials.git"
   # url: https%3A%2F%2Fgitlab.inria.fr%2Fmgenet%2Fdolfin_warp-tutorials/HEAD
