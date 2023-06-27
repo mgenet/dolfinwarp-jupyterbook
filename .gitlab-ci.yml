@@ -15,7 +15,8 @@ build_docker:
   tags:
     - ci.inria.fr
     - large
-  image: ubuntu:20.04
+  image: registry.gitlab.inria.fr/inria-ci/docker/ubuntu:20.04
+  # image: ubuntu:20.04
   script:
     - apt update; apt install -y python3 python3-pip mercurial git ca-certificates curl gnupg lsb-release
     - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg

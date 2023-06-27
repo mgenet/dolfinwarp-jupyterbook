@@ -6,11 +6,11 @@
 ###                                                                          ###
 ################################################################################
 
+gcc-multilib
 libgl1-mesa-dev
 libglu1-mesa-dev
 libxcursor-dev
 libxft-dev
 libxinerama1
-gcc-multilib
 vim
 xvfb
