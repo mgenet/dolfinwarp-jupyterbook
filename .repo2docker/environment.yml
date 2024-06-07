@@ -46,6 +46,7 @@ dependencies:
   - pip:
   # python
     - numpy==1.21.5 # MG20240605: meshio seems to be installing a newer numpy…
+    - zstd
 
   # computing stuff
     - gmsh
